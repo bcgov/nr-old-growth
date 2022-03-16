@@ -30,7 +30,7 @@ COPY --from=builder /usr/lib64/libbrotlicommon.so.1 /usr/lib64/
 # Copy over app
 WORKDIR /app
 COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/server/dist ./dist
 
 # Expose port - mostly a convention, for readability
 EXPOSE 3000
