@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "prebuild": "rimraf dist",
-    "build": "cd server && nest build",
+    "build": "cd ./server && nest build",
     "lint:staged": "./node_modules/.bin/lint-staged",
     "make-badges": "istanbul-badges-readme --logo=jest --exitCode=1",
     "make-badges:ci": "npm run make-badges -- --ci"
