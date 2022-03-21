@@ -18,19 +18,16 @@
       name="TAP_PRIORITY_DEF_AREA"
       layer-type="overlay"
     />     
-    <!-- <l-feature-group ref="featureGroup" @ready="onFeatureGroupReady($event)"></l-feature-group> -->
     <l-control-layers :collapsed="false" />        
     <l-control-zoom position="bottomright" />
   </l-map>
 </template>
 <script>
 import { defineComponent } from 'vue';
-import { LMap, LTileLayer, LWmsTileLayer, LControlLayers, LControlZoom, LFeatureGroup } from "@vue-leaflet/vue-leaflet";
-import * as L from 'leaflet';
-import "leaflet-draw/dist/leaflet.draw-src.js";
-
-import "leaflet/dist/leaflet.css";
-import 'leaflet-draw/dist/leaflet.draw.css';
+import { LMap, LTileLayer, LWmsTileLayer, LControlLayers, LControlZoom } from "@vue-leaflet/vue-leaflet";
+import * as L from "leaflet";
+import '@geoman-io/leaflet-geoman-free';  
+import '@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css';  
 
 
 export default defineComponent({
@@ -40,7 +37,6 @@ export default defineComponent({
     LWmsTileLayer,
     LControlLayers,
     LControlZoom,
-    // LFeatureGroup
   },
   data() {
     return {
@@ -51,69 +47,33 @@ export default defineComponent({
   methods: {
     async onLeafletReady() {
       await this.$nextTick();
-      const editableLayers = new L.FeatureGroup();
-      this.map.leafletObject.addLayer(editableLayers);
-      const drawControl = new L.Control.Draw(this.getDrawConfiguration(editableLayers));
-      this.map.leafletObject.addControl(drawControl);
-      this.map.leafletObject.on(L.Draw.Event.CREATED, (e) => {
-          const type = e.layerType;
-          if (type === 'polygon') {
-            console.log("e.layer", e.layer)
-            // this.geofenceStore.addNewPolygon(e.layer.getLatLngs());
-          }
-          this.map.leafletObject.addLayer(e.layer)
+      this.map.leafletObject.pm.addControls({  
+        position: 'topleft',  
+        // drawCircle: false,  
       });
-    },
-    // async onFeatureGroupReady(val) {
-    //   await this.$nextTick();
-    //   const drawControl = new L.Control.Draw(this.getDrawConfiguration(val));
-    //   this.map.leafletObject.addControl(drawControl);
-    // },
-    getDrawConfiguration(editableLayers) {
-      return {
-          position: 'topleft',
-          draw: {
-              // polygon: {
-              //     allowIntersection: false, // Restricts shapes to simple polygons
-              //     drawError: {
-              //         color: '#e1e100', // Color the shape will turn when intersects
-              //         message: '<strong>Oh snap!<strong> you can\'t draw that!' // Message that will show when intersect
-              //     },
-              //     shapeOptions: {
-              //         color: '#97009c'
-              //     }
-              // },
-              // polyline: false,
-              // circle: false,
-              // circleMarker: false,
-              // rectangle: false,
-              // marker: false,
-             polyline: {
-                shapeOptions: {
-                    color: '#f357a1',
-                    weight: 10
-                }
-             },
-              polygon: {
-                  allowIntersection: false, // Restricts shapes to simple polygons
-                  drawError: {
-                      color: '#e1e100', // Color the shape will turn when intersects
-                      message: '<strong>Oh snap!<strong> you can\'t draw that!' // Message that will show when intersect
-                  },
-                  shapeOptions: {
-                      color: '#bada55'
-                  }
-              },
-              circle: false, // Turns off this drawing tool
-              rectangle: false,
-              marker: false,
-              circlemarker: false
-          },
-          edit: {
-              featureGroup: editableLayers,
-              remove: false
-          }
-      };
+
+      this.map.leafletObject.on('pm:drawstart', (e) => {
+        // console.log('draw start e', e)
+      });
+
+       this.map.leafletObject.on('pm:drawend', (e) => {
+        // console.log('draw end e', e);
+        // const newDraw = this.map.leafletObject.pm.getGeomanDrawLayers(true);
+        // console.log('newDraw', newDraw);
+        // const newLayers = newDraw._layers;
+        // console.log("newLayers", newLayers, newLayers._bounds);
+         
+      });
+
+      this.map.leafletObject.on('pm:create', (e) => {
+        console.log('draw create e', e)
+        console.log('shape', e.shape)
+        if (e.shape == 'Polygon' || e.shape == 'Line' || e.shape == 'Rectangle') 
+          console.log('draw create', e.shape, 'coordinates', e.layer.getLatLngs())
+        if (e.shape == 'Circle')
+          console.log('draw create', e.shape, 'center', e.layer.getLatLng(), 'radius', e.layer.getRadius())
+        else console.log('draw create', e.shape, 'point', e.layer.getLatLng())
+      });
     },
   },
   mounted() {
