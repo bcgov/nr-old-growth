@@ -8,7 +8,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
-  TRIGGERS: ('package.json' 'package-lock.json' 'Dockerfile' 'backend/src/' 'backend/test/' '.github/pipeline')
+  TRIGGERS: ('package.json' 'package-lock.json' 'backend/Dockerfile' 'backend/src/' 'backend/test/' '.github/pipeline')
 
 jobs:
   check:
@@ -187,15 +187,16 @@ jobs:
           # Cancel any rollouts in progress
           oc rollout cancel dc/gfp-${{ github.event.number }} 2> /dev/null \
             || true && echo "No rollout in progress"
-
+          
           # Remove any stale imagestreams
           oc delete is/gfp-${{ github.event.number }} 2> /dev/null \
             || true && echo "No stale imagestreams"
 
           # Process and apply deployment template
-          oc process -f .github/pipeline/deploy.yml \
-            -p SUFFIX=${{ github.event.number }} -p NAMESPACE=${{ secrets.NAMESPACE }} \
+          for y in .github/pipeline/deploy.*.yml
+          do oc process -f ${y} -p SUFFIX=${{ github.event.number }} -p NAMESPACE=${{ secrets.NAMESPACE }} \
               | oc apply -f -
+          done
 
           # Start rollout (if necessary) and follow it
           oc rollout latest dc/gfp-${{ github.event.number }} 2> /dev/null \
@@ -229,7 +230,7 @@ jobs:
         uses: zaproxy/action-full-scan@v0.3.0
         with:
           target: https://gfp-${{ github.event.number }}.apps.silver.devops.gov.bc.ca/
-          cmd_options: "-a"
+          cmd_options: '-a'
           allow_issue_writing: false
           fail_action: false
 
