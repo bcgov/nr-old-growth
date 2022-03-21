@@ -26,9 +26,10 @@
 import { defineComponent } from 'vue';
 import { LMap, LTileLayer, LWmsTileLayer, LControlLayers, LControlZoom } from "@vue-leaflet/vue-leaflet";
 import * as L from "leaflet";
+import { EsriProvider, GeoSearchControl } from 'leaflet-geosearch';
 import '@geoman-io/leaflet-geoman-free';  
 import '@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css';  
-
+import 'leaflet-geosearch/dist/geosearch.css';
 
 export default defineComponent({
   components: {
@@ -47,8 +48,19 @@ export default defineComponent({
   methods: {
     async onLeafletReady() {
       await this.$nextTick();
+
+      // add search box
+      const provider = new EsriProvider();
+      this.map.leafletObject.addControl(
+        new GeoSearchControl({
+          provider,
+          // style: 'bar'
+        }),
+      );
+
+      // add drwing control
       this.map.leafletObject.pm.addControls({  
-        position: 'topleft',  
+        position: 'topright',  
         // drawCircle: false,  
       });
 
