@@ -82,7 +82,7 @@ export default defineComponent({
         console.log('shape', e.shape)
         if (e.shape == 'Polygon' || e.shape == 'Line' || e.shape == 'Rectangle') 
           console.log('draw create', e.shape, 'coordinates', e.layer.getLatLngs())
-        if (e.shape == 'Circle')
+        else if (e.shape == 'Circle')
           console.log('draw create', e.shape, 'center', e.layer.getLatLng(), 'radius', e.layer.getRadius())
         else console.log('draw create', e.shape, 'point', e.layer.getLatLng())
       });
