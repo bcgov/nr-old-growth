@@ -8,7 +8,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
-  TRIGGERS: ('backend/' '.github/pipeline')
+  TRIGGERS: ('backend/' 'frontend/' '.github/pipeline')
 
 jobs:
   check:
@@ -73,17 +73,26 @@ jobs:
           username: ${{ secrets.GHCR_USERNAME }}
           password: ${{ secrets.GHCR_TOKEN }}
 
-      - name: Build and push Docker image
+      - name: Build and push backend Docker image
         uses: docker/build-push-action@v2
         with:
           context: ./backend
           push: true
-          tags: ghcr.io/bcgov/greenfield-template:pr-${{ github.event.number }}
+          tags: ghcr.io/bcgov/greenfield-template:pr-backend-${{ github.event.number }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      # - name: Build and push frontend Docker image
+      #   uses: docker/build-push-action@v2
+      #   with:
+      #     context: ./frontend
+      #     push: true
+      #     tags: ghcr.io/bcgov/greenfield-template:pr-frontend-${{ github.event.number }}
+      #     cache-from: type=gha
+      #     cache-to: type=gha,mode=max
+
   tests:
-    name: Tests
+    name: Tests backend
     needs:
       - check
     if: needs.check.outputs.build == 'true'
@@ -212,7 +221,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           message: |
-            [${{ secrets.ENV }} deployment](https://gfp-${{ github.event.number }}.apps.silver.devops.gov.bc.ca/) available
+            [backend ${{ secrets.ENV }} deployment](https://gfp-backend-${{ github.event.number }}.apps.silver.devops.gov.bc.ca/) available
           allow-repeats: false
 
   zap:
