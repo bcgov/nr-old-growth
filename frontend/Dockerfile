@@ -36,4 +36,4 @@ COPY --from=builder /app/dist ./dist
 EXPOSE 3000
 
 # Start up command
-ENTRYPOINT ["node", "dist/main"]
+ENTRYPOINT ["npm", "start"]
