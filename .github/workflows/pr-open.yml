@@ -82,14 +82,14 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # - name: Build and push frontend Docker image
-      #   uses: docker/build-push-action@v2
-      #   with:
-      #     context: ./frontend
-      #     push: true
-      #     tags: ghcr.io/bcgov/greenfield-template:pr-frontend-${{ github.event.number }}
-      #     cache-from: type=gha
-      #     cache-to: type=gha,mode=max
+      - name: Build and push frontend Docker image
+        uses: docker/build-push-action@v2
+        with:
+          context: ./frontend
+          push: true
+          tags: ghcr.io/bcgov/greenfield-template:pr-frontend-${{ github.event.number }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   tests:
     name: Tests backend
@@ -196,9 +196,13 @@ jobs:
           # Cancel any rollouts in progress
           oc rollout cancel dc/gfp-backend-${{ github.event.number }} 2> /dev/null \
             || true && echo "No rollout in progress"
+          oc rollout cancel dc/gfp-frontend-${{ github.event.number }} 2> /dev/null \
+            || true && echo "No rollout in progress"
 
           # Remove any stale imagestreams
           oc delete is/gfp-backend-${{ github.event.number }} 2> /dev/null \
+            || true && echo "No stale imagestreams"
+          oc delete is/gfp-frontend-${{ github.event.number }} 2> /dev/null \
             || true && echo "No stale imagestreams"
 
           # Process and apply deployment template
@@ -211,9 +215,13 @@ jobs:
           oc rollout latest dc/gfp-backend-${{ github.event.number }} 2> /dev/null \
             || true && echo "Rollout in progress"
           oc logs -f dc/gfp-backend-${{ github.event.number }}
+          oc rollout latest dc/gfp-frontend-${{ github.event.number }} 2> /dev/null \
+            || true && echo "Rollout in progress"
+          oc logs -f dc/gfp-frontend-${{ github.event.number }}
 
           # Get status, returns 0 if rollout is successful
           oc rollout status dc/gfp-backend-${{ github.event.number }}
+          oc rollout status dc/gfp-frontend-${{ github.event.number }}
 
       - name: Deployment update
         uses: mshick/add-pr-comment@v1
@@ -222,6 +230,7 @@ jobs:
         with:
           message: |
             [backend ${{ secrets.ENV }} deployment](https://gfp-backend-${{ github.event.number }}.apps.silver.devops.gov.bc.ca/) available
+            [frontend ${{ secrets.ENV }} deployment](https://gfp-frontend-${{ github.event.number }}.apps.silver.devops.gov.bc.ca/) available
           allow-repeats: false
 
   zap:
