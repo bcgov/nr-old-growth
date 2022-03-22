@@ -196,13 +196,13 @@ jobs:
           # Cancel any rollouts in progress
           oc rollout cancel dc/gfp-backend-${{ github.event.number }} 2> /dev/null \
             || true && echo "No rollout in progress"
-          oc rollout cancel dc/gfp-frontend-${{ github.event.number }} 2> /dev/null \
+          oc rollout cancel dc/gfp-${{ github.event.number }} 2> /dev/null \
             || true && echo "No rollout in progress"
 
           # Remove any stale imagestreams
           oc delete is/gfp-backend-${{ github.event.number }} 2> /dev/null \
             || true && echo "No stale imagestreams"
-          oc delete is/gfp-frontend-${{ github.event.number }} 2> /dev/null \
+          oc delete is/gfp-${{ github.event.number }} 2> /dev/null \
             || true && echo "No stale imagestreams"
 
           # Process and apply deployment template
@@ -215,13 +215,13 @@ jobs:
           oc rollout latest dc/gfp-backend-${{ github.event.number }} 2> /dev/null \
             || true && echo "Rollout in progress"
           oc logs -f dc/gfp-backend-${{ github.event.number }}
-          oc rollout latest dc/gfp-frontend-${{ github.event.number }} 2> /dev/null \
+          oc rollout latest dc/gfp-${{ github.event.number }} 2> /dev/null \
             || true && echo "Rollout in progress"
-          oc logs -f dc/gfp-frontend-${{ github.event.number }}
+          oc logs -f dc/gfp-${{ github.event.number }}
 
           # Get status, returns 0 if rollout is successful
           oc rollout status dc/gfp-backend-${{ github.event.number }}
-          oc rollout status dc/gfp-frontend-${{ github.event.number }}
+          oc rollout status dc/gfp-${{ github.event.number }}
 
       - name: Deployment update
         uses: mshick/add-pr-comment@v1
@@ -230,7 +230,7 @@ jobs:
         with:
           message: |
             [backend ${{ secrets.ENV }} deployment](https://gfp-backend-${{ github.event.number }}.apps.silver.devops.gov.bc.ca/) available
-            [frontend ${{ secrets.ENV }} deployment](https://gfp-frontend-${{ github.event.number }}.apps.silver.devops.gov.bc.ca/) available
+            [frontend ${{ secrets.ENV }} deployment](https://gfp-${{ github.event.number }}.apps.silver.devops.gov.bc.ca/) available
           allow-repeats: false
 
   zap:
