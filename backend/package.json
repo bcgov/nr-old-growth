@@ -1,10 +1,10 @@
 {
-  "name": "backend",
+  "name": "old-growth-backend",
   "version": "0.0.1",
-  "description": "",
-  "author": "",
+  "description": "Backend for old growth project",
   "private": true,
   "license": "UNLICENSED",
+  "author": "Derek Roberts, Catherine Meng, Maria Martinez",
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "nest build",

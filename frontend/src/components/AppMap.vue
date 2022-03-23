@@ -106,6 +106,10 @@ export default defineComponent({
           );
         else console.log("draw create", e.shape, "point", e.layer.getLatLng());
       });
+
+      if (this.map.leafletObject.tap) {
+        this.map.leafletObject.tap.disable();
+      }
     },
   },
 });

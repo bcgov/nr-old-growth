@@ -1,6 +1,25 @@
 {
-  "name": "frontend",
-  "version": "0.1.0",
+  "name": "old-growth-frontend",
+  "version": "0.0.1",
+  "description": "Frontend for old growth project",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bcgov/nr-old-growth-integration.git"
+  },
+  "keywords": [
+    "openshift",
+    "pipeline",
+    "node",
+    "typescript",
+    "js",
+    "devops"
+  ],
+  "author": "Derek Roberts, Catherine Meng, Maria Martinez",
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/bcgov/nr-old-growth-integration/issues"
+  },
+  "homepage": "https://github.com/bcgov/nr-old-growth-integration",
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",

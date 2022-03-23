@@ -1,16 +1,26 @@
-# frontend
+# Overview
 
-The frontend is written in vue3 in typescript.
+The frontend is written in [vue3](https://vuejs.org) in typescript.
 
-### **Create the project**
+## Installation and Run locally
 
 ```
-$ vue new frontend
+$ npm install
+$ npm start
 ```
 
-Select the manually setup and include the typescript option, an [vedio instruction](https://www.youtube.com/watch?v=JfI5PISLr9w)
+If you are seeing the error about "vue-cli-service command not found", try:
 
-### **Technology options**
+```
+// install vue-cli-service globally
+$ sudo npm i -g @vue/cli-service
+$ npm start
+
+// or run
+$ ./node_modules/.bin/vue-cli-service serve
+```
+
+## Technology options
 
 **Map**:  
 [Leaflet Map](https://leafletjs.com)  
@@ -20,7 +30,7 @@ Select the manually setup and include the typescript option, an [vedio instructi
 **Map Search**:  
 [leaflet-geosearch](https://github.com/smeijer/leaflet-geosearch)
 
-### **Command**
+## Command
 
 ```
 ## Project setup
@@ -36,6 +46,12 @@ npm run build
 npm run lint
 ```
 
-### Customize configuration
+## Create a new project with vue
 
-See [Configuration Reference](https://cli.vuejs.org/config/).
+```
+// install command line tool for vue globally
+$ sudo npm install -g @vue/cli
+$ vue new project_name
+```
+
+Select the manually setup and include the typescript option, an [vedio instruction](https://www.youtube.com/watch?v=JfI5PISLr9w)
