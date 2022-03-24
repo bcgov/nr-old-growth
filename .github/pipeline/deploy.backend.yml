@@ -15,7 +15,7 @@ parameters:
     value: gfp
   - name: COMPONENT
     description: Component name
-    value: frontend
+    value: backend
   - name: SUFFIX
     description: Deployment suffix, e.g. pr-### or prod
     required: true
@@ -42,7 +42,7 @@ objects:
         - name: pr-${SUFFIX}
           from:
             kind: DockerImage
-            name: ghcr.io/bcgov/greenfield-template:pr-frontend-${SUFFIX}
+            name: ghcr.io/bcgov/greenfield-template:pr-backend-${SUFFIX}
           referencePolicy:
             type: Local
   - apiVersion: v1
