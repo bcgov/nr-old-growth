@@ -1,27 +1,36 @@
 <template>
-  <l-map
-    ref="map"
-    use-global-leaflet
-    :zoom="zoom"
-    :center="[54.7276, -127.6476]"
-    :options="{ zoomControl: false }"
-    @ready="onLeafletReady"
+  <div
+    style="
+      height: 90vh;
+      width: 101%;
+      position: relative;
+    "
   >
-    <l-tile-layer
-      url="http://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}"
-    />
-    <l-wms-tile-layer
-      base-url="http://openmaps.gov.bc.ca/geo/ows"
-      layers="WHSE_FOREST_VEGETATION.OGSR_TAP_PRIORITY_DEF_AREA_SP"
-      :transparent="true"
-      format="image/png"
-      name="TAP_PRIORITY_DEF_AREA"
-      layer-type="overlay"
-    />
-    <l-control-layers :collapsed="false" />
-    <l-control-zoom position="bottomright" />
-  </l-map>
+    <l-map
+      ref="map"
+      use-global-leaflet
+      :zoom="zoom"
+      :center="[54.7276, -127.6476]"
+      :options="{ zoomControl: false }"
+      @ready="onLeafletReady"
+    >
+      <l-tile-layer
+        url="http://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}"
+      />
+      <l-wms-tile-layer
+        base-url="http://openmaps.gov.bc.ca/geo/ows"
+        layers="WHSE_FOREST_VEGETATION.OGSR_TAP_PRIORITY_DEF_AREA_SP"
+        :transparent="true"
+        format="image/png"
+        name="Priority Deferral Areas"
+        layer-type="overlay"
+      />
+      <l-control-layers :collapsed="false" />
+      <l-control-zoom position="bottomright" />
+    </l-map>
+  </div>
 </template>
+
 <script>
 import { defineComponent } from "vue";
 import {
@@ -31,7 +40,6 @@ import {
   LControlLayers,
   LControlZoom,
 } from "@vue-leaflet/vue-leaflet";
-import * as L from "leaflet";
 import { EsriProvider, GeoSearchControl } from "leaflet-geosearch";
 import "@geoman-io/leaflet-geoman-free";
 import "@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css";
