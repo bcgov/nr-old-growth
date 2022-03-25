@@ -1,57 +1,59 @@
-# Overview
+# frontend
 
-The frontend is written in [vue3](https://vuejs.org) in typescript.
+This template should help get you started developing with Vue 3 in Vite.
 
-## Installation and Run locally
+## Recommended IDE Setup
 
-```
-$ npm install
-$ npm start
-```
+[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=johnsoncodehk.volar) (and disable Vetur) + [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=johnsoncodehk.vscode-typescript-vue-plugin).
 
-If you are seeing the error about "vue-cli-service command not found", try:
+## Type Support for `.vue` Imports in TS
 
-```
-// install vue-cli-service globally
-$ sudo npm i -g @vue/cli-service
-$ npm start
+TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=johnsoncodehk.vscode-typescript-vue-plugin) to make the TypeScript language service aware of `.vue` types.
 
-// or run
-$ ./node_modules/.bin/vue-cli-service serve
-```
+If the standalone TypeScript plugin doesn't feel fast enough to you, Volar has also implemented a [Take Over Mode](https://github.com/johnsoncodehk/volar/discussions/471#discussioncomment-1361669) that is more performant. You can enable it by the following steps:
 
-## Technology options
+1. Disable the built-in TypeScript Extension
+    1) Run `Extensions: Show Built-in Extensions` from VSCode's command palette
+    2) Find `TypeScript and JavaScript Language Features`, right click and select `Disable (Workspace)`
+2. Reload the VSCode window by running `Developer: Reload Window` from the command palette.
 
-**Map**:  
-[Leaflet Map](https://leafletjs.com)  
-[vue-leaflet](https://github.com/vue-leaflet/vue-leaflet)  
-**Map Drawing**:  
-[leaflet-geoman](https://github.com/geoman-io/leaflet-geoman)  
-**Map Search**:  
-[leaflet-geosearch](https://github.com/smeijer/leaflet-geosearch)
+## Customize configuration
 
-## Command
+See [Vite Configuration Reference](https://vitejs.dev/config/).
 
-```
-## Project setup
+## Project Setup
+
+```sh
 npm install
+```
 
-### Compiles and hot-reloads for development
-npm run serve
+### Compile and Hot-Reload for Development
 
-### Compiles and minifies for production
+```sh
+npm run dev
+```
+
+### Type-Check, Compile and Minify for Production
+
+```sh
 npm run build
+```
 
-### Lints and fixes files
+### Run Unit Tests with [Vitest](https://vitest.dev/)
+
+```sh
+npm run test:unit
+```
+
+### Run End-to-End Tests with [Cypress](https://www.cypress.io/)
+
+```sh
+npm run build
+npm run test:e2e # or `npm run test:e2e:ci` for headless testing
+```
+
+### Lint with [ESLint](https://eslint.org/)
+
+```sh
 npm run lint
 ```
-
-## Create a new project with vue
-
-```
-// install command line tool for vue globally
-$ sudo npm install -g @vue/cli
-$ vue new project_name
-```
-
-Select the manually setup and include the typescript option, an [vedio instruction](https://www.youtube.com/watch?v=JfI5PISLr9w)

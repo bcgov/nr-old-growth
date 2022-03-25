@@ -2,7 +2,7 @@
   <div>
     <MainHeader />
     <b-container>
-      <b-row>
+     <b-row>
         <b-col col md="2"></b-col>
         <b-col col md="10"><MapViewer /></b-col>
       </b-row>
@@ -40,13 +40,7 @@ export default defineComponent({
   margin: 0px 0px 0px 0px;
 }
 
-.container,
-.container-fluid,
-.container-xxl,
-.container-xl,
-.container-lg,
-.container-md,
-.container-sm {
+.container, .container-fluid, .container-xxl, .container-xl, .container-lg, .container-md, .container-sm {
   padding: 0px 0px 0px 0px !important;
   margin: 0px 0px 0px 0px !important;
   max-width: 99% !important;
@@ -56,4 +50,5 @@ export default defineComponent({
   padding: 0px 0px 0px 0px;
   margin: 0px 0px 0px 0px;
 }
+
 </style>
