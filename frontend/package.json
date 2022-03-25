@@ -22,7 +22,7 @@
   "homepage": "https://github.com/bcgov/nr-old-growth-integration",
   "private": true,
   "scripts": {
-    "dev": "vite",
+    "start": "vite",
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview --port 5050",
     "test:unit": "vitest --environment jsdom --coverage",
