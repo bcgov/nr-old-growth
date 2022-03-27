@@ -1,11 +1,5 @@
 <template>
-  <div
-    style="
-      height: 90vh;
-      width: 101%;
-      position: relative;
-    "
-  >
+  <div style="height: 90vh; width: 101%; position: relative">
     <l-map
       ref="map"
       use-global-leaflet
@@ -31,7 +25,7 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import { defineComponent } from "vue";
 import {
   LMap,
@@ -56,7 +50,7 @@ export default defineComponent({
   data() {
     return {
       zoom: 12,
-      map: null,
+      map: null as any,
     };
   },
   mounted() {
@@ -68,12 +62,11 @@ export default defineComponent({
 
       // add search box
       const provider = new EsriProvider();
-      this.map.leafletObject.addControl(
-        new GeoSearchControl({
-          provider,
-          // style: 'bar'
-        })
-      );
+      const searchControl = new (GeoSearchControl as any)({
+        provider,
+        // style: 'bar'
+      });
+      this.map.leafletObject.addControl(searchControl);
 
       // add drwing control
       this.map.leafletObject.pm.addControls({
@@ -81,11 +74,11 @@ export default defineComponent({
         // drawCircle: false,
       });
 
-      this.map.leafletObject.on("pm:drawstart", (e) => {
+      this.map.leafletObject.on("pm:drawstart", (e: any) => {
         // console.log('draw start e', e)
       });
 
-      this.map.leafletObject.on("pm:drawend", (e) => {
+      this.map.leafletObject.on("pm:drawend", (e: any) => {
         // console.log('draw end e', e);
         // const newDraw = this.map.leafletObject.pm.getGeomanDrawLayers(true);
         // console.log('newDraw', newDraw);
@@ -93,7 +86,7 @@ export default defineComponent({
         // console.log("newLayers", newLayers, newLayers._bounds);
       });
 
-      this.map.leafletObject.on("pm:create", (e) => {
+      this.map.leafletObject.on("pm:create", (e: any) => {
         // console.log('draw create e', e)
         // console.log('shape', e.shape)
         if (e.shape == "Polygon" || e.shape == "Line" || e.shape == "Rectangle")
