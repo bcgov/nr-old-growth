@@ -38,7 +38,7 @@ export default defineComponent({
       });
       this.map.addControl(searchControl);
 
-      L.marker([54.7276, -127.6476]).addTo(this.map);
+      // L.marker([54.7276, -127.6476]).addTo(this.map);
 
       const priorityLayers = L.tileLayer
         .wms("https://openmaps.gov.bc.ca/geo/ows", {
