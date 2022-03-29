@@ -3,8 +3,8 @@
     <MainHeader />
     <b-container>
       <b-row>
-        <b-col col md="2"></b-col>
-        <b-col col md="10"><MapViewer /></b-col>
+        <b-col col sm="1" md="2" lg="2" xl="2"><MenuBar /></b-col>
+        <b-col col sm="11" md="10" lg="10" xl="10"><MapViewer /></b-col>
       </b-row>
     </b-container>
   </div>
@@ -14,6 +14,7 @@
 import { defineComponent } from "vue";
 import MainHeader from "./components/MainHeader.vue";
 import MapViewer from "./components/MapViewer.vue";
+import MenuBar from "./components/MenuBar.vue";
 import "leaflet/dist/leaflet.css";
 import "./assets/global.css";
 
@@ -22,6 +23,7 @@ export default defineComponent({
   components: {
     MainHeader,
     MapViewer,
+    MenuBar,
   },
 });
 </script>
@@ -35,9 +37,9 @@ export default defineComponent({
   color: #2c3e50;
 }
 
-.row {
-  padding: 0px 0px 0px 0px;
-  margin: 0px 0px 0px 0px;
+.row > * {
+  padding: 0px 0px 0px 0px !important;
+  margin: 0px 0px 0px 0px !important;
 }
 
 .container,
@@ -49,7 +51,7 @@ export default defineComponent({
 .container-sm {
   padding: 0px 0px 0px 0px !important;
   margin: 0px 0px 0px 0px !important;
-  max-width: 99% !important;
+  max-width: 98% !important;
 }
 
 .col {
