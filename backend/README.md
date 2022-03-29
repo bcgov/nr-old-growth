@@ -34,3 +34,7 @@ $ npm run test:e2e
 # test coverage
 $ npm run test:cov
 ```
+
+## Reference reading
+
+[Setup openapi module with nestjs](https://dev.to/arnaudcortisse/trying-out-nestjs-part-3-creating-an-openapi-document-3800)

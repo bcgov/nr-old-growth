@@ -9,17 +9,6 @@ $ npm install
 $ npm start
 ```
 
-If you are seeing the error about "vue-cli-service command not found", try:
-
-```
-// install vue-cli-service globally
-$ sudo npm i -g @vue/cli-service
-$ npm start
-
-// or run
-$ ./node_modules/.bin/vue-cli-service serve
-```
-
 ## Technology options
 
 **Map**:  
@@ -28,7 +17,9 @@ $ ./node_modules/.bin/vue-cli-service serve
 **Map Drawing**:  
 [leaflet-geoman](https://github.com/geoman-io/leaflet-geoman)  
 **Map Search**:  
-[leaflet-geosearch](https://github.com/smeijer/leaflet-geosearch)
+[leaflet-geosearch](https://github.com/smeijer/leaflet-geosearch)  
+**Unit Test**:  
+[Vitest](https://vitest.dev/api/)
 
 ## Command
 
@@ -48,10 +39,12 @@ npm run lint
 
 ## Create a new project with vue
 
+The most recent recommended way to [create a vue app](https://vuejs.org/guide/quick-start.html#with-build-tools) is using the vite, vue cli could also [create typescript app](https://vuejs.org/guide/typescript/overview.html), but some [recent note](https://vuejs.org/guide/typescript/overview.html#note-on-vue-cli-and-ts-loader) recommend to migrate over to vite
+
 ```
-// install command line tool for vue globally
-$ sudo npm install -g @vue/cli
-$ vue new project_name
+$ npm init vue@latest
 ```
 
-Select the manually setup and include the typescript option, an [vedio instruction](https://www.youtube.com/watch?v=JfI5PISLr9w)
+## Reference reading
+
+[Testing frameworks for vue](https://vuejs.org/guide/scaling-up/testing.html#unit-testing)

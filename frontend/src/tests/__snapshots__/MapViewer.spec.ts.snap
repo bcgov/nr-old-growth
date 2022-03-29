@@ -1,0 +1,3 @@
+// Vitest Snapshot v1
+
+exports[`MapViewer > renders properly 1`] = `"<div id=\\"mapContainer\\" style=\\"height: 90vh; width: 101%; position: relative;\\"></div>"`;

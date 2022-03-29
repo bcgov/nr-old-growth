@@ -1,126 +1,81 @@
 <template>
   <div
-    style="
-      height: 90vh;
-      width: 101%;
-      position: relative;
-    "
-  >
-    <l-map
-      ref="map"
-      use-global-leaflet
-      :zoom="zoom"
-      :center="[54.7276, -127.6476]"
-      :options="{ zoomControl: false }"
-      @ready="onLeafletReady"
-    >
-      <l-tile-layer
-        url="http://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}"
-      />
-      <l-wms-tile-layer
-        base-url="http://openmaps.gov.bc.ca/geo/ows"
-        layers="WHSE_FOREST_VEGETATION.OGSR_TAP_PRIORITY_DEF_AREA_SP"
-        :transparent="true"
-        format="image/png"
-        name="Priority Deferral Areas"
-        layer-type="overlay"
-      />
-      <l-control-layers :collapsed="false" />
-      <l-control-zoom position="bottomright" />
-    </l-map>
-  </div>
+    id="mapContainer"
+    style="height: 90vh; width: 101%; position: relative"
+  />
 </template>
 
-<script>
+<script lang="ts">
 import { defineComponent } from "vue";
-import {
-  LMap,
-  LTileLayer,
-  LWmsTileLayer,
-  LControlLayers,
-  LControlZoom,
-} from "@vue-leaflet/vue-leaflet";
+import * as L from "leaflet";
 import { EsriProvider, GeoSearchControl } from "leaflet-geosearch";
 import "@geoman-io/leaflet-geoman-free";
+import "leaflet/dist/leaflet.css";
 import "@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css";
 import "leaflet-geosearch/dist/geosearch.css";
 
 export default defineComponent({
-  components: {
-    LMap,
-    LTileLayer,
-    LWmsTileLayer,
-    LControlLayers,
-    LControlZoom,
-  },
   data() {
     return {
       zoom: 12,
-      map: null,
+      map: null as any,
     };
   },
   mounted() {
-    this.map = this.$refs.map;
-  },
-  methods: {
-    async onLeafletReady() {
-      await this.$nextTick();
+    const container = document.getElementById("mapContainer");
+    if (container) {
+      // initial map view
+      this.map = L.map("mapContainer").setView([54.7276, -127.6476], 12);
+      new L.TileLayer(
+        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}"
+      ).addTo(this.map);
 
-      // add search box
+      // add search control
       const provider = new EsriProvider();
-      this.map.leafletObject.addControl(
-        new GeoSearchControl({
-          provider,
-          // style: 'bar'
-        })
-      );
+      const searchControl = new (GeoSearchControl as any)({
+        provider,
+        // style: 'bar'
+      });
+      this.map.addControl(searchControl);
 
-      // add drwing control
-      this.map.leafletObject.pm.addControls({
+      // L.marker([54.7276, -127.6476]).addTo(this.map);
+
+      const priorityLayers = L.tileLayer
+        .wms("https://openmaps.gov.bc.ca/geo/ows", {
+          format: "image/png",
+          transparent: true,
+          layers: "WHSE_FOREST_VEGETATION.OGSR_TAP_PRIORITY_DEF_AREA_SP",
+        })
+        .addTo(this.map);
+
+      // add layer control
+      const overlays = {
+        PRIORITY_DEF_AREA: priorityLayers,
+      };
+      L.control.layers({}, overlays).addTo(this.map);
+
+      // add drawing control
+      this.map.pm.addControls({
         position: "topright",
         // drawCircle: false,
       });
-
-      this.map.leafletObject.on("pm:drawstart", (e) => {
-        // console.log('draw start e', e)
-      });
-
-      this.map.leafletObject.on("pm:drawend", (e) => {
-        // console.log('draw end e', e);
-        // const newDraw = this.map.leafletObject.pm.getGeomanDrawLayers(true);
-        // console.log('newDraw', newDraw);
-        // const newLayers = newDraw._layers;
-        // console.log("newLayers", newLayers, newLayers._bounds);
-      });
-
-      this.map.leafletObject.on("pm:create", (e) => {
-        // console.log('draw create e', e)
-        // console.log('shape', e.shape)
-        if (e.shape == "Polygon" || e.shape == "Line" || e.shape == "Rectangle")
-          console.log(
-            "draw create",
-            e.shape,
-            "coordinates",
-            e.layer.getLatLngs()
-          );
-        else if (e.shape == "Circle")
-          console.log(
-            "draw create",
-            e.shape,
-            "center",
-            e.layer.getLatLng(),
-            "radius",
-            e.layer.getRadius()
-          );
-        else console.log("draw create", e.shape, "point", e.layer.getLatLng());
-      });
-
-      if (this.map.leafletObject.tap) {
-        this.map.leafletObject.tap.disable();
-      }
-    },
+    }
   },
+  methods: {},
 });
 </script>
 
-<style></style>
+<style>
+/* ------------- Draw control ------------- */
+.leaflet-pm-toolbar.leaflet-pm-draw {
+  position: fixed;
+  top: 130px;
+  right: 3px;
+}
+
+.leaflet-pm-toolbar.leaflet-pm-edit {
+  position: fixed;
+  top: 330px;
+  right: 3px;
+}
+</style>
