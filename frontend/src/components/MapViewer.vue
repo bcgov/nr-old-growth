@@ -27,7 +27,7 @@ export default defineComponent({
       // initial map view
       this.map = L.map("mapContainer").setView([54.7276, -127.6476], 12);
       new L.TileLayer(
-        "http://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}"
+        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}"
       ).addTo(this.map);
 
       // add search control
@@ -41,7 +41,7 @@ export default defineComponent({
       L.marker([54.7276, -127.6476]).addTo(this.map);
 
       const priorityLayers = L.tileLayer
-        .wms("http://openmaps.gov.bc.ca/geo/ows", {
+        .wms("https://openmaps.gov.bc.ca/geo/ows", {
           format: "image/png",
           transparent: true,
           layers: "WHSE_FOREST_VEGETATION.OGSR_TAP_PRIORITY_DEF_AREA_SP",
@@ -65,4 +65,17 @@ export default defineComponent({
 });
 </script>
 
-<style></style>
+<style>
+/* ------------- Draw control ------------- */
+.leaflet-pm-toolbar.leaflet-pm-draw {
+  position: fixed;
+  top: 130px;
+  right: 3px;
+}
+
+.leaflet-pm-toolbar.leaflet-pm-edit {
+  position: fixed;
+  top: 330px;
+  right: 3px;
+}
+</style>
