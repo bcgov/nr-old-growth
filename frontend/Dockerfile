@@ -8,7 +8,8 @@ COPY . ./
 RUN npm ci && \
     npm run build && \
     rm -rf ./node_modules && \
-    npm ci --only=prod
+    npm ci --only=prod && \
+    npm i vite
 
 # Deployment container
 FROM registry.access.redhat.com/ubi8/ubi-micro
