@@ -65,15 +65,6 @@ export default defineComponent({
         console.log(response.data);
       });
     },
-    getMessage() {
-      axios.get('/')
-        .then((res) => {
-          this.msg = res.data;
-        })
-        .catch((error) => {
-          console.error(error);
-        });
-    },
   },
 });
 </script>
