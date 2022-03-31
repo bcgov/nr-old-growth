@@ -40,19 +40,15 @@ export default defineComponent({
 
       // L.marker([54.7276, -127.6476]).addTo(this.map);
 
-      const priorityLayers = L.tileLayer
+      const priorityDefAreaLayer = L.tileLayer
         .wms("https://openmaps.gov.bc.ca/geo/ows", {
           format: "image/png",
           transparent: true,
           layers: "WHSE_FOREST_VEGETATION.OGSR_TAP_PRIORITY_DEF_AREA_SP",
-        })
-        .addTo(this.map);
+        });
+        //.addTo(this.map);
 
-      // add layer control
-      const overlays = {
-        PRIORITY_DEF_AREA: priorityLayers,
-      };
-      L.control.layers({}, overlays).addTo(this.map);
+      priorityDefAreaLayer.addTo(this.map);
 
       // add drawing control
       this.map.pm.addControls({
