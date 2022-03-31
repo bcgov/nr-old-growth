@@ -31,7 +31,7 @@
         <b-collapse id="accordion-2" accordion="my-accordion" role="tabpanel">
           <b-card-body>
             <b-card-text
-              ><b-button variant="primary" @click="getMessage()"
+              ><b-button variant="primary" @click="getList()"
                 >Primary</b-button
               ></b-card-text
             >
