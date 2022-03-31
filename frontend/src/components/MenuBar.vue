@@ -30,7 +30,11 @@
         </b-card-header>
         <b-collapse id="accordion-2" accordion="my-accordion" role="tabpanel">
           <b-card-body>
-            <b-card-text>TODO</b-card-text>
+            <b-card-text
+              ><b-button variant="primary" @click="getMessage()"
+                >Primary</b-button
+              ></b-card-text
+            >
           </b-card-body>
         </b-collapse>
       </b-card>
@@ -40,6 +44,7 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
+import axios from "axios";
 
 export default defineComponent({
   data() {
@@ -53,6 +58,22 @@ export default defineComponent({
         { description: "Big Trees", code: "bt" },
       ],
     };
+  },
+  methods: {
+    getList() {
+      axios.get("http://localhost:3000/records").then((response) => {
+        console.log(response.data);
+      });
+    },
+    getMessage() {
+      axios.get('/')
+        .then((res) => {
+          this.msg = res.data;
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    },
   },
 });
 </script>
