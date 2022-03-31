@@ -31,7 +31,7 @@
         <b-collapse id="accordion-2" accordion="my-accordion" role="tabpanel">
           <b-card-body>
             <b-card-text
-              ><b-button variant="primary" @click="getMessage()"
+              ><b-button variant="primary" @click="getList()"
                 >Primary</b-button
               ></b-card-text
             >
@@ -62,7 +62,7 @@ export default defineComponent({
   methods: {
     getList() {
       //TODO: remove hardcoded URL
-      axios.get("http://localhost:3000/records").then((response) => {
+      axios.get("/api/records").then((response) => {
         console.log(response.data);
       });
     },
