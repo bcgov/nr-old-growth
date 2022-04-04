@@ -31,7 +31,7 @@ jobs:
       - name: Delete old packages
         uses: davahome/ghcr-cleanup@v1
         with:
-          token: ${{ secrets.DELETE_PACKAGES_TOKEN }}
+          token: ${{ secrets.GHCR_TOKEN }}
           package: greenfield-template
           owner: orgs/bcgov
           skip_tags: prod,test
