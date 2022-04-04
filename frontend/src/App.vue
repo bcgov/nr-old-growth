@@ -3,8 +3,12 @@
     <MainHeader />
     <b-container>
       <b-row>
-        <b-col col sm="1" md="2" lg="2" xl="2"><MenuBar /></b-col>
-        <b-col col sm="11" md="10" lg="10" xl="10"><MapViewer /></b-col>
+        <b-col col sm="1" md="2" lg="2" xl="2">
+          <MenuBar />
+        </b-col>
+        <b-col col sm="11" md="10" lg="10" xl="10">
+          <MapViewer />
+        </b-col>
       </b-row>
     </b-container>
   </div>
