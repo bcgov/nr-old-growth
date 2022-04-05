@@ -21,10 +21,7 @@ export default defineConfig(({ command, mode }) => {
       port: port,
       proxy: {
         "/api": {
-          target:
-            env.VITE_NODE_ENV === "development"
-              ? "http://localhost:3000/"
-              : "https://gfp-backend-dev.apps.silver.devops.gov.bc.ca",
+          target: env.VITE_BACKEND_URL || "http://localhost:3000/",
           changeOrigin: true,
           secure: false,
           rewrite: (path) => path.replace(/^\/api/, ""),

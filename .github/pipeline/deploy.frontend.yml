@@ -83,6 +83,9 @@ objects:
             - image: ${REGISTRY}/${NAMESPACE}/${NAME}-${ZONE}-${COMPONENT}:${IMAGE_TAG}
               imagePullPolicy: Always
               name: ${NAME}
+              env:
+                - name: VITE_BACKEND_URL
+                  value: https://gfp-${ZONE}-backend.apps.silver.devops.gov.bc.ca/
               ports:
                 - containerPort: 3000
                   protocol: TCP
