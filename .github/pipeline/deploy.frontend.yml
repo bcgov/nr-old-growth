@@ -85,7 +85,7 @@ objects:
               name: ${NAME}
               env:
                 - name: VITE_BACKEND_URL
-                  value: https://gfp-${ZONE}-backend.apps.silver.devops.gov.bc.ca
+                  value: https://gfp-${ZONE}-backend.apps.silver.devops.gov.bc.ca/
               ports:
                 - containerPort: 3000
                   protocol: TCP
