@@ -16,6 +16,7 @@
                 class="mb-3"
                 value-field="code"
                 text-field="description"
+                @change="$emit('input', $event)"
               ></b-form-checkbox-group>
             </b-card-text>
           </b-card-body>
@@ -47,6 +48,7 @@ import { defineComponent } from "vue";
 import axios from "axios";
 
 export default defineComponent({
+  emits: ["input"],
   data() {
     return {
       selectedLayers: [],
