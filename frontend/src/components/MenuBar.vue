@@ -62,8 +62,9 @@ export default defineComponent({
   methods: {
     getList() {
       console.log("test print");
-      console.log("process env", process.env.VITE_BACKEND_URL);
       console.log("backend env url", import.meta.env.VITE_BACKEND_URL);
+      console.log("test env file", import.meta.env.VITE_TEST);
+      console.log("process env", process.env.VITE_BACKEND_URL);
       axios.get("/api/records").then((response) => {
         console.log(response.data);
       });
