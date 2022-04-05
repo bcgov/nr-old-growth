@@ -61,9 +61,11 @@ export default defineComponent({
   },
   methods: {
     getList() {
-      axios.get("/api/records").then((response) => {
-        console.log(response.data);
-      });
+      axios
+        .get(`${import.meta.env.VITE_BACKEND_URL}api/records`)
+        .then((response) => {
+          console.log(response.data);
+        });
     },
   },
 });
