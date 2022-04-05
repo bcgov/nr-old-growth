@@ -7,6 +7,9 @@ export default defineConfig(({ command, mode }) => {
   const env = loadEnv(mode, process.cwd());
   const port = parseInt(env.VITE_PORT) || 8080;
 
+  console.log("backend url1", env.VITE_BACKEND_URL);
+  console.log("backend url2", process.env.VITE_BACKEND_URL);
+
   return {
     plugins: [vue()],
     resolve: {
@@ -21,7 +24,10 @@ export default defineConfig(({ command, mode }) => {
       port: port,
       proxy: {
         "/api": {
-          target: env.VITE_BACKEND_URL || "http://localhost:3000/",
+          target:
+            env.VITE_NODE_ENV === "development"
+              ? "http://localhost:3000/"
+              : process.env.VITE_BACKEND_URL,
           changeOrigin: true,
           secure: false,
           rewrite: (path) => path.replace(/^\/api/, ""),
