@@ -37,6 +37,7 @@ export default defineComponent({
   methods: {
     getSelectedLayers(selectedLayersFromChild) {
       this.selectedLayers = selectedLayersFromChild;
+      alert(this.selectedLayers);
     },
   }
 });
