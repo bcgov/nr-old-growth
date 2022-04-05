@@ -61,7 +61,6 @@ export default defineComponent({
   },
   methods: {
     getList() {
-      //TODO: remove hardcoded URL
       axios.get("/api/records").then((response) => {
         console.log(response.data);
       });
