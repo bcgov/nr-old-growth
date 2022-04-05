@@ -63,12 +63,9 @@ export default defineComponent({
   },
   methods: {
     getList() {
-      console.log("backendurl", import.meta.env.VITE_BACKEND_URL);
-      axios
-        .get(`${import.meta.env.VITE_BACKEND_URL}api/records`)
-        .then((response) => {
-          console.log(response.data);
-        });
+      axios.get(`/api/records`).then((response) => {
+        console.log(response.data);
+      });
     },
   },
 });
