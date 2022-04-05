@@ -64,6 +64,9 @@ objects:
             - image: image-registry.openshift-image-registry.svc:5000/${NAMESPACE}/${NAME}-${SUFFIX}:pr-${SUFFIX}
               imagePullPolicy: Always
               name: ${NAME}
+              env:
+                - name: DATABASE_URL
+                  value: http://${NAME}-${ZONE}-database.${DOMAIN}
               ports:
                 - containerPort: 3000
                   protocol: TCP
