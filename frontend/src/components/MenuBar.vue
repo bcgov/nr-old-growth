@@ -63,9 +63,17 @@ export default defineComponent({
     getList() {
       console.log("test print 2");
       console.log("backend env url", import.meta.env.VITE_BACKEND_URL);
-      axios.get("/api/records").then((response) => {
-        console.log(response.data);
-      });
+      if (import.meta.env.VITE_BACKEND_URL) {
+        axios
+          .get(`${import.meta.env.VITE_BACKEND_URL}records`)
+          .then((response) => {
+            console.log("prod", response.data);
+          });
+      } else {
+        axios.get("/api/records").then((response) => {
+          console.log("dev", response.data);
+        });
+      }
     },
   },
 });

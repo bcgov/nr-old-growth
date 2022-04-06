@@ -24,10 +24,10 @@ export default defineConfig(({ command, mode }) => {
       port: port,
       proxy: {
         "/api": {
-          target: process.env.VITE_BACKEND_URL,
-          // env.VITE_NODE_ENV === "development"
-          //   ? "http://localhost:3000/"
-          //   : process.env.VITE_BACKEND_URL,
+          target:
+            process.env.VITE_NODE_ENV === "development"
+              ? "http://localhost:3000/"
+              : process.env.VITE_BACKEND_URL,
           changeOrigin: true,
           secure: false,
           rewrite: (path) => path.replace(/^\/api/, ""),
