@@ -7,7 +7,7 @@
           <MenuBar @input="getSelectedLayers" />
         </b-col>
         <b-col col sm="11" md="10" lg="10" xl="10">
-          <MapViewer />
+          <MapViewer :selectedLayers="selectedLayers" />
         </b-col>
       </b-row>
     </b-container>
@@ -37,7 +37,6 @@ export default defineComponent({
   methods: {
     getSelectedLayers(selectedLayersFromChild) {
       this.selectedLayers = selectedLayersFromChild;
-      alert(this.selectedLayers);
     },
   }
 });
