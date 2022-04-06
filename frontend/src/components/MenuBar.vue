@@ -61,7 +61,7 @@ export default defineComponent({
   },
   methods: {
     getList() {
-      console.log("test print 2");
+      console.log("test print 3");
       console.log("backend env url", import.meta.env.VITE_BACKEND_URL);
       if (!import.meta.env.VITE_NODE_ENV && import.meta.env.VITE_BACKEND_URL) {
         axios

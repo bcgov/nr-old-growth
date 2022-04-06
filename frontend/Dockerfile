@@ -3,9 +3,12 @@ FROM registry.access.redhat.com/ubi8/ubi as builder
 RUN dnf module install -y nodejs:16
 
 # Install packages, build and keep only prod packages
+ARG BACKEND_URL
 WORKDIR /app
 COPY . ./
-RUN echo $VITE_BACKEND_URL
+RUN echo BACKEND_URL=$BACKEND_URL
+ENV VITE_BACKEND_URL=$BACKEND_URL
+RUN echo VITE_BACKEND_URL=$VITE_BACKEND_URL
 RUN npm ci && \
     npm run build && \
     rm -rf ./node_modules && \
@@ -41,4 +44,4 @@ RUN echo $VITE_BACKEND_URL
 
 # # Start up command
 # ENTRYPOINT ["./node_modules/.bin/vite", "dist", "--host"]
-ENTRYPOINT ["/bin/sh", "-c", "echo VITE_BACKEND_URL=$VITE_BACKEND_URL && export VITE_BACKEND_URL=$VITE_BACKEND_URL && ./node_modules/.bin/vite dist --host"]
+ENTRYPOINT ["/bin/sh", "-c", "echo VITE_BACKEND_URL=$VITE_BACKEND_URL && ./node_modules/.bin/serve dist"]
