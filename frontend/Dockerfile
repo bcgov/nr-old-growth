@@ -4,11 +4,9 @@ RUN dnf module install -y nodejs:16
 
 # Install packages, build and keep only prod packages
 ARG BACKEND_URL
+ENV VITE_BACKEND_URL=$BACKEND_URL
 WORKDIR /app
 COPY . ./
-RUN echo BACKEND_URL=$BACKEND_URL
-ENV VITE_BACKEND_URL=$BACKEND_URL
-RUN echo VITE_BACKEND_URL=$VITE_BACKEND_URL
 RUN npm ci && \
     npm run build && \
     rm -rf ./node_modules && \
@@ -40,8 +38,6 @@ COPY --from=builder /app/dist ./dist
 # Expose port - mostly a convention, for readability
 EXPOSE 3000
 
-RUN echo $VITE_BACKEND_URL
-
 # # Start up command
-# ENTRYPOINT ["./node_modules/.bin/vite", "dist", "--host"]
-ENTRYPOINT ["/bin/sh", "-c", "echo VITE_BACKEND_URL=$VITE_BACKEND_URL && ./node_modules/.bin/serve dist"]
+ENTRYPOINT ["./node_modules/.bin/serve", "dist"]
+# ENTRYPOINT ["/bin/sh", "-c", "echo VITE_BACKEND_URL=$VITE_BACKEND_URL && ./node_modules/.bin/serve dist"]
