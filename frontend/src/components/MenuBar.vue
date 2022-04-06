@@ -63,6 +63,7 @@ export default defineComponent({
     getList() {
       console.log("backend env url", import.meta.env.VITE_BACKEND_URL);
       axios.get("/api/records").then((response) => {
+        // res.set("Access-Control-Allow-Origin", "http://localhost:8080");
         console.log("records", response.data);
       });
     },
