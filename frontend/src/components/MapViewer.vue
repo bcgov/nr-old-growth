@@ -70,7 +70,7 @@ export default defineComponent({
           }
         });
 
-        /* tileLayer = L.tileLayer.wms(
+        tileLayer = L.tileLayer.wms(
           "https://openmaps.gov.bc.ca/geo/ows",
           {
             format: "image/png",
@@ -80,7 +80,7 @@ export default defineComponent({
         );
 
         console.log("Adding the following layers: " + wmsLayers.toString() + " ...");
-        tileLayer.addTo(this.map); */
+        tileLayer.addTo(this.map);
       },
       deep: true,
     },
