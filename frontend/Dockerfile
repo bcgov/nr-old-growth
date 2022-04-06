@@ -37,4 +37,4 @@ COPY --from=builder /app/dist ./dist
 EXPOSE 3000
 
 # Start up command
-ENTRYPOINT ["/bin/sh", "-c", "VITE_BACKEND_URL=$VITE_BACKEND_URL && ./node_modules/.bin/serve dist"]
+ENTRYPOINT ["/bin/sh", "-c", "echo VITE_BACKEND_URL=$VITE_BACKEND_URL && ./node_modules/.bin/serve dist"]
