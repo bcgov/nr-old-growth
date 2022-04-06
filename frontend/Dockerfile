@@ -1,6 +1,6 @@
 # RedHat UBI 8 with nodejs 14
 FROM registry.access.redhat.com/ubi8/ubi as builder
-RUN dnf module install -y nodejs:14
+RUN dnf module install -y nodejs:16
 
 # Install packages, build and keep only prod packages
 WORKDIR /app
@@ -8,8 +8,9 @@ COPY . ./
 RUN npm ci && \
     npm run build && \
     rm -rf ./node_modules && \
-    npm ci --only=prod && \
-    npm i serve
+    npm ci --only=prod
+    # npm ci --only=prod && \
+    # npm i serve
 
 # Deployment container
 FROM registry.access.redhat.com/ubi8/ubi-micro
@@ -36,6 +37,5 @@ COPY --from=builder /app/dist ./dist
 # Expose port - mostly a convention, for readability
 EXPOSE 3000
 
-ENV VITE_BACKEND_URL=$VITE_BACKEND_URL
 # Start up command
-ENTRYPOINT ["/bin/sh", "-c", "echo VITE_BACKEND_URL=$VITE_BACKEND_URL && ./node_modules/.bin/serve dist"]
+ENTRYPOINT ["./node_modules/.bin/vite"]
