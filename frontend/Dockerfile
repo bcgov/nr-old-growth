@@ -37,4 +37,4 @@ COPY --from=builder /app/dist ./dist
 EXPOSE 3000
 
 # Start up command
-ENTRYPOINT ["./node_modules/.bin/serve", "dist"]
+ENTRYPOINT ["./node_modules/.bin/vite", "dist"]

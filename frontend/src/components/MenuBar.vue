@@ -63,7 +63,7 @@ export default defineComponent({
     getList() {
       console.log("test print 2");
       console.log("backend env url", import.meta.env.VITE_BACKEND_URL);
-      if (import.meta.env.VITE_BACKEND_URL) {
+      if (!import.meta.env.VITE_NODE_ENV && import.meta.env.VITE_BACKEND_URL) {
         axios
           .get(`${import.meta.env.VITE_BACKEND_URL}records`)
           .then((response) => {
