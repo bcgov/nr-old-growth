@@ -36,5 +36,6 @@ COPY --from=builder /app/dist ./dist
 # Expose port - mostly a convention, for readability
 EXPOSE 3000
 
+ENV VITE_BACKEND_URL=$VITE_BACKEND_URL
 # Start up command
 ENTRYPOINT ["/bin/sh", "-c", "echo VITE_BACKEND_URL=$VITE_BACKEND_URL && ./node_modules/.bin/serve dist"]
