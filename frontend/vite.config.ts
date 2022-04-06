@@ -4,10 +4,11 @@ import vue from "@vitejs/plugin-vue";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ command, mode }) => {
-  const env = loadEnv(mode, process.cwd());
-  const port = parseInt(env.VITE_PORT) || 8080;
+  process.env = { ...process.env, ...loadEnv(mode, process.cwd(), "") };
+  // const env = loadEnv(mode, process.cwd());
+  const port = parseInt(process.env.VITE_PORT) || 8080;
 
-  console.log("backend url", env.VITE_BACKEND_URL);
+  console.log("backend url", process.env.VITE_BACKEND_URL);
 
   return {
     plugins: [vue()],
@@ -23,7 +24,7 @@ export default defineConfig(({ command, mode }) => {
       port: port,
       proxy: {
         "/api": {
-          target: env.VITE_BACKEND_URL,
+          target: process.env.VITE_BACKEND_URL,
           // env.VITE_NODE_ENV === "development"
           //   ? "http://localhost:3000/"
           //   : process.env.VITE_BACKEND_URL,
