@@ -37,5 +37,7 @@ COPY --from=builder /app/dist ./dist
 # Expose port - mostly a convention, for readability
 EXPOSE 3000
 
+
+WORKDIR /app/dist
 # Start up command
-ENTRYPOINT ["./node_modules/.bin/vite", "--host"]
+ENTRYPOINT ["../node_modules/.bin/vite"]
