@@ -24,10 +24,11 @@ export default defineConfig(({ command, mode }) => {
       port: port,
       proxy: {
         "/api": {
-          target: "https://gfp-15-backend.apps.silver.devops.gov.bc.ca/",
+          target: process.env.VITE_BACKEND_URL,
           changeOrigin: true,
           secure: false,
           rewrite: (path) => path.replace(/^\/api/, ""),
+          ws: true,
         },
       },
     },
