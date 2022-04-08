@@ -16,6 +16,7 @@
                 class="mb-3"
                 value-field="code"
                 text-field="description"
+                @change="$emit('input', $event)"
               ></b-form-checkbox-group>
             </b-card-text>
           </b-card-body>
@@ -31,7 +32,7 @@
         <b-collapse id="accordion-2" accordion="my-accordion" role="tabpanel">
           <b-card-body>
             <b-card-text
-              ><b-button variant="primary" @click="getMessage()"
+              ><b-button variant="primary" @click="getList()"
                 >Primary</b-button
               ></b-card-text
             >
@@ -47,6 +48,7 @@ import { defineComponent } from "vue";
 import axios from "axios";
 
 export default defineComponent({
+  emits: ["input"],
   data() {
     return {
       selectedLayers: [],
@@ -61,7 +63,7 @@ export default defineComponent({
   },
   methods: {
     getList() {
-      axios.get("http://localhost:3000/records").then((response) => {
+      axios.get(`/api/records`).then((response) => {
         console.log(response.data);
       });
     },

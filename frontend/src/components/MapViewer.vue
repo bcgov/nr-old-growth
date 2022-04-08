@@ -6,7 +6,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent, PropType, watch } from "vue";
 import * as L from "leaflet";
 import { EsriProvider, GeoSearchControl } from "leaflet-geosearch";
 import "@geoman-io/leaflet-geoman-free";
@@ -15,6 +15,76 @@ import "@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css";
 import "leaflet-geosearch/dist/geosearch.css";
 
 export default defineComponent({
+  props: {
+    selectedLayers: {
+      type: Array as PropType<String[]>,
+      required: true,
+    },
+  },
+  watch: {
+    selectedLayers: {
+      handler: function (newValue) {
+
+        //TODO: Avoid hardcording and improve logic
+
+        let tileLayer = L.tileLayer.wms(
+          "https://openmaps.gov.bc.ca/geo/ows",
+          {
+            format: "image/png",
+            transparent: true,
+            layers: "WHSE_FOREST_VEGETATION.OGSR_TAP_PRIORITY_DEF_AREA_SP," +
+                    "WHSE_FOREST_VEGETATION.OGSR_TAP_ANCIENT_FOREST_SP," +
+                    "WHSE_FOREST_VEGETATION.OGSR_TAP_PRTY_BIG_TREED_OG_SP," +
+                    "WHSE_FOREST_VEGETATION.OGSR_TAP_REMNANT_ECOSYSTEMS_SP," +
+                    "WHSE_FOREST_VEGETATION.OGSR_TAP_BIG_TREED_OG_SP"
+          }
+        );
+        
+        console.log("Deleting all layers...");
+        tileLayer.addTo(this.map);
+        this.map.removeLayer(tileLayer);
+
+        let wmsLayers = [];
+
+        newValue.forEach((item) => {
+          if ("pda" === item) {
+            wmsLayers.push(
+              "WHSE_FOREST_VEGETATION.OGSR_TAP_PRIORITY_DEF_AREA_SP"
+            );
+          }
+          if ("af" === item) {
+            wmsLayers.push("WHSE_FOREST_VEGETATION.OGSR_TAP_ANCIENT_FOREST_SP");
+          }
+          if ("pbt" === item) {
+            wmsLayers.push(
+              "WHSE_FOREST_VEGETATION.OGSR_TAP_PRTY_BIG_TREED_OG_SP"
+            );
+          }
+          if ("re" === item) {
+            wmsLayers.push(
+              "WHSE_FOREST_VEGETATION.OGSR_TAP_REMNANT_ECOSYSTEMS_SP"
+            );
+          }
+          if ("bt" === item) {
+            wmsLayers.push("WHSE_FOREST_VEGETATION.OGSR_TAP_BIG_TREED_OG_SP");
+          }
+        });
+
+        tileLayer = L.tileLayer.wms(
+          "https://openmaps.gov.bc.ca/geo/ows",
+          {
+            format: "image/png",
+            transparent: true,
+            layers: wmsLayers.toString(),
+          }
+        );
+
+        console.log("Adding the following layers: " + wmsLayers.toString() + " ...");
+        tileLayer.addTo(this.map);
+      },
+      deep: true,
+    },
+  },
   data() {
     return {
       zoom: 12,
@@ -40,19 +110,16 @@ export default defineComponent({
 
       // L.marker([54.7276, -127.6476]).addTo(this.map);
 
-      const priorityLayers = L.tileLayer
-        .wms("https://openmaps.gov.bc.ca/geo/ows", {
+      /* const tileLayer = L.tileLayer.wms(
+        "https://openmaps.gov.bc.ca/geo/ows",
+        {
           format: "image/png",
           transparent: true,
           layers: "WHSE_FOREST_VEGETATION.OGSR_TAP_PRIORITY_DEF_AREA_SP",
-        })
-        .addTo(this.map);
+        }
+      );
 
-      // add layer control
-      const overlays = {
-        PRIORITY_DEF_AREA: priorityLayers,
-      };
-      L.control.layers({}, overlays).addTo(this.map);
+      tileLayer.addTo(this.map); */
 
       // add drawing control
       this.map.pm.addControls({

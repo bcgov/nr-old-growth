@@ -9,7 +9,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
-  TRIGGERS: ('backend/' 'frontend/' '.github/pipeline')
+  TRIGGERS: ('frontend/' 'backend/' '.github/pipeline' '.github/workflows')
 
 jobs:
   check:
@@ -43,8 +43,8 @@ jobs:
           done < <(git diff origin/main --name-only)
           echo "Build and deploy workflows not triggered"
 
-  build:
-    name: Build
+  build-backend:
+    name: Build-Backend
     needs:
       - check
     if: needs.check.outputs.build == 'true'
@@ -77,23 +77,53 @@ jobs:
       - name: Build and push backend Docker image
         uses: docker/build-push-action@v2
         with:
-          context: ./backend
+          context: ./backend/
           push: true
-          tags: ghcr.io/bcgov/greenfield-template:pr-backend-${{ github.event.number }}
+          tags: ghcr.io/bcgov/greenfield-template:${{ github.event.number }}-backend
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Build and push frontend Docker image
+  build-frontend:
+    name: Build-Frontend
+    needs:
+      - check
+    if: needs.check.outputs.build == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Cache Docker layers
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+      - name: Log in to the Container registry
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.GHCR_USERNAME }}
+          password: ${{ secrets.GHCR_TOKEN }}
+
+      - name: Build and push Frontend Docker image
         uses: docker/build-push-action@v2
         with:
-          context: ./frontend
+          context: ./frontend/
           push: true
-          tags: ghcr.io/bcgov/greenfield-template:pr-frontend-${{ github.event.number }}
+          tags: ghcr.io/bcgov/greenfield-template:${{ github.event.number }}-frontend
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  tests:
-    name: Tests backend
+  tests-backend:
+    name: Tests-Backend
     needs:
       - check
     if: needs.check.outputs.build == 'true'
@@ -129,58 +159,106 @@ jobs:
       - name: Analysis
         uses: github/codeql-action/analyze@v1
 
-  # https://github.com/snyk/snyk
-  #   snyk:
-  #     name: Snyk
-  #     needs:
-  #       - check
-  #     if: needs.check.outputs.build == 'true'
-  #     runs-on: ubuntu-latest
-  #     steps:
-  #     - name: Checkout repository
+  # # https://github.com/snyk/snyk
+  # snyk:
+  #   name: Snyk
+  #   needs:
+  #     - check
+  #   if: needs.check.outputs.build == 'true'
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #   - name: Checkout repository
+  #     uses: actions/checkout@v2
+
+  #   - name: Run Snyk to check for vulnerabilities
+  #     uses: snyk/actions/node@master
+  #     env:
+  #       SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+  #     with:
+  #       args: --all-projects --severity-threshold=high
+
+  # # https://github.com/marketplace/actions/aqua-security-trivy
+  # trivy-repo:
+  #   name: Trivy-Repo
+  #   needs:
+  #     - check
+  #   if: needs.check.outputs.build == 'true'
+  #   runs-on: ubuntu-18.04
+  #   steps:
+  #     - name: Checkout code
   #       uses: actions/checkout@v2
 
-  #     - name: Run Snyk to check for vulnerabilities
-  #       uses: snyk/actions/node@master
-  #       continue-on-error: true # To make sure that SARIF upload gets called
-  #       env:
-  #         SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+  #     - name: Run Trivy vulnerability scanner in repo mode
+  #       uses: aquasecurity/trivy-action@master
   #       with:
-  #         args: --severity-threshold=high --sarif-file-output=snyk.sarif
+  #         scan-type: 'fs'
+  #         ignore-unfixed: true
+  #         format: 'sarif'
+  #         output: 'trivy-results.sarif'
+  #         severity: 'CRITICAL'
 
-  #     - name: Upload result to GitHub Code Scanning
+  #     - name: Upload Trivy scan results to GitHub Security tab
   #       uses: github/codeql-action/upload-sarif@v1
   #       with:
-  #         sarif_file: snyk.sarif
+  #         sarif_file: 'trivy-results.sarif'
 
-  #   sonarcloud:
-  #     name: SonarCloud
-  #     needs:
-  #       - check
-  #     if: needs.check.outputs.build == 'true'
-  #     runs-on: ubuntu-latest
-  #     steps:
-  #       - uses: actions/checkout@v2
-  #         with:
-  #           # Disabling shallow clone is recommended for improving relevancy of reporting
-  #           fetch-depth: 0
-  #       - name: SonarCloud Scan
-  #         uses: SonarSource/sonarcloud-github-action@master
-  #         env:
-  #           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-  #         with:
-  #           args: >
-  #             -Dsonar.organization=bcgov-sonarcloud
-  #             -Dsonar.projectKey=${{ github.event.repository.name }}
-  #             -Dsonar.sources=src
-  #           # -Dsonar.verbose=true
+  # trivy-backend:
+  #   name: Trivy-Backend
+  #   needs:
+  #     - build-backend
+  #     - build-frontend
+  #   runs-on: ubuntu-latest
+  #   timeout-minutes: 5
+  #   steps:
+  #   - name: Checkout repository
+  #     uses: actions/checkout@v2
+
+  #   - name: Trivy Vulnerability Scan
+  #     uses: aquasecurity/trivy-action@master
+  #     with:
+  #       image-ref: ghcr.io/bcgov/greenfield-template:${{ github.event.number }}-backend
+  #       exit-code: '1'
+  #       ignore-unfixed: true
+  #       severity: CRITICAL
+  #       format: 'sarif'
+  #       output: 'trivy-results.sarif'
+
+  #   - name: Upload Trivy results to GitHub Security tab
+  #     uses: github/codeql-action/upload-sarif@v1
+  #     with:
+  #       sarif_file: 'trivy-results.sarif'
+
+  # trivy-frontend:
+  #   name: Trivy-Frontend
+  #   needs:
+  #     - build-backend
+  #     - build-frontend
+  #   runs-on: ubuntu-latest
+  #   timeout-minutes: 5
+  #   steps:
+  #   - name: Checkout repository
+  #     uses: actions/checkout@v2
+
+  #   - name: Trivy Vulnerability Scan
+  #     uses: aquasecurity/trivy-action@master
+  #     with:
+  #       image-ref: ghcr.io/bcgov/greenfield-template:${{ github.event.number }}-frontend
+  #       exit-code: '1'
+  #       ignore-unfixed: true
+  #       severity: CRITICAL
+  #       format: 'sarif'
+  #       output: 'trivy-results.sarif'
+
+  #   - name: Upload Trivy results to GitHub Security tab
+  #     uses: github/codeql-action/upload-sarif@v1
+  #     with:
+  #       sarif_file: 'trivy-results.sarif'
 
   deploy:
     name: Deploy
     needs:
-      - build
-    if: needs.check.outputs.build == 'true'
+      - build-backend
+      - build-frontend
     runs-on: ubuntu-latest
     environment:
       name: dev
@@ -189,40 +267,40 @@ jobs:
       - name: Deploy
         run: |
           set -eux
-
           # Login to OpenShift and select project
           oc login --token=${{ secrets.OC_TOKEN }} --server=${{ secrets.OC_SERVER }}
           oc project ${{ secrets.NAMESPACE }}
 
           # Cancel any rollouts in progress
-          oc rollout cancel dc/gfp-backend-${{ github.event.number }} 2> /dev/null \
+          oc rollout cancel dc/gfp-${{ github.event.number }}-backend 2> /dev/null \
             || true && echo "No rollout in progress"
-          oc rollout cancel dc/gfp-frontend-${{ github.event.number }} 2> /dev/null \
+          oc rollout cancel dc/gfp-${{ github.event.number }}-frontend 2> /dev/null \
             || true && echo "No rollout in progress"
-
           # Remove any stale imagestreams
-          oc delete is/gfp-backend-${{ github.event.number }} 2> /dev/null \
+          oc delete is/gfp-${{ github.event.number }}-backend 2> /dev/null \
             || true && echo "No stale imagestreams"
-          oc delete is/gfp-frontend-${{ github.event.number }} 2> /dev/null \
+          oc delete is/gfp-${{ github.event.number }}-frontend 2> /dev/null \
             || true && echo "No stale imagestreams"
 
-          # Process and apply deployment template
-          for y in .github/pipeline/deploy.*.yml
-          do oc process -f ${y} -p SUFFIX=${{ github.event.number }} -p NAMESPACE=${{ secrets.NAMESPACE }} \
+          # Process and apply deployment templates
+          for yml in .github/pipeline/deploy.*.yml
+          do
+            oc process -f ${yml} -p ZONE=${{ github.event.number }} -p NAMESPACE=${{ secrets.NAMESPACE }} \
               | oc apply -f -
           done
 
           # Start rollout (if necessary) and follow it
-          oc rollout latest dc/gfp-backend-${{ github.event.number }} 2> /dev/null \
+          oc rollout latest dc/gfp-${{ github.event.number }}-backend 2> /dev/null \
             || true && echo "Rollout in progress"
-          oc logs -f dc/gfp-backend-${{ github.event.number }}
-          oc rollout latest dc/gfp-frontend-${{ github.event.number }} 2> /dev/null \
+          oc logs -f dc/gfp-${{ github.event.number }}-backend
+          oc rollout latest dc/gfp-${{ github.event.number }}-frontend 2> /dev/null \
             || true && echo "Rollout in progress"
-          oc logs -f dc/gfp-frontend-${{ github.event.number }}
+          oc logs -f dc/gfp-${{ github.event.number }}-frontend
 
-          # Get status, returns 0 if rollout is successful
-          oc rollout status dc/gfp-backend-${{ github.event.number }}
-          oc rollout status dc/gfp-frontend-${{ github.event.number }}
+          # Follow any active rollouts (see deploymentconfigs)
+          oc rollout status dc/gfp-${{ github.event.number }}-database -w
+          oc rollout status dc/gfp-${{ github.event.number }}-backend -w
+          oc rollout status dc/gfp-${{ github.event.number }}-frontend -w
 
       - name: Deployment update
         uses: mshick/add-pr-comment@v1
@@ -230,16 +308,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           message: |
-            [backend ${{ secrets.ENV }} deployment](https://gfp-backend-${{ github.event.number }}.apps.silver.devops.gov.bc.ca/) available
-            [frontend ${{ secrets.ENV }} deployment](https://gfp-frontend-${{ github.event.number }}.apps.silver.devops.gov.bc.ca/) available
+            [${{ secrets.ENV }} - Backend](https://gfp-${{ github.event.number }}-backend.apps.silver.devops.gov.bc.ca/) deployment available
+            [${{ secrets.ENV }} - Frontend](https://gfp-${{ github.event.number }}-frontend.apps.silver.devops.gov.bc.ca/) deployment available
           allow-repeats: false
 
   zap:
     name: Zap
     needs:
-      - check
       - deploy
-    if: needs.check.outputs.build == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -248,25 +324,7 @@ jobs:
       - name: ZAP Scan
         uses: zaproxy/action-full-scan@v0.3.0
         with:
-          target: https://gfp-${{ github.event.number }}.apps.silver.devops.gov.bc.ca/
+          target: https://gfp-${{ github.event.number }}-frontend.apps.silver.devops.gov.bc.ca/
           cmd_options: "-a"
           allow_issue_writing: false
           fail_action: false
-
-  # trivy:
-  #   name: Trivy
-  #   needs:
-  #     - build
-  #   if: needs.check.outputs.build == 'true'
-  #   runs-on: ubuntu-latest
-  #   timeout-minutes: 60
-  #   steps:
-  #   - name: Trivy Vulnerability Scan
-  #     uses: aquasecurity/trivy-action@master
-  #     with:
-  #       image-ref: ghcr.io/bcgov/greenfield-template:pr-${{ github.event.number }}
-  #       format: table
-  #       exit-code: '1'
-  #       ignore-unfixed: true
-  #       vuln-type: os,library
-  #       severity: CRITICAL

@@ -3,15 +3,19 @@
     <MainHeader />
     <b-container>
       <b-row>
-        <b-col col sm="1" md="2" lg="2" xl="2"><MenuBar /></b-col>
-        <b-col col sm="11" md="10" lg="10" xl="10"><MapViewer /></b-col>
+        <b-col col sm="1" md="2" lg="2" xl="2">
+          <MenuBar @input="getSelectedLayers" />
+        </b-col>
+        <b-col col sm="11" md="10" lg="10" xl="10">
+          <MapViewer :selectedLayers="selectedLayers" />
+        </b-col>
       </b-row>
     </b-container>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent, PropType } from "vue";
 import MainHeader from "./components/MainHeader.vue";
 import MapViewer from "./components/MapViewer.vue";
 import MenuBar from "./components/MenuBar.vue";
@@ -25,7 +29,16 @@ export default defineComponent({
     MapViewer,
     MenuBar,
   },
-
+  data() {
+    return {
+      selectedLayers: []
+    }
+  },
+  methods: {
+    getSelectedLayers(selectedLayersFromChild) {
+      this.selectedLayers = selectedLayersFromChild;
+    },
+  }
 });
 </script>
 
