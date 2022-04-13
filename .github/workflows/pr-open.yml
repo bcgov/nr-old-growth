@@ -282,13 +282,13 @@ jobs:
           oc process -f .github/pipeline/deploy.frontend.yml -p ZONE=${{ github.event.number }} \
             -p PROMOTE=${{ github.repository }}:${{ github.event.number }}-frontend | oc apply -f -
 
-          # Start rollout (if necessary) and follow it
-          oc rollout latest dc/gfp-${{ github.event.number }}-backend 2> /dev/null \
-            || true && echo "Rollout in progress"
-          oc logs -f dc/gfp-${{ github.event.number }}-backend
-          oc rollout latest dc/gfp-${{ github.event.number }}-frontend 2> /dev/null \
-            || true && echo "Rollout in progress"
-          oc logs -f dc/gfp-${{ github.event.number }}-frontend
+          # # Start rollout (if necessary) and follow it
+          # oc rollout latest dc/gfp-${{ github.event.number }}-backend 2> /dev/null \
+          #   || true && echo "Rollout in progress"
+          # oc logs -f dc/gfp-${{ github.event.number }}-backend
+          # oc rollout latest dc/gfp-${{ github.event.number }}-frontend 2> /dev/null \
+          #   || true && echo "Rollout in progress"
+          # oc logs -f dc/gfp-${{ github.event.number }}-frontend
 
           # Follow any active rollouts (see deploymentconfigs)
           oc rollout status dc/gfp-${{ github.event.number }}-database -w
