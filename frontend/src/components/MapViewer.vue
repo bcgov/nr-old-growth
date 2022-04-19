@@ -133,6 +133,11 @@ export default defineComponent({
         // drawCircle: false,
       });
 
+      // need to disable the tap to let map draw work in safair
+      if (this.map.tap) {
+        this.map.tap.disable();
+      }
+
       // // method to get shape geojson
       // this.map.on("pm:create", (e: any) => {
       //   console.log("draw create e", e);
