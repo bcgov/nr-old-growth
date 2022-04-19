@@ -4,7 +4,7 @@
       <b-card no-body class="mb-1">
         <b-card-header header-tag="header" class="p-1" role="tab">
           <b-button block v-b-toggle="['accordion-1']" variant="link"
-                    @click="setMenuSelection(0)">
+                    @click="setMenuSelection(0, '')">
             Layers
           </b-button>
         </b-card-header>
@@ -27,8 +27,7 @@
       <b-card no-body class="mb-1">
         <b-card-header header-tag="header" class="p-1" role="tab">
           <b-button block v-b-toggle="['accordion-2']" variant="link"
-                    @click="setMenuSelection(1); 
-                            $emit('menuItem', menuItem)">
+                    @click="setMenuSelection(1, '')">
             Backend Test
           </b-button>
         </b-card-header>
@@ -69,20 +68,23 @@ export default defineComponent({
         { description: "Big Trees", code: "bt" },
       ],
       menuItem: 0,
+      dataFromMenu: {
+        menuItem: 0,
+        msgFromBackend: ""
+      }
     };
   },
   methods: {
     createRecord() {
-      this.menuItem = 1;
-
       const newRecord = {
-        username: "un" + Math.random().toString(),
+        username: "UN-" + Math.random().toString(),
         file: Math.random().toString(),
       };
 
       axios
         .post("/api/records", newRecord)
         .then((response) => {
+          this.setMenuSelection(1, response.data);
           console.log(response);
         })
         .catch((error) => {
@@ -91,15 +93,19 @@ export default defineComponent({
     },
 
     findAllRecords() {
-      this.menuItem = 1;
-
       axios.get(`/api/records`).then((response) => {
+        this.setMenuSelection(1, response.data);
         console.log(response.data);
       });
     },
 
-    setMenuSelection(menuItem) {
+    setMenuSelection(menuItem, msg) {
       this.menuItem = menuItem;
+      this.dataFromMenu = {
+        menuItem: this.menuItem,
+        msgFromBackend: msg,
+      };
+      this.$emit('dataFromMenu', this.dataFromMenu);
     }
   },
 });

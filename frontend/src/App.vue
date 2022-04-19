@@ -4,10 +4,14 @@
     <b-container>
       <b-row>
         <b-col col sm="1" md="2" lg="2" xl="2">
-          <MenuBar @input="getSelectedLayers; getMenuItem" />
+          <MenuBar @input="getSelectedLayers" 
+                   v-on:dataFromMenu="getDataFromMenuBar" />
         </b-col>
         <b-col col sm="11" md="10" lg="10" xl="10">
-          <MapViewer :selectedLayers="selectedLayers" />
+          <span v-if="menuItem == 0">
+            <MapViewer :selectedLayers="selectedLayers" />
+          </span>
+          {{msgFromBackend}}
         </b-col>
       </b-row>
     </b-container>
@@ -32,16 +36,18 @@ export default defineComponent({
   data() {
     return {
       selectedLayers: [],
-      menuItem: Number,
+      menuItem: 0,
+      msgFromBackend: '',
     }
   },
   methods: {
     getSelectedLayers(selectedLayersFromChild) {
       this.selectedLayers = selectedLayersFromChild;
     },
-    getMenuItem(menuItemFromChild) {
-      alert(menuItemFromChild);
-    }
+    getDataFromMenuBar(data) {
+      this.menuItem = data.menuItem;
+      this.msgFromBackend = data.msgFromBackend;
+    },
   }
 });
 </script>
