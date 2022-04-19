@@ -4,7 +4,7 @@
     <b-container>
       <b-row>
         <b-col col sm="1" md="2" lg="2" xl="2">
-          <MenuBar @input="getSelectedLayers" />
+          <MenuBar @input="getSelectedLayers; getMenuItem" />
         </b-col>
         <b-col col sm="11" md="10" lg="10" xl="10">
           <MapViewer :selectedLayers="selectedLayers" />
@@ -31,13 +31,17 @@ export default defineComponent({
   },
   data() {
     return {
-      selectedLayers: []
+      selectedLayers: [],
+      menuItem: Number,
     }
   },
   methods: {
     getSelectedLayers(selectedLayersFromChild) {
       this.selectedLayers = selectedLayersFromChild;
     },
+    getMenuItem(menuItemFromChild) {
+      alert(menuItemFromChild);
+    }
   }
 });
 </script>
