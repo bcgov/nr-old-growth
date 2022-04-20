@@ -10,7 +10,7 @@ export class ClientService {
 
     constructor(
         @InjectRepository(ClientEntity)
-        private readonly clientRepository: Repository<ClientEntity>,
+        private clientRepository: Repository<ClientEntity>,
     ) { }
 
     create(client: Client): Observable<Client> {

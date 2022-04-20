@@ -10,7 +10,7 @@ async function bootstrap() {
     .setTitle('DB example')
     .setDescription('The user API description')
     .setVersion('1.0')
-    .addTag('tbd')
+    .addTag('client')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
