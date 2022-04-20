@@ -5,10 +5,9 @@ RUN dnf module install -y nodejs:14
 # Install packages, build and keep only prod packages
 WORKDIR /app
 COPY . ./
-RUN npm ci && \
+RUN npm ci --only=prod && \
+    npm i vue-tsc && \
     npm run build && \
-    rm -rf ./node_modules && \
-    npm ci --only=prod && \
     npm i serve
 
 # Deployment container
