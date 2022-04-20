@@ -1,0 +1,70 @@
+---
+version: "3.8"
+
+services:
+  database:
+    container_name: database
+    environment:
+      POSTGRES_USER: default
+      POSTGRES_PASSWORD: default
+      POSTGRES_DATABASE: default
+    hostname: database
+    image: postgres:12
+    restart: always
+    volumes:
+      - ./.volumes/database:/pgdata:z
+
+  backend:
+    container_name: backend
+    entrypoint:
+      - "sh"
+      - "-c"
+      - "npm ci && npm run start"
+    environment:
+      NODE_ENV: development
+      PG_HOST: database
+      PG_USER: default
+      PG_PASSWORD: default
+      PG_DATABASE: default
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    hostname: backend
+    image: node:14
+    links:
+      - database
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./backend:/app:z
+      - ./.cache/backend/node_modules:/app/node_modules:z
+    working_dir: "/app"
+
+  frontend:
+    container_name: frontend
+    entrypoint:
+      - "sh"
+      - "-c"
+      - "npm ci && npm run start"
+    environment:
+      NODE_ENV: development
+      VITE_BACKEND_URL: backend
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    hostname: frontend
+    image: node:14
+    links:
+      - backend
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./frontend:/app:z
+      - ./.cache/frontend/node_modules:/app/node_modules:z
+    working_dir: "/app"

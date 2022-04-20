@@ -1,4 +1,4 @@
-apiVersion: v1
+apiVersion: template.openshift.io/v1
 kind: Template
 metadata:
   name: ${NAME}
@@ -7,8 +7,8 @@ metadata:
     tags: "gfp"
     iconClass: icon-js
 labels:
-  app: ${NAME}-${SUFFIX}
-  app.kubernetes.io/part-of: "${NAME}"
+  app: ${NAME}-${ZONE}
+  app.kubernetes.io/part-of: ${NAME}-${ZONE}
 parameters:
   - name: NAME
     description: Product name
@@ -16,12 +16,12 @@ parameters:
   - name: COMPONENT
     description: Component name
     value: database
-  - name: SUFFIX
-    description: Deployment suffix, e.g. pr-### or prod
+  - name: ZONE
+    description: Deployment zone, e.g. pr-### or prod
     required: true
-  - name: NAMESPACE
-    description: Namespace to deploy to
-    value: 32d13a-dev
+  - name: IMAGE_TAG
+    description: Image tag to use
+    value: latest
   - description: Password for the PostgreSQL connection user.
     from: "[a-zA-Z0-9]{16}"
     generate: expression
@@ -31,13 +31,18 @@ parameters:
     name: DB_PVC_SIZE
     required: true
     value: 1Gi
+  - name: REGISTRY
+    value: image-registry.openshift-image-registry.svc:5000
+  - name: PROMOTE
+    description: Image (namespace/name:tag) to promote/import
+    value: openshift/postgresql:12
 objects:
   - apiVersion: v1
     kind: Secret
     metadata:
-      name: ${NAME}-${COMPONENT}-${SUFFIX}
+      name: ${NAME}-${ZONE}-${COMPONENT}
       labels:
-        app: ${NAME}-${SUFFIX}
+        app: ${NAME}-${ZONE}
     stringData:
       database-name: "${NAME}"
       database-password: "${DB_PASSWORD}"
@@ -45,9 +50,9 @@ objects:
   - kind: PersistentVolumeClaim
     apiVersion: v1
     metadata:
-      name: ${NAME}-${COMPONENT}-${SUFFIX}
+      name: ${NAME}-${ZONE}-${COMPONENT}
       labels:
-        app: ${NAME}-${SUFFIX}
+        app: ${NAME}-${ZONE}
     spec:
       accessModes:
         - ReadWriteOnce
@@ -58,68 +63,105 @@ objects:
   - kind: ImageStream
     apiVersion: v1
     metadata:
-      name: ${NAME}-${COMPONENT}-${SUFFIX}
+      name: ${NAME}-${ZONE}-${COMPONENT}
       labels:
-        app: ${NAME}-${SUFFIX}
+        app: ${NAME}-${ZONE}
     spec:
       lookupPolicy:
         local: false
       tags:
-      - name: pr-${SUFFIX}
+      - name: ${IMAGE_TAG}
         from:
           kind: DockerImage
-          name: image-registry.openshift-image-registry.svc:5000/openshift/postgresql:12
+          name: ${REGISTRY}/${PROMOTE}
         referencePolicy:
           type: Local
   - kind: DeploymentConfig
     apiVersion: v1
     metadata:
-      name: ${NAME}-${COMPONENT}-${SUFFIX}
+      name: ${NAME}-${ZONE}-${COMPONENT}
       labels:
-        app: ${NAME}-${SUFFIX}
+        app: ${NAME}-${ZONE}
     spec:
       replicas: 1
+      triggers:
+      - type: ConfigChange
+      - type: ImageChange
+        imageChangeParams:
+          automatic: true
+          containerNames:
+          - ${NAME}
+          from:
+            kind: ImageStreamTag
+            name: ${NAME}-${ZONE}-${COMPONENT}:${IMAGE_TAG}
+      selector:
+        deploymentconfig: ${NAME}-${ZONE}-${COMPONENT}
       strategy:
         type: Recreate
         recreateParams:
           timeoutSeconds: 600
-        resources: {}
         activeDeadlineSeconds: 21600
-      revisionHistoryLimit: 10
       template:
         metadata:
-          name: ${NAME}-${COMPONENT}-${SUFFIX}
+          name: ${NAME}-${ZONE}-${COMPONENT}
           labels:
-            app: ${NAME}-${SUFFIX}
+            app: ${NAME}-${ZONE}
+            deploymentconfig: ${NAME}-${ZONE}-${COMPONENT}
         spec:
           volumes:
-            - name: ${NAME}-${COMPONENT}-${SUFFIX}
+            - name: ${NAME}-${ZONE}-${COMPONENT}
               persistentVolumeClaim:
-                claimName: ${NAME}-${COMPONENT}-${SUFFIX}
+                claimName: ${NAME}-${ZONE}-${COMPONENT}
           containers:
-            - name: ${NAME}-${COMPONENT}-${SUFFIX}
-              image: image-registry.openshift-image-registry.svc:5000/${NAMESPACE}/${NAME}-${COMPONENT}-${SUFFIX}:pr-${SUFFIX}
+            - name: ${NAME}
+              image: ${NAME}-${ZONE}-${COMPONENT}:${IMAGE_TAG}
               ports:
                 - containerPort: 5432
                   protocol: TCP
+              readinessProbe:
+                exec:
+                  command:
+                    - /usr/bin/env
+                    - bash
+                    - '-c'
+                    - >-
+                      psql -q -d
+                      $PG_DATABASE -c 'SELECT 1'
+                failureThreshold: 5
+                initialDelaySeconds: 30
+                periodSeconds: 15
+                timeoutSeconds: 1
+              livenessProbe:
+                exec:
+                  command:
+                    - /usr/bin/env
+                    - bash
+                    - '-c'
+                    - >-
+                      psql -q -d
+                      $PG_DATABASE -c 'SELECT 1'
+                failureThreshold: 5
+                initialDelaySeconds: 30
+                periodSeconds: 15
+                timeoutSeconds: 1
               env:
                 - name: POSTGRESQL_DATABASE
                   valueFrom:
                     secretKeyRef:
-                      name: ${NAME}-${COMPONENT}-${SUFFIX}
+                      name: ${NAME}-${ZONE}-${COMPONENT}
                       key: database-name
                 - name: POSTGRESQL_PASSWORD
                   valueFrom:
                     secretKeyRef:
-                      name: ${NAME}-${COMPONENT}-${SUFFIX}
+                      name: ${NAME}-${ZONE}-${COMPONENT}
                       key: database-password
                 - name: POSTGRESQL_USER
                   valueFrom:
                     secretKeyRef:
-                      name: ${NAME}-${COMPONENT}-${SUFFIX}
+                      name: ${NAME}-${ZONE}-${COMPONENT}
                       key: database-user
               volumeMounts:
-                - name: ${NAME}-${COMPONENT}-${SUFFIX}
+                - name: ${NAME}-${ZONE}-${COMPONENT}
                   mountPath: "/var/lib/pgsql/data"
               livenessProbe:
                 initialDelaySeconds: 30
@@ -141,3 +183,20 @@ objects:
           terminationGracePeriodSeconds: 30
           dnsPolicy: ClusterFirst
           schedulerName: default-scheduler
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: ${NAME}-${ZONE}
+      name: ${NAME}-${ZONE}-${COMPONENT}
+    spec:
+      ports:
+        - name: postgresql
+          nodePort: 0
+          port: 5432
+          protocol: TCP
+          targetPort: 5432
+      selector:
+        deploymentconfig: ${NAME}-${ZONE}-${COMPONENT}
+      sessionAffinity: None
+      type: ClusterIP
