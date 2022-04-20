@@ -5,11 +5,8 @@ RUN dnf module install -y nodejs:14
 # Install packages, build and keep only prod packages
 WORKDIR /app
 COPY . ./
-RUN npm ci && \
-    npm run build && \
-    rm -rf ./node_modules && \
-    npm ci --only=prod && \
-    npm i serve
+RUN npm ci --only=prod && \
+    npm run build
 
 # Deployment container
 FROM registry.access.redhat.com/ubi8/ubi-micro
