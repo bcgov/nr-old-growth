@@ -21,7 +21,7 @@ export default defineConfig(({ command, mode }) => {
       port: port,
       proxy: {
         "/api": {
-          target: env.VITE_BACKEND_URL,
+          target: env.VITE_BACKEND_URL || "http://localhost:3000/",
           // env.VITE_NODE_ENV === "development"
           //   ? "http://localhost:3000/"
           //   : process.env.VITE_BACKEND_URL,
