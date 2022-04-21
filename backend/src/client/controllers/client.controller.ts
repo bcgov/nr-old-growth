@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { Client } from '../model/client.interface';
 import { ClientService } from '../services/client.service';
 
-@ApiTags('record')
+@ApiTags('client')
 @Controller('client')
 export class ClientController {
 
