@@ -3,8 +3,12 @@
     <div class="accordion" role="tablist">
       <b-card no-body class="mb-1">
         <b-card-header header-tag="header" class="p-1" role="tab">
-          <b-button block v-b-toggle="['accordion-1']" variant="link"
-                    @click="setMenuSelection(0, '')">
+          <b-button
+            block
+            v-b-toggle="['accordion-1']"
+            variant="link"
+            @click="setMenuSelection(0, '')"
+          >
             Layers
           </b-button>
         </b-card-header>
@@ -26,21 +30,23 @@
 
       <b-card no-body class="mb-1">
         <b-card-header header-tag="header" class="p-1" role="tab">
-          <b-button block v-b-toggle="['accordion-2']" variant="link"
-                    @click="setMenuSelection(1, '')">
+          <b-button
+            block
+            v-b-toggle="['accordion-2']"
+            variant="link"
+            @click="setMenuSelection(1, '')"
+          >
             Backend Test
           </b-button>
         </b-card-header>
         <b-collapse id="accordion-2" accordion="my-accordion" role="tabpanel">
           <b-card-body>
             <b-card-text>
-              <b-button variant="primary" 
-                        @click="createRecord()">
+              <b-button variant="primary" @click="createRecord()">
                 Create record
               </b-button>
               <br /><br />
-              <b-button variant="primary" 
-                        @click="findAllRecords()">
+              <b-button variant="primary" @click="findAllRecords()">
                 Find records
               </b-button>
             </b-card-text>
@@ -70,8 +76,8 @@ export default defineComponent({
       menuItem: 0,
       dataFromMenu: {
         menuItem: 0,
-        msgFromBackend: ""
-      }
+        msgFromBackend: "",
+      },
     };
   },
   methods: {
@@ -80,7 +86,6 @@ export default defineComponent({
         username: "UN-" + Math.random().toString(),
         file: Math.random().toString(),
       };
-
       axios
         .post("/api/records", newRecord)
         .then((response) => {
@@ -93,9 +98,10 @@ export default defineComponent({
     },
 
     findAllRecords() {
+      console.log("backend env url", import.meta.env.VITE_BACKEND_URL);
       axios.get(`/api/records`).then((response) => {
         this.setMenuSelection(1, response.data);
-        console.log(response.data);
+        console.log(response);
       });
     },
 
@@ -105,8 +111,8 @@ export default defineComponent({
         menuItem: this.menuItem,
         msgFromBackend: msg,
       };
-      this.$emit('dataFromMenu', this.dataFromMenu);
-    }
+      this.$emit("dataFromMenu", this.dataFromMenu);
+    },
   },
 });
 </script>
