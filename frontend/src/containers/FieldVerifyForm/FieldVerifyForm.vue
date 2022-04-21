@@ -59,19 +59,17 @@ export default defineComponent({
     generateReport() {
       var element = document.getElementById("pdf-form-div");
       // download pdf format of the web form
-      document.getElementById("form-licensee")!.style.display = "block";
-      document.getElementById("form-submitter")!.style.display = "block";
-      document.getElementById("form-tenure")!.style.display = "block";
-      document.getElementById("form-attachment")!.style.display = "block";
-      html2pdf()
-        .from(element)
-        .save()
-        .then(() => {
-          document.getElementById("form-licensee")!.style.display = "";
-          document.getElementById("form-submitter")!.style.display = "";
-          document.getElementById("form-tenure")!.style.display = "";
-          document.getElementById("form-attachment")!.style.display = "";
-        });
+      // document.getElementById("form-licensee")!.style.display = "block";
+      // document.getElementById("form-submitter")!.style.display = "block";
+      // document.getElementById("form-tenure")!.style.display = "block";
+      // document.getElementById("form-attachment")!.style.display = "block";
+      html2pdf().from(element).save();
+      // .then(() => {
+      //   document.getElementById("form-licensee")!.style.display = "";
+      //   document.getElementById("form-submitter")!.style.display = "";
+      //   document.getElementById("form-tenure")!.style.display = "";
+      //   document.getElementById("form-attachment")!.style.display = "";
+      // });
 
       // if want to access the form data, could just read by
       // console.log("form data licensee section", this.tenureGridData);
