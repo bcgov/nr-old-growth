@@ -27,13 +27,15 @@
     "@nestjs/core": "^8.4.4 ",
     "@nestjs/platform-express": "^8.4.4",
     "@nestjs/swagger": "^5.2.1",
+    "@nestjs/mapped-types": "*",
     "@nestjs/typeorm": "^8.0.3",
     "dotenv": "^16.0.0",
     "pg": "^8.7.3",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
-    "rxjs": "^7.2.0",
+    "rxjs": "^7.5.5",
     "swagger-ui-express": "^4.3.0",
+    "typeorm": "^0.2.45",
     "webpack": "^5.71.0"
   },
   "devDependencies": {
