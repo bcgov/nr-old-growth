@@ -42,12 +42,12 @@
         <b-collapse id="accordion-2" accordion="my-accordion" role="tabpanel">
           <b-card-body>
             <b-card-text>
-              <b-button variant="primary" @click="createRecord()">
-                Create record
+              <b-button variant="primary" @click="createClient()">
+                Create client
               </b-button>
               <br /><br />
-              <b-button variant="primary" @click="findAllRecords()">
-                Find records
+              <b-button variant="primary" @click="findAllClients()">
+                Find clients
               </b-button>
             </b-card-text>
           </b-card-body>
@@ -81,13 +81,12 @@ export default defineComponent({
     };
   },
   methods: {
-    createRecord() {
-      const newRecord = {
-        username: "UN-" + Math.random().toString(),
-        file: Math.random().toString(),
+    createClient() {
+      const newClient = {
+        name: "UN-" + Math.random().toString(),
       };
       axios
-        .post("/api/records", newRecord)
+        .post("/api/client", newClient)
         .then((response) => {
           this.setMenuSelection(1, response.data);
           console.log(response);
@@ -97,9 +96,8 @@ export default defineComponent({
         });
     },
 
-    findAllRecords() {
-      console.log("backend env url", import.meta.env.VITE_BACKEND_URL);
-      axios.get(`/api/records`).then((response) => {
+    findAllClients() {
+      axios.get(`/api/client`).then((response) => {
         this.setMenuSelection(1, response.data);
         console.log(response);
       });

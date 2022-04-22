@@ -29,7 +29,7 @@ export default defineComponent({
         }>
       >,
       default: [
-        { id: 0, modelValue: "", required: false, label: "", note: "" },
+        { id: "test", modelValue: "", required: false, label: "", note: "" },
       ],
     },
   },
