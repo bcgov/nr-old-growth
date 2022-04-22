@@ -1,0 +1,43 @@
+<template>
+  <CollapseCard title="Licensee details" id="form-licensee">
+    <InputBox
+      v-for="row in data"
+      :key="row.id"
+      :label="row.label"
+      v-model="row.modelValue"
+      :required="row.required"
+      :note="row.note"
+    />
+  </CollapseCard>
+</template>
+
+<script lang="ts">
+import { defineComponent, PropType } from "vue";
+import CollapseCard from "../../components/CollapseCard.vue";
+import InputBox from "../../components/InputBox.vue";
+
+export default defineComponent({
+  props: {
+    data: {
+      type: Array as PropType<
+        Array<{
+          id: number;
+          label: string;
+          modelValue: string;
+          required: boolean;
+          note: string;
+        }>
+      >,
+      default: [
+        { id: 0, modelValue: "", required: false, label: "", note: "" },
+      ],
+    },
+  },
+  components: {
+    CollapseCard,
+    InputBox,
+  },
+});
+</script>
+
+<style scoped></style>

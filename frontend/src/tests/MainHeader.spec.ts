@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { mount } from "@vue/test-utils";
 
-import MainHeader from "../components/MainHeader.vue";
+import MainHeader from "../containers/MainHeader.vue";
 
 describe("MainHeader", () => {
   it("renders properly", () => {
