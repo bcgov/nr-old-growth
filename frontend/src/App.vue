@@ -2,53 +2,26 @@
   <div>
     <MainHeader />
     <b-container>
-      <b-row>
-        <b-col col sm="1" md="2" lg="2" xl="2">
-          <MenuBar @input="getSelectedLayers" 
-                   v-on:dataFromMenu="getDataFromMenuBar" />
-        </b-col>
-        <b-col col sm="11" md="10" lg="10" xl="10">
-          <span v-if="menuItem == 0">
-            <MapViewer :selectedLayers="selectedLayers" />
-          </span>
-          {{msgFromBackend}}
-        </b-col>
-      </b-row>
+      <FieldVerifyForm />
     </b-container>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType } from "vue";
-import MainHeader from "./components/MainHeader.vue";
-import MapViewer from "./components/MapViewer.vue";
-import MenuBar from "./components/MenuBar.vue";
-import "leaflet/dist/leaflet.css";
-import "./assets/global.css";
+import { defineComponent } from "vue";
+import MainHeader from "./containers/MainHeader.vue";
+import FieldVerifyForm from "./containers/FieldVerifyForm/FieldVerifyForm.vue";
 
 export default defineComponent({
   name: "App",
   components: {
     MainHeader,
-    MapViewer,
-    MenuBar,
+    FieldVerifyForm,
   },
   data() {
-    return {
-      selectedLayers: [],
-      menuItem: 0,
-      msgFromBackend: '',
-    }
+    return {};
   },
-  methods: {
-    getSelectedLayers(selectedLayersFromChild) {
-      this.selectedLayers = selectedLayersFromChild;
-    },
-    getDataFromMenuBar(data) {
-      this.menuItem = data.menuItem;
-      this.msgFromBackend = data.msgFromBackend;
-    },
-  }
+  methods: {},
 });
 </script>
 
