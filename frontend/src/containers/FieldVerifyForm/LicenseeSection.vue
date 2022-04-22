@@ -21,10 +21,10 @@ export default defineComponent({
     data: {
       type: Array as PropType<
         Array<{
-          id: number;
           label: string;
-          modelValue: string;
           required: boolean;
+          id: string;
+          modelValue: string;
           note: string;
         }>
       >,
