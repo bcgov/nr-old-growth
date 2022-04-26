@@ -1,49 +1,38 @@
 export const licenseeData = [
   {
     label: "Licensee or agreement holder",
-    required: true,
     id: "licensee_name",
     modelValue: "",
     note: "Enter the licensee or agreement holder",
   },
   {
     label: "Address",
-    required: false,
     id: "licensee_address",
     modelValue: "",
-    note: "",
   },
   {
     label: "City/Town",
-    required: false,
     id: "licensee_city",
     modelValue: "",
-    note: "",
   },
   {
     label: "Province",
-    required: false,
     id: "licensee_province",
     modelValue: "",
-    note: "",
   },
   {
     label: "Postal code",
-    required: false,
     id: "licensee_postal_code",
     modelValue: "",
-    note: "",
   },
   {
     label: "Phone number",
-    required: true,
     id: "licensee_phone",
     modelValue: "",
     note: "Licensee or agreement holder's phone number",
   },
   {
     label: "Email",
-    required: true,
     id: "licensee_email",
     modelValue: "",
     note: "Licensee or agreement holder's email",
@@ -53,54 +42,105 @@ export const licenseeData = [
 export const submitterData = [
   {
     label: "First name",
-    required: false,
     id: "submitter_firstname",
     modelValue: "",
-    note: "",
   },
   {
     label: "Last name",
-    required: false,
     id: "submitter_lastname",
     modelValue: "",
-    note: "",
   },
   {
     label: "Phone number",
     required: false,
     id: "submitter_phone",
     modelValue: "",
-    note: "",
   },
   {
     label: "Email",
-    required: false,
     id: "submitter_email",
     modelValue: "",
-    note: "",
   },
 ];
 
-export const tenureData = [
-  {
-    label: "Natural resource district",
-    required: true,
-    id: "natural_resource_distrct",
-    modelValue: "",
-    note: "Select the district",
-  },
+export const tenureInputData = [
   {
     label: "Tenure",
-    required: true,
     id: "tenure",
     modelValue: "",
     note: "Enter the forest file ID",
   },
   {
     label: "Cutting permit",
-    required: true,
     id: "cutting_permit",
     modelValue: "",
     note: "Enter the cutting permit number",
   },
 ];
+
+export const tenureSelectData = {
+  label: "Natural resource district",
+  id: "natural_resource_distrct",
+  modelValue: "",
+  note: "Select the district",
+  options: [
+    { value: "a", label: "First option" },
+    { value: "b", label: "Selected Option" },
+  ],
+};
+
+export const tenureGridData = {
+  columns: [
+    {
+      id: "cut_block_id",
+      label: "Cut Block ID",
+      type: "input",
+    },
+    {
+      id: "total_block_ha",
+      label: "Total cut block hectares",
+      type: "input",
+    },
+    {
+      id: "ha_org_mapped_def_area",
+      label: "Hectares originally mapped as priority deferral area",
+      type: "input",
+    },
+    {
+      id: "deferral_category_code",
+      label: "Check all that apply",
+      type: "radio",
+      options: [
+        { label: "Big Tree", value: "big_tree" },
+        { label: "Ancient", value: "ancient" },
+        { label: "Remnant", value: "remnant" },
+      ],
+    },
+    {
+      id: "ha_kept_org_mapping",
+      label: "Hectares kept of original mapping",
+      info: "Enter hectares kept of original priority deferral mapping",
+      type: "input",
+    },
+    {
+      id: "ha_added_org_mapping",
+      label: "Hectares added to original mapping",
+      type: "input",
+    },
+    {
+      id: "ha_deleted_org_mapping",
+      label: "Hectares deleted from original mapping",
+      type: "input",
+    },
+  ],
+  defaultNewData: {
+    cut_block_id: "",
+    total_block_ha: "",
+    ha_org_mapped_def_area: "",
+    deferral_category_code: "big_tree",
+    ha_kept_org_mapping: "",
+    ha_added_org_mapping: "",
+    ha_deleted_org_mapping: "",
+  },
+  data: [],
+};

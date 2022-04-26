@@ -1,34 +1,43 @@
 <template>
   <div id="form-container">
-    <div id="pdf-form-div">
-      <h4 style="margin-bottom: 24px">Field Verification Submission From</h4>
+    <div id="pdf-form-div" style="margin: 40px">
+      <h4 style="margin-bottom: 8px">Field Verification Submission From</h4>
+      <p style="color: gray; margin-bottom: 24">All fileds are mandatory</p>
       <div class="accordion" role="tablist">
-        <InfoSection />
         <LicenseeSection :data="licenseeData" />
         <SubmitterSection :data="submitterData" />
-        <TenureSection :inputData="tenureData" />
+        <TenureSection
+          :inputData="tenureInputData"
+          :selectData="tenureSelectData"
+          :tenureGridData="tenureGridData"
+        />
       </div>
     </div>
-    <button @click="generateReport()">Download</button>
+    <button
+      style="margin-left: 40px; margin-right: 40px"
+      @click="generateReport()"
+    >
+      Download
+    </button>
   </div>
 </template>
 
 <script lang="ts">
 import { defineComponent } from "vue";
 import html2pdf from "html2pdf.js";
-import InfoSection from "./InfoSection.vue";
 import LicenseeSection from "./LicenseeSection.vue";
 import SubmitterSection from "./SubmitterSection.vue";
 import TenureSection from "./TenureSection.vue";
 import {
   licenseeData,
   submitterData,
-  tenureData,
+  tenureInputData,
+  tenureSelectData,
+  tenureGridData,
 } from "../../helpers/FieldVerifyFormData";
 
 export default defineComponent({
   components: {
-    InfoSection,
     LicenseeSection,
     SubmitterSection,
     TenureSection,
@@ -37,16 +46,18 @@ export default defineComponent({
     return {
       licenseeData,
       submitterData,
-      tenureData,
+      tenureInputData,
+      tenureSelectData,
+      tenureGridData,
     };
   },
   methods: {
     generateReport() {
       var element = document.getElementById("pdf-form-div");
       // download pdf format of the web form
-      html2pdf().from(element).save();
+      // html2pdf().from(element).save();
       // if want to access the form data, could just read by
-      console.log("form data licensee section", this.licenseeData);
+      console.log("form data licensee section", this.tenureGridData);
     },
   },
 });
@@ -55,6 +66,6 @@ export default defineComponent({
 <style scoped>
 #form-container {
   text-align: left;
-  margin: 40px;
+  /* margin: 40px; */
 }
 </style>
