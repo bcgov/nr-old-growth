@@ -22,9 +22,9 @@
     />
     <FormGrid
       label="Data Grid"
-      :columns="tenureGridData.columns"
-      :defaultNewData="tenureGridData.defaultNewData"
-      v-model="tenureGridData.data"
+      :columns="gridData.columns"
+      :defaultNewData="gridData.defaultNewData"
+      v-model="gridData.data"
     />
   </CollapseCard>
 </template>
@@ -72,7 +72,7 @@ export default defineComponent({
         options: [{ value: "1", label: "Option 1" }],
       },
     },
-    tenureGridData: {
+    gridData: {
       type: Object as PropType<{
         columns: Array<FromGridColumnType>;
         defaultNewData: { [key: string]: any };

@@ -19,11 +19,11 @@ export default defineComponent({
     FormFieldTemplate,
   },
   props: {
+    // form field template props (optional): label, required, info, note
     label: {
       type: String,
       default: null,
     },
-    modelValue: String,
     required: {
       type: Boolean,
       default: false,
@@ -36,6 +36,8 @@ export default defineComponent({
       type: String,
       default: "",
     },
+    // input value
+    modelValue: String,
   },
   methods: {
     updateInput(newValue: String) {

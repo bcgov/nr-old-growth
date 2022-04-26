@@ -6,6 +6,7 @@
       :note="note"
       :info="info"
     >
+      <!-- title row -->
       <b-row align-h="center" class="form-grid-row">
         <b-col
           v-for="title in columns"
@@ -20,6 +21,7 @@
         </b-col>
         <b-col v-if="modelValue.length > 0" cols="1" class="form-grid-column" />
       </b-row>
+      <!-- data row -->
       <b-row
         align-h="center"
         class="form-grid-row"
@@ -73,6 +75,7 @@ export default defineComponent({
     FormRadio,
   },
   props: {
+    // form field template props (optional): label, required, info, note
     label: {
       type: String,
       default: null,
@@ -89,32 +92,19 @@ export default defineComponent({
       type: String,
       default: "",
     },
+    // grid column titles
     columns: {
       type: Array as PropType<Array<FromGridColumnType>>,
-      default: [
-        {
-          id: "column_1",
-          label: "Column 1",
-          required: true,
-          info: null,
-          type: "input",
-        },
-        {
-          id: "column_2",
-          label: "Column 2",
-          required: false,
-          info: null,
-          type: "input",
-        },
-      ],
+      required: true,
     },
+    // grid data
     modelValue: {
       type: Array as PropType<Array<{ [key: string]: any }>>,
-      default: [{ column_1: 1, column_2: 2 }],
+      required: true,
     },
     defaultNewData: {
       type: Object as PropType<{ [key: string]: any }>,
-      default: { column_1: 1, column_2: 2 },
+      required: true,
     },
   },
   methods: {

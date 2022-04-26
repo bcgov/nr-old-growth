@@ -32,11 +32,11 @@ export default defineComponent({
     FormFieldTemplate,
   },
   props: {
+    // form field template props (optional): label, required, info, note
     label: {
       type: String,
       default: null,
     },
-    modelValue: String,
     required: {
       type: Boolean,
       default: false,
@@ -49,10 +49,16 @@ export default defineComponent({
       type: String,
       default: "",
     },
-    options: Array as PropType<Array<{ value: string; label: string }>>,
+    // selected option
+    modelValue: String,
+    options: {
+      type: Array as PropType<Array<{ value: string; label: string }>>,
+      required: true,
+    },
+    // radio group name, has to be unique when using multiple radio groups
     name: {
       type: String,
-      default: "radio-input", // has to be unique when using multiple radio group
+      default: "radio-input",
     },
   },
   methods: {

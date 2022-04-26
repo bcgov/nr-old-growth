@@ -14,7 +14,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent, PropType } from "vue";
 import FormFieldTemplate from "./FormFieldTemplate.vue";
 
 export default defineComponent({
@@ -23,11 +23,12 @@ export default defineComponent({
     FormFieldTemplate,
   },
   props: {
+    // form field template props (optional): label, required, info, note
     label: {
       type: String,
       default: null,
     },
-    modelValue: String,
+
     required: {
       type: Boolean,
       default: false,
@@ -40,7 +41,12 @@ export default defineComponent({
       type: String,
       default: null,
     },
-    options: Array,
+    // selected option
+    modelValue: String,
+    options: {
+      type: Array as PropType<Array<{ value: string; label: string }>>,
+      required: true,
+    },
   },
   methods: {
     updateValue(newValue: String) {

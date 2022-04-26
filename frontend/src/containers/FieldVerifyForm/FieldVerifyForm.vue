@@ -9,7 +9,7 @@
         <TenureSection
           :inputData="tenureInputData"
           :selectData="tenureSelectData"
-          :tenureGridData="tenureGridData"
+          :gridData="tenureGridData"
         />
       </div>
     </div>
@@ -55,9 +55,9 @@ export default defineComponent({
     generateReport() {
       var element = document.getElementById("pdf-form-div");
       // download pdf format of the web form
-      // html2pdf().from(element).save();
+      html2pdf().from(element).save();
       // if want to access the form data, could just read by
-      console.log("form data licensee section", this.tenureGridData);
+      // console.log("form data licensee section", this.tenureGridData);
     },
   },
 });
