@@ -1,44 +1,40 @@
 <template>
   <div style="margin-bottom: 18px">
     <FormFieldTitle
-      v-if="label"
-      :label="label"
-      :required="required"
-      :info="info"
+      v-if="props.label"
+      :label="props.label"
+      :required="props.required"
+      :info="props.info"
     />
     <slot />
-    <p v-if="note" class="form-field-note">{{ note }}</p>
+    <p v-if="props.note" class="form-field-note">{{ note }}</p>
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
 import FormFieldTitle from "./FormFieldTitle.vue";
 
-export default defineComponent({
-  name: "FormFieldTemplate",
-  components: {
-    FormFieldTitle,
+const props = defineProps({
+  label: {
+    type: String,
+    default: null,
   },
-  props: {
-    label: {
-      type: String,
-      default: null,
-    },
-    required: {
-      type: Boolean,
-      default: false,
-    },
-    info: {
-      type: String,
-      default: null,
-    },
-    note: {
-      type: String,
-      default: null,
-    },
+  required: {
+    type: Boolean,
+    default: false,
+  },
+  info: {
+    type: String,
+    default: null,
+  },
+  note: {
+    type: String,
+    default: null,
   },
 });
+</script>
+<script lang="ts">
+export default {};
 </script>
 
 <style scoped>
