@@ -13,6 +13,20 @@
       multiple
       @change="handleChange"
     />
+    <div
+      v-for="(file, index) in rows"
+      :key="'file' + index"
+      style="margin-top: 16px"
+    >
+      File: {{ file.name }} Uploaded successfully
+      <b-button
+        variant="outline-primary"
+        class="btn-sm"
+        style="margin-left: 16px"
+        @click="deleteFile(index)"
+        >Remove</b-button
+      >
+    </div>
   </FormFieldTemplate>
 </template>
 
@@ -53,16 +67,22 @@ export default defineComponent({
   },
   methods: {
     handleChange(e: Event | any) {
-      const newModelValue = this.modelValue;
+      // const newModelValue = this.modelValue;
       if (e.target.files && e.target.files) {
         console.log("e", e.target.files);
-        e.target.files.forEach((f) => {
+        e.target.files.forEach((f: File) => {
           // console.log(f);
-          newModelValue.push(f);
+          // newModelValue.push(f);
+          this.rows.push(f);
         });
       }
-      console.log("newModelValue", newModelValue);
+      // console.log("newModelValue", newModelValue);
+      console.log("this.rows", this.rows);
       // this.$emit("update:modelValue", newModelValue);
+    },
+    deleteFile(index: number) {
+      const newRows = this.rows.filter((m, i) => i !== index);
+      this.rows = newRows;
     },
   },
 });

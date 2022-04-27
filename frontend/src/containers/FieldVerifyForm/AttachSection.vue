@@ -13,19 +13,6 @@ import { defineComponent, Proptype } from "vue";
 import CollapseCard from "../../components/CollapseCard.vue";
 import FormUpload from "../../components/FormUpload.vue";
 
-interface FileItem {
-  uid: string;
-  name?: string;
-  status?: string;
-  response?: string;
-  url?: string;
-}
-
-interface FileInfo {
-  file: FileItem;
-  fileList: FileItem[];
-}
-
 export default defineComponent({
   components: {
     CollapseCard,
