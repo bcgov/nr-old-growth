@@ -37,12 +37,12 @@
             v-if="columns[column_index].type == 'input'"
             v-model="modelValue[row_index][column]"
           ></FormInput>
-          <FormRadio
+          <FormCheckboxGroup
             v-if="columns[column_index].type == 'radio'"
             v-model="modelValue[row_index][column]"
             :options="columns[column_index].options"
             :name="row_index + 'radio'"
-          ></FormRadio>
+          ></FormCheckboxGroup>
         </b-col>
         <b-col v-if="modelValue.length > 0" cols="1" class="form-grid-column">
           <b-button variant="outline-primary" @click="deleteData(row_index)"
@@ -63,7 +63,7 @@ import { defineComponent, PropType } from "vue";
 import FormFieldTemplate from "./FormFieldTemplate.vue";
 import FormFieldTitle from "./FormFieldTitle.vue";
 import FormInput from "./FormInput.vue";
-import FormRadio from "./FormRadio.vue";
+import FormCheckboxGroup from "./FormCheckboxGroup.vue";
 import type { FromGridColumnType } from "../helpers/AppType";
 
 export default defineComponent({
@@ -72,7 +72,7 @@ export default defineComponent({
     FormFieldTemplate,
     FormFieldTitle,
     FormInput,
-    FormRadio,
+    FormCheckboxGroup,
   },
   props: {
     // form field template props (optional): label, required, info, note

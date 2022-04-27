@@ -137,7 +137,7 @@ export const tenureGridData = {
     cut_block_id: "",
     total_block_ha: "",
     ha_org_mapped_def_area: "",
-    deferral_category_code: "big_tree",
+    deferral_category_code: ["big_tree"],
     ha_kept_org_mapping: "",
     ha_added_org_mapping: "",
     ha_deleted_org_mapping: "",

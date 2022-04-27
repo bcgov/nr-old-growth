@@ -11,10 +11,10 @@
       style="display: block"
     >
       <input
-        type="radio"
+        type="checkbox"
         :value="option.value"
         @input="updateValue"
-        :checked="option.value == modelValue"
+        :checked="modelValue?.includes(option.value)"
         :name="name"
       />
       {{ option.label }}
@@ -49,11 +49,14 @@ export default defineComponent({
       type: String,
       default: "",
     },
-    // selected option got from parent component through v-model
-    modelValue: String,
+    // selected options got from parent component through v-model
+    modelValue: Array as PropType<Array<String>>,
     options: {
-      type: Array as PropType<Array<{ value: string; label: string }>>,
+      type: Array as
+        | PropType<Array<{ value: string; label: string }>>
+        | undefined,
       required: true,
+      default: [{ value: 1, label: "Option 1" }],
     },
     // radio group name, has to be unique when using multiple radio groups
     name: {
@@ -63,7 +66,14 @@ export default defineComponent({
   },
   methods: {
     updateValue(event: any) {
-      this.$emit("update:modelValue", event.target.value);
+      console.log(event.target.value);
+      let newModelValue = this.modelValue;
+      if (newModelValue?.includes(event.target.value)) {
+        newModelValue = newModelValue.filter((m) => m != event.target.value);
+      } else {
+        newModelValue?.push(event.target.value);
+      }
+      this.$emit("update:modelValue", newModelValue);
     },
   },
 });
