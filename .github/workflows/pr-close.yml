@@ -31,6 +31,6 @@ jobs:
         uses: davahome/ghcr-cleanup@v1
         with:
           token: ${{ secrets.GHCR_TOKEN }}
-          package: greenfield-template
+          package: nr-old-growth-integration
           owner: orgs/bcgov
           skip_tags: prod,test

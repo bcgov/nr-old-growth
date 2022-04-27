@@ -5,12 +5,12 @@
       class="p-1"
       role="tab"
       style="display: flex"
+      @click="visible = !visible"
     >
       <div
         :class="visible ? null : 'collapsed'"
         :aria-expanded="visible ? 'true' : 'false'"
         :aria-controls="id"
-        @click="visible = !visible"
         style="width: 100%; margin: 8px; font-weight: bold"
       >
         <b-icon-arrow-up-short v-if="visible" />

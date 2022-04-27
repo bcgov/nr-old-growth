@@ -49,7 +49,7 @@ export default defineComponent({
       type: String,
       default: "",
     },
-    // selected option
+    // selected option got from parent component through v-model
     modelValue: String,
     options: {
       type: Array as PropType<Array<{ value: string; label: string }>>,

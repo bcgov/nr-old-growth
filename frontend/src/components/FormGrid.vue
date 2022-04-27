@@ -97,7 +97,7 @@ export default defineComponent({
       type: Array as PropType<Array<FromGridColumnType>>,
       required: true,
     },
-    // grid data
+    // grid data got from parent component through v-model
     modelValue: {
       type: Array as PropType<Array<{ [key: string]: any }>>,
       required: true,

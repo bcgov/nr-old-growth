@@ -59,6 +59,10 @@ export default defineComponent({
     generateReport() {
       var element = document.getElementById("pdf-form-div");
       // download pdf format of the web form
+      document.getElementById("form-licensee")!.style.display = "block";
+      document.getElementById("form-submitter")!.style.display = "block";
+      document.getElementById("form-tenure")!.style.display = "block";
+      document.getElementById("form-attachment")!.style.display = "block";
       html2pdf().from(element).save();
       // if want to access the form data, could just read by
       // console.log("form data licensee section", this.tenureGridData);

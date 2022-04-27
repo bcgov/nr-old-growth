@@ -36,7 +36,7 @@ export default defineComponent({
       type: String,
       default: "",
     },
-    // input value
+    // input value got from parent component through v-model
     modelValue: String,
   },
   methods: {

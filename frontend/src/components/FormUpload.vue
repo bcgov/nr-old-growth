@@ -43,7 +43,7 @@ export default defineComponent({
       type: String,
       default: "",
     },
-    // files data
+    // files data got from parent component through v-model
     modelValue: Array as Proptype<Array<File>>,
   },
   data() {
