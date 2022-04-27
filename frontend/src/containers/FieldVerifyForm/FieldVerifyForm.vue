@@ -11,6 +11,7 @@
           :selectData="tenureSelectData"
           :gridData="tenureGridData"
         />
+        <AttachSection :files="attachmentData" />
       </div>
     </div>
     <button
@@ -28,6 +29,7 @@ import html2pdf from "html2pdf.js";
 import LicenseeSection from "./LicenseeSection.vue";
 import SubmitterSection from "./SubmitterSection.vue";
 import TenureSection from "./TenureSection.vue";
+import AttachSection from "./AttachSection.vue";
 import {
   licenseeData,
   submitterData,
@@ -41,6 +43,7 @@ export default defineComponent({
     LicenseeSection,
     SubmitterSection,
     TenureSection,
+    AttachSection,
   },
   data() {
     return {
@@ -49,6 +52,7 @@ export default defineComponent({
       tenureInputData,
       tenureSelectData,
       tenureGridData,
+      attachmentData: [],
     };
   },
   methods: {
