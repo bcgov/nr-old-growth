@@ -345,70 +345,73 @@ jobs:
           allow_issue_writing: false
           fail_action: false
 
-  # deploy-prod:
-  #   name: Deploy-Prod
-  #   needs:
-  #     - deploy-dev
-  #   runs-on: ubuntu-latest
-  #   environment:
-  #     name: prod
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #     - name: Deploy
-  #       run: |
-  #         # Login to OpenShift and select project
-  #         oc login --token=${{ secrets.OC_TOKEN }} --server=${{ secrets.OC_SERVER }}
-  #         oc project ${{ secrets.NAMESPACE }}
-  #         # Process and apply deployment templates
-  #         oc process -f .github/openshift/deploy.database.yml -p ZONE=prod | oc apply -f -
-  #         oc process -f .github/openshift/deploy.backend.yml -p ZONE=prod \
-  #           -p PROMOTE=${{ github.repository }}:${{ github.event.number }}-backend | oc apply -f -
-  #         oc process -f .github/openshift/deploy.frontend.yml -p ZONE=prod \
-  #           -p PROMOTE=${{ github.repository }}:${{ github.event.number }}-frontend | oc apply -f -
-  #         # Follow any active rollouts (see deploymentconfigs)
-  #         oc rollout status dc/gfp-prod-database -w
-  #         oc rollout status dc/gfp-prod-backend -w
-  #         oc rollout status dc/gfp-prod-frontend -w
-  #     - name: Deployment update
-  #       uses: mshick/add-pr-comment@v1
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #       with:
-  #         message: |
-  #           [Prod - Backend](https://gfp-prod-backend.apps.silver.devops.gov.bc.ca/) available
-  #           [Prod - Frontend](https://gfp-prod-frontend.apps.silver.devops.gov.bc.ca/) available
-  #         allow-repeats: false
+  deploy-prod:
+    name: Deploy-Prod
+    needs:
+      - deploy-dev
+    runs-on: ubuntu-latest
+    environment:
+      name: prod
+    steps:
+      - uses: actions/checkout@v2
+      - name: Deploy
+        run: |
+          # Login to OpenShift and select project
+          oc login --token=${{ secrets.OC_TOKEN }} --server=${{ secrets.OC_SERVER }}
+          oc project ${{ secrets.NAMESPACE }}
 
-  # zap-prod-backend:
-  #   name: Zap-Prod-Backend
-  #   needs:
-  #     - deploy-prod
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v2
+          # Process and apply deployment templates
+          oc process -f .github/openshift/deploy.database.yml -p ZONE=prod | oc apply -f -
+          oc process -f .github/openshift/deploy.backend.yml -p ZONE=prod \
+            -p PROMOTE=${{ github.repository }}:${{ github.event.number }}-backend | oc apply -f -
+          oc process -f .github/openshift/deploy.frontend.yml -p ZONE=prod \
+            -p PROMOTE=${{ github.repository }}:${{ github.event.number }}-frontend | oc apply -f -
 
-  #     - name: ZAP Scan
-  #       uses: zaproxy/action-full-scan@v0.3.0
-  #       with:
-  #         target: https://gfp-prod-backend.apps.silver.devops.gov.bc.ca/
-  #         cmd_options: "-a"
-  #         allow_issue_writing: fase
-  #         fail_action: false
+          # Follow any active rollouts (see deploymentconfigs)
+          oc rollout status dc/gfp-prod-database -w
+          oc rollout status dc/gfp-prod-backend -w
+          oc rollout status dc/gfp-prod-frontend -w
 
-  # zap-prod-frontend:
-  #   name: Zap-Prod-Frontend
-  #   needs:
-  #     - deploy-prod
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v2
+      - name: Deployment update
+        uses: mshick/add-pr-comment@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          message: |
+            [Prod - Backend](https://gfp-prod-backend.apps.silver.devops.gov.bc.ca/) available
+            [Prod - Frontend](https://gfp-prod-frontend.apps.silver.devops.gov.bc.ca/) available
+          allow-repeats: false
 
-  #     - name: ZAP Scan
-  #       uses: zaproxy/action-full-scan@v0.3.0
-  #       with:
-  #         target: https://gfp-prod-frontend.apps.silver.devops.gov.bc.ca/
-  #         cmd_options: "-a"
-  #         allow_issue_writing: false
-  #         fail_action: false
+  zap-prod-backend:
+    name: Zap-Prod-Backend
+    needs:
+      - deploy-prod
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: ZAP Scan
+        uses: zaproxy/action-full-scan@v0.3.0
+        with:
+          target: https://gfp-prod-backend.apps.silver.devops.gov.bc.ca/
+          cmd_options: "-a"
+          allow_issue_writing: fase
+          fail_action: false
+
+  zap-prod-frontend:
+    name: Zap-Prod-Frontend
+    needs:
+      - deploy-prod
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: ZAP Scan
+        uses: zaproxy/action-full-scan@v0.3.0
+        with:
+          target: https://gfp-prod-frontend.apps.silver.devops.gov.bc.ca/
+          cmd_options: "-a"
+          allow_issue_writing: false
+          fail_action: false
