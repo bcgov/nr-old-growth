@@ -14,12 +14,13 @@
         <AttachSection :files="attachmentData" />
       </div>
     </div>
-    <button
+    <b-button
+      variant="outline-primary"
       style="margin-left: 40px; margin-right: 40px"
       @click="generateReport()"
     >
-      Download
-    </button>
+      Submit
+    </b-button>
   </div>
 </template>
 
@@ -58,20 +59,33 @@ export default defineComponent({
   methods: {
     generateReport() {
       var element = document.getElementById("pdf-form-div");
-      // download pdf format of the web form
+
+      // // display all the hidden content
       // document.getElementById("form-licensee")!.style.display = "block";
       // document.getElementById("form-submitter")!.style.display = "block";
       // document.getElementById("form-tenure")!.style.display = "block";
       // document.getElementById("form-attachment")!.style.display = "block";
-      html2pdf().from(element).save();
-      // .then(() => {
-      //   document.getElementById("form-licensee")!.style.display = "";
-      //   document.getElementById("form-submitter")!.style.display = "";
-      //   document.getElementById("form-tenure")!.style.display = "";
-      //   document.getElementById("form-attachment")!.style.display = "";
-      // });
 
-      // if want to access the form data, could just read by
+      // // download pdf format of the web form
+      // html2pdf().from(element).save();
+
+      // save pdf web form to a variable
+      html2pdf()
+        .from(element)
+        .toPdf()
+        // .output("datauristring")
+        // .then(function (pdfAsString: string) {
+        //   // The PDF has been converted to a Data URI string and passed to this function.
+        //   // Use pdfAsString however you like (send as email, etc)! For instance:
+        //   console.log("doc", pdfAsString);
+        // });
+        .get("pdf")
+        .then(function (pdf: object) {
+          // Use the pdf object as desired, e.g.:
+          console.log(pdf);
+        });
+
+      // // if want to access the form data, could just read by
       // console.log("form data licensee section", this.tenureGridData);
     },
   },
