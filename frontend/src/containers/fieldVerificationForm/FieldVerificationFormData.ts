@@ -84,6 +84,7 @@ export const tenureSelectData = {
   modelValue: "",
   note: "Select the district",
   // options need to be in the format of [{value:"", text:""}]
+  //TODO: Make it dynamic, not hard-coded
   options: [
     { value: "a", text: "First option" },
     { value: "b", text: "Selected Option" },
@@ -109,8 +110,10 @@ export const tenureGridData = {
     },
     {
       id: "deferral_category_code",
-      label: "Check all that apply",
-      type: "radio",
+      label: "Deferral category",
+      info: "Deferral category - Check all that apply",
+      type: "checkbox",
+      //TODO: Make it dynamic, not hard-coded
       options: [
         { label: "Big Tree", value: "big_tree" },
         { label: "Ancient", value: "ancient" },
@@ -138,7 +141,7 @@ export const tenureGridData = {
     cut_block_id: "",
     total_block_ha: "",
     ha_org_mapped_def_area: "",
-    deferral_category_code: ["big_tree"],
+    deferral_category_code: [],
     ha_kept_org_mapping: "",
     ha_added_org_mapping: "",
     ha_deleted_org_mapping: "",

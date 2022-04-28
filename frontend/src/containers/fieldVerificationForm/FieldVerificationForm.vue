@@ -37,7 +37,7 @@ import {
   tenureInputData,
   tenureSelectData,
   tenureGridData,
-} from "../../helpers/FieldVerifyFormData";
+} from "./FieldVerificationFormData";
 
 export default defineComponent({
   components: {
@@ -86,7 +86,7 @@ export default defineComponent({
         });
 
       // // if want to access the form data, could just read by
-      // console.log("form data licensee section", this.tenureGridData);
+      console.log("form data licensee section", this.tenureGridData);
     },
   },
 });

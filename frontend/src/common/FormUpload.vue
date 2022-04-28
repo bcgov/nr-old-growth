@@ -31,7 +31,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, Proptype } from "vue";
+import { defineComponent } from "vue";
 import FormFieldTemplate from "./FormFieldTemplate.vue";
 
 export default defineComponent({

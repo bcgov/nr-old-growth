@@ -2,21 +2,21 @@
   <div>
     <MainHeader />
     <b-container>
-      <FieldVerifyForm />
+      <FieldVerificationForm />
     </b-container>
   </div>
 </template>
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import MainHeader from "./containers/MainHeader.vue";
-import FieldVerifyForm from "./containers/FieldVerifyForm/FieldVerifyForm.vue";
+import MainHeader from "./common/MainHeader.vue";
+import FieldVerificationForm from "./containers/FieldVerificationForm/FieldVerificationForm.vue";
 
 export default defineComponent({
   name: "App",
   components: {
     MainHeader,
-    FieldVerifyForm,
+    FieldVerificationForm,
   },
   data() {
     return {};

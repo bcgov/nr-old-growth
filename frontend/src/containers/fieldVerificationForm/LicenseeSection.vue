@@ -1,5 +1,5 @@
 <template>
-  <CollapseCard title="Submitter details" id="form-submitter">
+  <CollapseCard title="Licensee details" id="form-licensee">
     <FormInput
       v-for="row in data"
       :key="row.id"
@@ -14,8 +14,8 @@
 
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
-import CollapseCard from "../../components/CollapseCard.vue";
-import FormInput from "../../components/FormInput.vue";
+import CollapseCard from "../../common/CollapseCard.vue";
+import FormInput from "../../common/FormInput.vue";
 import type { FormInputType } from "../../helpers/AppType";
 
 export default defineComponent({
