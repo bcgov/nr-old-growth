@@ -9,9 +9,9 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, Proptype } from "vue";
-import CollapseCard from "../../components/CollapseCard.vue";
-import FormUpload from "../../components/FormUpload.vue";
+import { defineComponent, PropType } from "vue";
+import CollapseCard from "../../common/CollapseCard.vue";
+import FormUpload from "../../common/FormUpload.vue";
 
 export default defineComponent({
   components: {
@@ -19,7 +19,7 @@ export default defineComponent({
     FormUpload,
   },
   props: {
-    files: Array as Proptype<Array<File>>,
+    files: Array as PropType<Array<File>>,
   },
 });
 </script>

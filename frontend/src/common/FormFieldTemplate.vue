@@ -7,7 +7,9 @@
       :info="props.info"
     />
     <slot />
-    <p v-if="props.note" class="form-field-note">{{ note }}</p>
+    <p v-if="props.note" class="form-field-note">
+      <span v-html="note"></span>
+    </p>
   </div>
 </template>
 

@@ -8,7 +8,7 @@
     <label
       v-for="(option, index) in options"
       :key="index"
-      style="display: block"
+      style="display: block; text-align: left"
     >
       <input
         type="checkbox"

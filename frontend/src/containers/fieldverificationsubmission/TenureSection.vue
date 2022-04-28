@@ -31,10 +31,10 @@
 
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
-import CollapseCard from "../../components/CollapseCard.vue";
-import FormInput from "../../components/FormInput.vue";
-import FormSelect from "../../components/FormSelect.vue";
-import FormGrid from "../../components/FormGrid.vue";
+import CollapseCard from "../../common/CollapseCard.vue";
+import FormInput from "../../common/FormInput.vue";
+import FormSelect from "../../common/FormSelect.vue";
+import FormGrid from "../../common/FormGrid.vue";
 import type { FormInputType, FromGridColumnType } from "../../helpers/AppType";
 
 export default defineComponent({
