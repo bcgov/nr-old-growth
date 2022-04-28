@@ -3,8 +3,8 @@ kind: Template
 metadata:
   name: ${NAME}
   annotations:
-    description: "Greenfield Template"
-    tags: "gfp"
+    description: "Nr-Old-Growth"
+    tags: "nrog"
     iconClass: icon-js
 labels:
   app: ${NAME}-${ZONE}
@@ -12,7 +12,7 @@ labels:
 parameters:
   - name: NAME
     description: Module name
-    value: gfp
+    value: nrog
   - name: COMPONENT
     description: Component name
     value: backend

@@ -9,6 +9,7 @@ on:
 env:
   REGISTRY: ghcr.io
   TRIGGERS: ('frontend/' 'backend/' '.github/openshift' '.github/workflows')
+  NAME: nrog
 
 jobs:
   check:
@@ -262,21 +263,21 @@ jobs:
           oc login --token=${{ secrets.OC_TOKEN }} --server=${{ secrets.OC_SERVER }}
           oc project ${{ secrets.NAMESPACE }}
 
-          # # Cancel any rollouts in progress
-          # oc rollout cancel dc/gfp-${{ github.event.number }}-database 2> /dev/null \
-          #   || true && echo "No rollout in progress"
-          # oc rollout cancel dc/gfp-${{ github.event.number }}-backend 2> /dev/null \
-          #   || true && echo "No rollout in progress"
-          # oc rollout cancel dc/gfp-${{ github.event.number }}-frontend 2> /dev/null \
-          #   || true && echo "No rollout in progress"
+          # Cancel any rollouts in progress
+          oc rollout cancel dc/${{ env.NAME }}-${{ github.event.number }}-database 2> /dev/null \
+            || true && echo "No rollout in progress"
+          oc rollout cancel dc/${{ env.NAME }}-${{ github.event.number }}-backend 2> /dev/null \
+            || true && echo "No rollout in progress"
+          oc rollout cancel dc/${{ env.NAME }}-${{ github.event.number }}-frontend 2> /dev/null \
+            || true && echo "No rollout in progress"
 
-          # # Remove any stale imagestreams
-          # oc delete is/gfp-${{ github.event.number }}-database 2> /dev/null \
-          #   || true && echo "No stale imagestreams"
-          # oc delete is/gfp-${{ github.event.number }}-backend 2> /dev/null \
-          #   || true && echo "No stale imagestreams"
-          # oc delete is/gfp-${{ github.event.number }}-frontend 2> /dev/null \
-          #   || true && echo "No stale imagestreams"
+          # Remove any stale imagestreams
+          oc delete is/${{ env.NAME }}-${{ github.event.number }}-database 2> /dev/null \
+            || true && echo "No stale imagestreams"
+          oc delete is/${{ env.NAME }}-${{ github.event.number }}-backend 2> /dev/null \
+            || true && echo "No stale imagestreams"
+          oc delete is/${{ env.NAME }}-${{ github.event.number }}-frontend 2> /dev/null \
+            || true && echo "No stale imagestreams"
 
           # Process and apply deployment templates
           oc process -f .github/openshift/deploy.database.yml -p ZONE=${{ github.event.number }} | oc apply -f -
@@ -285,21 +286,21 @@ jobs:
           oc process -f .github/openshift/deploy.frontend.yml -p ZONE=${{ github.event.number }} \
             -p PROMOTE=${{ github.repository }}:${{ github.event.number }}-frontend | oc apply -f -
 
-          # # Start rollout (if necessary) and follow it
-          # oc rollout latest dc/gfp-${{ github.event.number }}-database 2> /dev/null \
-          #   || true && echo "Rollout in progress"
-          # oc logs -f dc/gfp-${{ github.event.number }}-database
-          # oc rollout latest dc/gfp-${{ github.event.number }}-backend 2> /dev/null \
-          #   || true && echo "Rollout in progress"
-          # oc logs -f dc/gfp-${{ github.event.number }}-backend
-          # oc rollout latest dc/gfp-${{ github.event.number }}-frontend 2> /dev/null \
-          #   || true && echo "Rollout in progress"
-          # oc logs -f dc/gfp-${{ github.event.number }}-frontend
+          # Start rollout (if necessary) and follow it
+          oc rollout latest dc/${{ env.NAME }}-${{ github.event.number }}-database 2> /dev/null \
+            || true && echo "Rollout in progress"
+          oc logs -f dc/${{ env.NAME }}-${{ github.event.number }}-database
+          oc rollout latest dc/${{ env.NAME }}-${{ github.event.number }}-backend 2> /dev/null \
+            || true && echo "Rollout in progress"
+          oc logs -f dc/${{ env.NAME }}-${{ github.event.number }}-backend
+          oc rollout latest dc/${{ env.NAME }}-${{ github.event.number }}-frontend 2> /dev/null \
+            || true && echo "Rollout in progress"
+          oc logs -f dc/${{ env.NAME }}-${{ github.event.number }}-frontend
 
           # Follow any active rollouts (see deploymentconfigs)
-          oc rollout status dc/gfp-${{ github.event.number }}-database -w
-          oc rollout status dc/gfp-${{ github.event.number }}-backend -w
-          oc rollout status dc/gfp-${{ github.event.number }}-frontend -w
+          oc rollout status dc/${{ env.NAME }}-${{ github.event.number }}-database -w
+          oc rollout status dc/${{ env.NAME }}-${{ github.event.number }}-backend -w
+          oc rollout status dc/${{ env.NAME }}-${{ github.event.number }}-frontend -w
 
       - name: Deployment update
         uses: mshick/add-pr-comment@v1
@@ -307,8 +308,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           message: |
-            [Dev - Backend](https://gfp-${{ github.event.number }}-backend.apps.silver.devops.gov.bc.ca/) available
-            [Dev - Frontend](https://gfp-${{ github.event.number }}-frontend.apps.silver.devops.gov.bc.ca/) available
+            [Dev - Backend](https://${{ env.NAME }}-${{ github.event.number }}-backend.apps.silver.devops.gov.bc.ca/) available
+            [Dev - Frontend](https://${{ env.NAME }}-${{ github.event.number }}-frontend.apps.silver.devops.gov.bc.ca/) available
           allow-repeats: false
 
   zap-dev-backend:
@@ -323,7 +324,7 @@ jobs:
       - name: ZAP Scan
         uses: zaproxy/action-full-scan@v0.3.0
         with:
-          target: https://gfp-${{ github.event.number }}-backend.apps.silver.devops.gov.bc.ca/
+          target: https://${{ env.NAME }}-${{ github.event.number }}-backend.apps.silver.devops.gov.bc.ca/
           cmd_options: "-a"
           allow_issue_writing: false
           fail_action: false
@@ -340,7 +341,7 @@ jobs:
       - name: ZAP Scan
         uses: zaproxy/action-full-scan@v0.3.0
         with:
-          target: https://gfp-${{ github.event.number }}-frontend.apps.silver.devops.gov.bc.ca/
+          target: https://${{ env.NAME }}-${{ github.event.number }}-frontend.apps.silver.devops.gov.bc.ca/
           cmd_options: "-a"
           allow_issue_writing: false
           fail_action: false
@@ -368,9 +369,9 @@ jobs:
             -p PROMOTE=${{ github.repository }}:${{ github.event.number }}-frontend | oc apply -f -
 
           # Follow any active rollouts (see deploymentconfigs)
-          oc rollout status dc/gfp-prod-database -w
-          oc rollout status dc/gfp-prod-backend -w
-          oc rollout status dc/gfp-prod-frontend -w
+          oc rollout status dc/${{ env.NAME }}-prod-database -w
+          oc rollout status dc/${{ env.NAME }}-prod-backend -w
+          oc rollout status dc/${{ env.NAME }}-prod-frontend -w
 
       - name: Deployment update
         uses: mshick/add-pr-comment@v1
@@ -378,8 +379,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           message: |
-            [Prod - Backend](https://gfp-prod-backend.apps.silver.devops.gov.bc.ca/) available
-            [Prod - Frontend](https://gfp-prod-frontend.apps.silver.devops.gov.bc.ca/) available
+            [Prod - Backend](https://${{ env.NAME }}-prod-backend.apps.silver.devops.gov.bc.ca/) available
+            [Prod - Frontend](https://${{ env.NAME }}-prod-frontend.apps.silver.devops.gov.bc.ca/) available
           allow-repeats: false
 
   zap-prod-backend:
@@ -394,7 +395,7 @@ jobs:
       - name: ZAP Scan
         uses: zaproxy/action-full-scan@v0.3.0
         with:
-          target: https://gfp-prod-backend.apps.silver.devops.gov.bc.ca/
+          target: https://${{ env.NAME }}-prod-backend.apps.silver.devops.gov.bc.ca/
           cmd_options: "-a"
           allow_issue_writing: fase
           fail_action: false
@@ -411,7 +412,7 @@ jobs:
       - name: ZAP Scan
         uses: zaproxy/action-full-scan@v0.3.0
         with:
-          target: https://gfp-prod-frontend.apps.silver.devops.gov.bc.ca/
+          target: https://${{ env.NAME }}-prod-frontend.apps.silver.devops.gov.bc.ca/
           cmd_options: "-a"
           allow_issue_writing: false
           fail_action: false
