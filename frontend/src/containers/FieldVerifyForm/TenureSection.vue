@@ -63,13 +63,13 @@ export default defineComponent({
         required?: boolean;
         info?: string;
         modelValue: string;
-        options: Array<{ value: string; label: string }>;
+        options: Array<{ value: string; text: string }>;
       }>,
       default: {
         label: "Select from below",
         id: "form-select-example",
         modelValue: "",
-        options: [{ value: "1", label: "Option 1" }],
+        options: [{ value: "1", text: "Option 1" }],
       },
     },
     gridData: {
