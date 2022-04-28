@@ -31,13 +31,14 @@ import LicenseeSection from "./LicenseeSection.vue";
 import SubmitterSection from "./SubmitterSection.vue";
 import TenureSection from "./TenureSection.vue";
 import AttachSection from "./AttachSection.vue";
+
 import {
   licenseeData,
   submitterData,
   tenureInputData,
   tenureSelectData,
   tenureGridData,
-} from "./FieldVerificationFormData";
+} from "./FieldVerificationSubmissionData";
 
 export default defineComponent({
   components: {
@@ -86,7 +87,7 @@ export default defineComponent({
         });
 
       // // if want to access the form data, could just read by
-      console.log("form data licensee section", this.tenureGridData);
+      //console.log("form data licensee section", this.tenureGridData);
     },
   },
 });

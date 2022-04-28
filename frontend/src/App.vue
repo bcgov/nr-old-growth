@@ -10,7 +10,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import MainHeader from "./common/MainHeader.vue";
-import FieldVerificationForm from "./containers/FieldVerificationForm/FieldVerificationForm.vue";
+import FieldVerificationForm from "./containers/fieldverificationsubmission/FieldVerificationSubmission.vue";
 
 export default defineComponent({
   name: "App",
