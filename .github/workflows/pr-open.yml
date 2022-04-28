@@ -8,7 +8,8 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  TRIGGERS: ('frontend/' 'backend/' '.github/pipeline' '.github/workflows')
+  TRIGGERS: ('frontend/' 'backend/' '.github/openshift' '.github/workflows')
+  NAME: nrog
 
 jobs:
   check:
@@ -262,17 +263,44 @@ jobs:
           oc login --token=${{ secrets.OC_TOKEN }} --server=${{ secrets.OC_SERVER }}
           oc project ${{ secrets.NAMESPACE }}
 
+          # Cancel any rollouts in progress
+          oc rollout cancel dc/${{ env.NAME }}-${{ github.event.number }}-database 2> /dev/null \
+            || true && echo "No rollout in progress"
+          oc rollout cancel dc/${{ env.NAME }}-${{ github.event.number }}-backend 2> /dev/null \
+            || true && echo "No rollout in progress"
+          oc rollout cancel dc/${{ env.NAME }}-${{ github.event.number }}-frontend 2> /dev/null \
+            || true && echo "No rollout in progress"
+
+          # Remove any stale imagestreams
+          oc delete is/${{ env.NAME }}-${{ github.event.number }}-database 2> /dev/null \
+            || true && echo "No stale imagestreams"
+          oc delete is/${{ env.NAME }}-${{ github.event.number }}-backend 2> /dev/null \
+            || true && echo "No stale imagestreams"
+          oc delete is/${{ env.NAME }}-${{ github.event.number }}-frontend 2> /dev/null \
+            || true && echo "No stale imagestreams"
+
           # Process and apply deployment templates
-          oc process -f .github/pipeline/deploy.database.yml -p ZONE=${{ github.event.number }} | oc apply -f -
-          oc process -f .github/pipeline/deploy.backend.yml -p ZONE=${{ github.event.number }} \
+          oc process -f .github/openshift/deploy.database.yml -p ZONE=${{ github.event.number }} | oc apply -f -
+          oc process -f .github/openshift/deploy.backend.yml -p ZONE=${{ github.event.number }} \
             -p PROMOTE=${{ github.repository }}:${{ github.event.number }}-backend | oc apply -f -
-          oc process -f .github/pipeline/deploy.frontend.yml -p ZONE=${{ github.event.number }} \
+          oc process -f .github/openshift/deploy.frontend.yml -p ZONE=${{ github.event.number }} \
             -p PROMOTE=${{ github.repository }}:${{ github.event.number }}-frontend | oc apply -f -
 
+          # Start rollout (if necessary) and follow it
+          oc rollout latest dc/${{ env.NAME }}-${{ github.event.number }}-database 2> /dev/null \
+            || true && echo "Rollout in progress"
+          oc logs -f dc/${{ env.NAME }}-${{ github.event.number }}-database
+          oc rollout latest dc/${{ env.NAME }}-${{ github.event.number }}-backend 2> /dev/null \
+            || true && echo "Rollout in progress"
+          oc logs -f dc/${{ env.NAME }}-${{ github.event.number }}-backend
+          oc rollout latest dc/${{ env.NAME }}-${{ github.event.number }}-frontend 2> /dev/null \
+            || true && echo "Rollout in progress"
+          oc logs -f dc/${{ env.NAME }}-${{ github.event.number }}-frontend
+
           # Follow any active rollouts (see deploymentconfigs)
-          oc rollout status dc/gfp-${{ github.event.number }}-database -w
-          oc rollout status dc/gfp-${{ github.event.number }}-backend -w
-          oc rollout status dc/gfp-${{ github.event.number }}-frontend -w
+          oc rollout status dc/${{ env.NAME }}-${{ github.event.number }}-database -w
+          oc rollout status dc/${{ env.NAME }}-${{ github.event.number }}-backend -w
+          oc rollout status dc/${{ env.NAME }}-${{ github.event.number }}-frontend -w
 
       - name: Deployment update
         uses: mshick/add-pr-comment@v1
@@ -280,8 +308,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           message: |
-            [Dev - Backend](https://gfp-${{ github.event.number }}-backend.apps.silver.devops.gov.bc.ca/) available
-            [Dev - Frontend](https://gfp-${{ github.event.number }}-frontend.apps.silver.devops.gov.bc.ca/) available
+            [Dev - Backend](https://${{ env.NAME }}-${{ github.event.number }}-backend.apps.silver.devops.gov.bc.ca/) available
+            [Dev - Frontend](https://${{ env.NAME }}-${{ github.event.number }}-frontend.apps.silver.devops.gov.bc.ca/) available
           allow-repeats: false
 
   zap-dev-backend:
@@ -296,7 +324,7 @@ jobs:
       - name: ZAP Scan
         uses: zaproxy/action-full-scan@v0.3.0
         with:
-          target: https://gfp-${{ github.event.number }}-backend.apps.silver.devops.gov.bc.ca/
+          target: https://${{ env.NAME }}-${{ github.event.number }}-backend.apps.silver.devops.gov.bc.ca/
           cmd_options: "-a"
           allow_issue_writing: false
           fail_action: false
@@ -313,78 +341,105 @@ jobs:
       - name: ZAP Scan
         uses: zaproxy/action-full-scan@v0.3.0
         with:
-          target: https://gfp-${{ github.event.number }}-frontend.apps.silver.devops.gov.bc.ca/
+          target: https://${{ env.NAME }}-${{ github.event.number }}-frontend.apps.silver.devops.gov.bc.ca/
           cmd_options: "-a"
           allow_issue_writing: false
           fail_action: false
 
-  # deploy-prod:
-  #   name: Deploy-Prod
-  #   needs:
-  #     - deploy-dev
-  #   runs-on: ubuntu-latest
-  #   environment:
-  #     name: prod
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #     - name: Deploy
-  #       run: |
-  #         # Login to OpenShift and select project
-  #         oc login --token=${{ secrets.OC_TOKEN }} --server=${{ secrets.OC_SERVER }}
-  #         oc project ${{ secrets.NAMESPACE }}
+  deploy-prod:
+    name: Deploy-Prod
+    needs:
+      - deploy-dev
+    runs-on: ubuntu-latest
+    environment:
+      name: prod
+    steps:
+      - uses: actions/checkout@v2
+      - name: Deploy
+        run: |
+          # Login to OpenShift and select project
+          oc login --token=${{ secrets.OC_TOKEN }} --server=${{ secrets.OC_SERVER }}
+          oc project ${{ secrets.NAMESPACE }}
 
-  #         # Process and apply deployment templates
-  #         oc process -f .github/pipeline/deploy.database.yml -p ZONE=prod | oc apply -f -
-  #         oc process -f .github/pipeline/deploy.backend.yml -p ZONE=prod \
-  #           -p PROMOTE=${{ github.repository }}:${{ github.event.number }}-backend | oc apply -f -
-  #         oc process -f .github/pipeline/deploy.frontend.yml -p ZONE=prod \
-  #           -p PROMOTE=${{ github.repository }}:${{ github.event.number }}-frontend | oc apply -f -
+          # Cancel any rollouts in progress
+          oc rollout cancel dc/${{ env.NAME }}-prod-database 2> /dev/null \
+            || true && echo "No rollout in progress"
+          oc rollout cancel dc/${{ env.NAME }}-prod-backend 2> /dev/null \
+            || true && echo "No rollout in progress"
+          oc rollout cancel dc/${{ env.NAME }}-prod-frontend 2> /dev/null \
+            || true && echo "No rollout in progress"
 
-  #         # Follow any active rollouts (see deploymentconfigs)
-  #         oc rollout status dc/gfp-prod-database -w
-  #         oc rollout status dc/gfp-prod-backend -w
-  #         oc rollout status dc/gfp-prod-frontend -w
+          # Remove any stale imagestreams
+          oc delete is/${{ env.NAME }}-prod-database 2> /dev/null \
+            || true && echo "No stale imagestreams"
+          oc delete is/${{ env.NAME }}-prod-backend 2> /dev/null \
+            || true && echo "No stale imagestreams"
+          oc delete is/${{ env.NAME }}-prod-frontend 2> /dev/null \
+            || true && echo "No stale imagestreams"
 
-  #     - name: Deployment update
-  #       uses: mshick/add-pr-comment@v1
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #       with:
-  #         message: |
-  #           [Prod - Backend](https://gfp-prod-backend.apps.silver.devops.gov.bc.ca/) available
-  #           [Prod - Frontend](https://gfp-prod-frontend.apps.silver.devops.gov.bc.ca/) available
-  #         allow-repeats: false
+          # Process and apply deployment templates
+          oc process -f .github/openshift/deploy.database.yml -p ZONE=prod | oc apply -f -
+          oc process -f .github/openshift/deploy.backend.yml -p ZONE=prod \
+            -p PROMOTE=${{ github.repository }}:${{ github.event.number }}-backend | oc apply -f -
+          oc process -f .github/openshift/deploy.frontend.yml -p ZONE=prod \
+            -p PROMOTE=${{ github.repository }}:${{ github.event.number }}-frontend | oc apply -f -
 
-  # zap-prod-backend:
-  #   name: Zap-Prod-Backend
-  #   needs:
-  #     - deploy-prod
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v2
+          # Start rollout (if necessary) and follow it
+          oc rollout latest dc/${{ env.NAME }}-prod-database 2> /dev/null \
+            || true && echo "Rollout in progress"
+          oc logs -f dc/${{ env.NAME }}-prod-database
+          oc rollout latest dc/${{ env.NAME }}-prod-backend 2> /dev/null \
+            || true && echo "Rollout in progress"
+          oc logs -f dc/${{ env.NAME }}-prod-backend
+          oc rollout latest dc/${{ env.NAME }}-prod-frontend 2> /dev/null \
+            || true && echo "Rollout in progress"
+          oc logs -f dc/${{ env.NAME }}-prod-frontend
 
-  #     - name: ZAP Scan
-  #       uses: zaproxy/action-full-scan@v0.3.0
-  #       with:
-  #         target: https://gfp-prod-backend.apps.silver.devops.gov.bc.ca/
-  #         cmd_options: "-a"
-  #         allow_issue_writing: fase
-  #         fail_action: false
+          # Follow any active rollouts (see deploymentconfigs)
+          oc rollout status dc/${{ env.NAME }}-prod-database -w
+          oc rollout status dc/${{ env.NAME }}-prod-backend -w
+          oc rollout status dc/${{ env.NAME }}-prod-frontend -w
 
-  # zap-prod-frontend:
-  #   name: Zap-Prod-Frontend
-  #   needs:
-  #     - deploy-prod
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v2
+      - name: Deployment update
+        uses: mshick/add-pr-comment@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          message: |
+            [Prod - Backend](https://${{ env.NAME }}-prod-backend.apps.silver.devops.gov.bc.ca/) available
+            [Prod - Frontend](https://${{ env.NAME }}-prod-frontend.apps.silver.devops.gov.bc.ca/) available
+          allow-repeats: false
 
-  #     - name: ZAP Scan
-  #       uses: zaproxy/action-full-scan@v0.3.0
-  #       with:
-  #         target: https://gfp-prod-frontend.apps.silver.devops.gov.bc.ca/
-  #         cmd_options: "-a"
-  #         allow_issue_writing: false
-  #         fail_action: false
+  zap-prod-backend:
+    name: Zap-Prod-Backend
+    needs:
+      - deploy-prod
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: ZAP Scan
+        uses: zaproxy/action-full-scan@v0.3.0
+        with:
+          target: https://${{ env.NAME }}-prod-backend.apps.silver.devops.gov.bc.ca/
+          cmd_options: "-a"
+          allow_issue_writing: fase
+          fail_action: false
+
+  zap-prod-frontend:
+    name: Zap-Prod-Frontend
+    needs:
+      - deploy-prod
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: ZAP Scan
+        uses: zaproxy/action-full-scan@v0.3.0
+        with:
+          target: https://${{ env.NAME }}-prod-frontend.apps.silver.devops.gov.bc.ca/
+          cmd_options: "-a"
+          allow_issue_writing: false
+          fail_action: false

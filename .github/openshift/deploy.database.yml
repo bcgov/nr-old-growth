@@ -3,8 +3,8 @@ kind: Template
 metadata:
   name: ${NAME}
   annotations:
-    description: "Greenfield Template"
-    tags: "gfp"
+    description: "Nr-Old-Growth"
+    tags: "nrog"
     iconClass: icon-js
 labels:
   app: ${NAME}-${ZONE}
@@ -12,7 +12,7 @@ labels:
 parameters:
   - name: NAME
     description: Product name
-    value: gfp
+    value: nrog
   - name: COMPONENT
     description: Component name
     value: database
@@ -126,7 +126,7 @@ objects:
                     - '-c'
                     - >-
                       psql -q -d
-                      $PG_DATABASE -c 'SELECT 1'
+                      $POSTGRESQL_DATABASE -c 'SELECT 1'
                 failureThreshold: 5
                 initialDelaySeconds: 30
                 periodSeconds: 15
@@ -139,7 +139,7 @@ objects:
                     - '-c'
                     - >-
                       psql -q -d
-                      $PG_DATABASE -c 'SELECT 1'
+                      $POSTGRESQL_DATABASE -c 'SELECT 1'
                 failureThreshold: 5
                 initialDelaySeconds: 30
                 periodSeconds: 15

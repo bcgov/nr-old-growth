@@ -8,6 +8,10 @@ on:
       - main
       - dev
 
+env:
+  NAME: nrog
+  REPONAME: nr-old-growth-integration
+
 jobs:
   cleanup-openshift:
     name: Cleanup OpenShift
@@ -21,7 +25,7 @@ jobs:
           oc login --token=${{ secrets.OC_TOKEN }} --server=${{ secrets.OC_SERVER }}
           oc project ${{ secrets.NAMESPACE }}
           # Remove old build runs, build pods and deployment pods
-          oc delete all,pvc,secret -l app=gfp-${{ github.event.number }}
+          oc delete all,pvc,secret -l app=${{ env.NAME }}-${{ github.event.number }}
   cleanup-ghcr:
     name: Cleanup ghcr.io
     runs-on: ubuntu-latest
@@ -31,6 +35,6 @@ jobs:
         uses: davahome/ghcr-cleanup@v1
         with:
           token: ${{ secrets.GHCR_TOKEN }}
-          package: greenfield-template
+          package: ${{ env.REPONAME }}
           owner: orgs/bcgov
           skip_tags: prod,test

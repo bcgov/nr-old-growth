@@ -1,12 +1,13 @@
 <template>
   <CollapseCard title="Licensee details" id="form-licensee">
-    <InputBox
+    <FormInput
       v-for="row in data"
       :key="row.id"
       :label="row.label"
       v-model="row.modelValue"
       :required="row.required"
       :note="row.note"
+      :info="row.info"
     />
   </CollapseCard>
 </template>
@@ -14,28 +15,25 @@
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
 import CollapseCard from "../../components/CollapseCard.vue";
-import InputBox from "../../components/InputBox.vue";
+import FormInput from "../../components/FormInput.vue";
+import type { FormInputType } from "../../helpers/AppType";
 
 export default defineComponent({
-  props: {
-    data: {
-      type: Array as PropType<
-        Array<{
-          label: string;
-          required: boolean;
-          id: string;
-          modelValue: string;
-          note: string;
-        }>
-      >,
-      default: [
-        { id: "test", modelValue: "", required: false, label: "", note: "" },
-      ],
-    },
-  },
   components: {
     CollapseCard,
-    InputBox,
+    FormInput,
+  },
+  props: {
+    data: {
+      type: Array as PropType<Array<FormInputType>>,
+      default: [
+        {
+          id: "test",
+          modelValue: "",
+          label: "",
+        },
+      ],
+    },
   },
 });
 </script>
