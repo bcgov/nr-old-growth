@@ -5,20 +5,20 @@
       class="p-1"
       role="tab"
       style="display: flex"
+      @click="visible = !visible"
     >
       <div
         :class="visible ? null : 'collapsed'"
         :aria-expanded="visible ? 'true' : 'false'"
-        :aria-controls="id"
-        @click="visible = !visible"
+        :aria-controls="props.id"
         style="width: 100%; margin: 8px; font-weight: bold"
       >
         <b-icon-arrow-up-short v-if="visible" />
         <b-icon-arrow-down-short v-else />
-        {{ title }}
+        {{ props.title }}
       </div>
     </b-card-header>
-    <b-collapse :id="id" role="tabpanel" v-model="visible">
+    <b-collapse :id="props.id" role="tabpanel" v-model="visible">
       <b-card-body style="margin-top: 16px; margin-bottom: 16px">
         <slot />
       </b-card-body>
@@ -26,21 +26,17 @@
   </b-card>
 </template>
 
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
+import { ref } from "vue";
 
-export default defineComponent({
-  components: {},
-  props: {
-    title: String,
-    id: String,
-  },
-  data() {
-    return {
-      visible: false,
-    };
-  },
+const props = defineProps({
+  title: String,
+  id: String,
 });
+const visible = ref(false);
+</script>
+<script lang="ts">
+export default {};
 </script>
 
 <style scoped></style>

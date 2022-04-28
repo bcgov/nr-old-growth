@@ -9,12 +9,12 @@ import { ClientModule } from './client/client.module';
   imports: [
     ConfigModule.forRoot(),
     TypeOrmModule.forRoot({
-      type: "postgres",
-      host: process.env.PG_HOST || "localhost",
+      type: 'postgres',
+      host: process.env.POSTGRESQL_HOST || 'localhost',
       port: 5432,
-      database: process.env.PG_DATABASE || "postgres",
-      username: process.env.PG_USER || "postgres",
-      password: process.env.PG_PASSWORD,
+      database: process.env.POSTGRESQL_DATABASE || 'postgres',
+      username: process.env.POSTGRESQL_USER || 'postgres',
+      password: process.env.POSTGRESQL_PASSWORD,
       autoLoadEntities: true, // Auto load all entities regiestered by typeorm forFeature method.
       synchronize: true, // This changes the DB schema to match changes to entities, which we might not want.
     }),
