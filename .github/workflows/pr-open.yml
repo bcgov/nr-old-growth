@@ -263,12 +263,39 @@ jobs:
           oc login --token=${{ secrets.OC_TOKEN }} --server=${{ secrets.OC_SERVER }}
           oc project ${{ secrets.NAMESPACE }}
 
+          # Cancel any rollouts in progress
+          oc rollout cancel dc/${{ env.NAME }}-${{ github.event.number }}-database 2> /dev/null \
+            || true && echo "No rollout in progress"
+          oc rollout cancel dc/${{ env.NAME }}-${{ github.event.number }}-backend 2> /dev/null \
+            || true && echo "No rollout in progress"
+          oc rollout cancel dc/${{ env.NAME }}-${{ github.event.number }}-frontend 2> /dev/null \
+            || true && echo "No rollout in progress"
+
+          # Remove any stale imagestreams
+          oc delete is/${{ env.NAME }}-${{ github.event.number }}-database 2> /dev/null \
+            || true && echo "No stale imagestreams"
+          oc delete is/${{ env.NAME }}-${{ github.event.number }}-backend 2> /dev/null \
+            || true && echo "No stale imagestreams"
+          oc delete is/${{ env.NAME }}-${{ github.event.number }}-frontend 2> /dev/null \
+            || true && echo "No stale imagestreams"
+
           # Process and apply deployment templates
           oc process -f .github/openshift/deploy.database.yml -p ZONE=${{ github.event.number }} | oc apply -f -
           oc process -f .github/openshift/deploy.backend.yml -p ZONE=${{ github.event.number }} \
             -p PROMOTE=${{ github.repository }}:${{ github.event.number }}-backend | oc apply -f -
           oc process -f .github/openshift/deploy.frontend.yml -p ZONE=${{ github.event.number }} \
             -p PROMOTE=${{ github.repository }}:${{ github.event.number }}-frontend | oc apply -f -
+
+          # Start rollout (if necessary) and follow it
+          oc rollout latest dc/${{ env.NAME }}-${{ github.event.number }}-database 2> /dev/null \
+            || true && echo "Rollout in progress"
+          oc logs -f dc/${{ env.NAME }}-${{ github.event.number }}-database
+          oc rollout latest dc/${{ env.NAME }}-${{ github.event.number }}-backend 2> /dev/null \
+            || true && echo "Rollout in progress"
+          oc logs -f dc/${{ env.NAME }}-${{ github.event.number }}-backend
+          oc rollout latest dc/${{ env.NAME }}-${{ github.event.number }}-frontend 2> /dev/null \
+            || true && echo "Rollout in progress"
+          oc logs -f dc/${{ env.NAME }}-${{ github.event.number }}-frontend
 
           # Follow any active rollouts (see deploymentconfigs)
           oc rollout status dc/${{ env.NAME }}-${{ github.event.number }}-database -w
@@ -335,19 +362,19 @@ jobs:
           oc project ${{ secrets.NAMESPACE }}
 
           # Cancel any rollouts in progress
-          oc rollout cancel dc/${{ env.NAME }}-${{ github.event.number }}-database 2> /dev/null \
+          oc rollout cancel dc/${{ env.NAME }}-prod-database 2> /dev/null \
             || true && echo "No rollout in progress"
-          oc rollout cancel dc/${{ env.NAME }}-${{ github.event.number }}-backend 2> /dev/null \
+          oc rollout cancel dc/${{ env.NAME }}-prod-backend 2> /dev/null \
             || true && echo "No rollout in progress"
-          oc rollout cancel dc/${{ env.NAME }}-${{ github.event.number }}-frontend 2> /dev/null \
+          oc rollout cancel dc/${{ env.NAME }}-prod-frontend 2> /dev/null \
             || true && echo "No rollout in progress"
 
           # Remove any stale imagestreams
-          oc delete is/${{ env.NAME }}-${{ github.event.number }}-database 2> /dev/null \
+          oc delete is/${{ env.NAME }}-prod-database 2> /dev/null \
             || true && echo "No stale imagestreams"
-          oc delete is/${{ env.NAME }}-${{ github.event.number }}-backend 2> /dev/null \
+          oc delete is/${{ env.NAME }}-prod-backend 2> /dev/null \
             || true && echo "No stale imagestreams"
-          oc delete is/${{ env.NAME }}-${{ github.event.number }}-frontend 2> /dev/null \
+          oc delete is/${{ env.NAME }}-prod-frontend 2> /dev/null \
             || true && echo "No stale imagestreams"
 
           # Process and apply deployment templates
@@ -358,15 +385,15 @@ jobs:
             -p PROMOTE=${{ github.repository }}:${{ github.event.number }}-frontend | oc apply -f -
 
           # Start rollout (if necessary) and follow it
-          oc rollout latest dc/${{ env.NAME }}-${{ github.event.number }}-database 2> /dev/null \
+          oc rollout latest dc/${{ env.NAME }}-prod-database 2> /dev/null \
             || true && echo "Rollout in progress"
-          oc logs -f dc/${{ env.NAME }}-${{ github.event.number }}-database
-          oc rollout latest dc/${{ env.NAME }}-${{ github.event.number }}-backend 2> /dev/null \
+          oc logs -f dc/${{ env.NAME }}-prod-database
+          oc rollout latest dc/${{ env.NAME }}-prod-backend 2> /dev/null \
             || true && echo "Rollout in progress"
-          oc logs -f dc/${{ env.NAME }}-${{ github.event.number }}-backend
-          oc rollout latest dc/${{ env.NAME }}-${{ github.event.number }}-frontend 2> /dev/null \
+          oc logs -f dc/${{ env.NAME }}-prod-backend
+          oc rollout latest dc/${{ env.NAME }}-prod-frontend 2> /dev/null \
             || true && echo "Rollout in progress"
-          oc logs -f dc/${{ env.NAME }}-${{ github.event.number }}-frontend
+          oc logs -f dc/${{ env.NAME }}-prod-frontend
 
           # Follow any active rollouts (see deploymentconfigs)
           oc rollout status dc/${{ env.NAME }}-prod-database -w
