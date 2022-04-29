@@ -23,11 +23,11 @@ export default defineConfig(({ command, mode }) => {
     server: {
       port: port,
       proxy: {
-        "^/api/.*": {
-          target: env.VITE_BACKEND_URL || "http://localhost:3000/",
+        "/api": {
+          target: "https://nrog-31-backend.apps.silver.devops.gov.bc.ca/", // env.VITE_BACKEND_URL || "http://localhost:3000/",
           changeOrigin: true,
           secure: false,
-          rewrite: (path) => path.replace("/api/", ""),
+          rewrite: (path) => path.replace(/^\/api/, ""),
         },
       },
     },
