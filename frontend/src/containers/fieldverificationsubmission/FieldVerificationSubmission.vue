@@ -83,6 +83,7 @@ export default defineComponent({
         });
 
       // test api call
+      console.log("backend", import.meta.env.VITE_BACKEND_URL);
       axios.get(`/api/client`).then((response) => {
         console.log("client", response.data);
       });
