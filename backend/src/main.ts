@@ -6,6 +6,22 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // enable cors for localhost and our frontend
+  const whitelist = [
+    'http://localhost:8080',
+    'http://localhost:3000',
+    process.env.FRONTEND_URL,
+  ];
+  app.enableCors({
+    origin: (origin, callback) => {
+      if (!origin || whitelist.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+  });
+
   const config = new DocumentBuilder()
     .setTitle('DB example')
     .setDescription('The user API description')

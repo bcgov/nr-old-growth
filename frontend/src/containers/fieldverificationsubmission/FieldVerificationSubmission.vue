@@ -84,9 +84,11 @@ export default defineComponent({
 
       // test api call
       console.log("backend", import.meta.env.VITE_BACKEND_URL);
-      axios.get(`/api/client`).then((response) => {
-        console.log("client", response.data);
-      });
+      axios
+        .get(`${import.meta.env.VITE_BACKEND_URL}/client`)
+        .then((response) => {
+          console.log("client", response.data);
+        });
 
       // // if want to access the form data, could just read by
       //console.log("form data licensee section", this.tenureGridData);
