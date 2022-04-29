@@ -38,7 +38,7 @@
             v-model="modelValue[row_index][column]"
           ></FormInput>
           <FormCheckboxGroup
-            v-if="columns[column_index].type == 'radio'"
+            v-if="columns[column_index].type == 'checkbox'"
             v-model="modelValue[row_index][column]"
             :options="columns[column_index].options"
             :name="row_index + 'radio'"
