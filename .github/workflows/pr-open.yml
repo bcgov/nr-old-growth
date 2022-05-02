@@ -284,7 +284,7 @@ jobs:
           oc delete configmap ${{ env.NAME }}-${{ github.event.number }}-frontend 2> /dev/null \
             || true && echo "No existing frontend config"
           # oc create configmap ${{ env.NAME }}-${{ github.event.number }}-frontend --from-literal=VITE_BACKEND_URL=https://${{ env.NAME }}-${{ github.event.number }}-backend.apps.silver.devops.gov.bc.ca
-          oc create configmap ${{ env.NAME }}-${{ github.event.number }}-frontend --from-file=./frontend/public/config.js
+          oc create configmap ${{ env.NAME }}-${{ github.event.number }}-frontend --from-file=./frontend/src/configs/config.js
 
           # Process and apply deployment templates
           oc process -f .github/openshift/deploy.database.yml -p ZONE=${{ github.event.number }} | oc apply -f -
