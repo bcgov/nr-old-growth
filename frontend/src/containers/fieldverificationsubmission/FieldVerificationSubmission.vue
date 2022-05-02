@@ -32,6 +32,7 @@ import LicenseeSection from "./LicenseeSection.vue";
 import SubmitterSection from "./SubmitterSection.vue";
 import TenureSection from "./TenureSection.vue";
 import AttachSection from "./AttachSection.vue";
+import { getClient } from "../../api/OldGrowthRequest";
 
 import {
   licenseeData,
@@ -83,15 +84,7 @@ export default defineComponent({
         });
 
       // test api call
-      console.log("backend", import.meta.env.VITE_BACKEND_URL);
-      console.log("config backend", config.VITE_BACKEND_URL);
-
-      const backend =
-        config.VITE_BACKEND_URL || import.meta.env.VITE_BACKEND_URL;
-
-      axios.get(`${backend}/client`).then((response) => {
-        console.log("client", response.data);
-      });
+      getClient();
 
       // // if want to access the form data, could just read by
       //console.log("form data licensee section", this.tenureGridData);

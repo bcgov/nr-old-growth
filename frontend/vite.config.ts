@@ -19,14 +19,6 @@ export default defineConfig(({ command, mode }) => {
     },
     server: {
       port: port,
-      // proxy: {
-      //   "/api": {
-      //     target: env.VITE_BACKEND_URL || "http://localhost:3000/",
-      //     changeOrigin: true,
-      //     secure: false,
-      //     rewrite: (path) => path.replace(/^\/api/, ""),
-      //   },
-      // },
     },
   };
 });
