@@ -2,7 +2,7 @@
   <div id="form-container">
     <div id="pdf-form-div" style="margin: 40px">
       <h4 style="margin-bottom: 8px">Field Verification submission form</h4>
-      <p style="color: gray; margin-bottom: 24">All fileds are mandatory</p>
+      <p style="color: gray; margin-bottom: 24">All fields are mandatory</p>
       <div class="accordion" role="tablist">
         <LicenseeSection :data="licenseeData" />
         <SubmitterSection :data="submitterData" />
