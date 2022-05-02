@@ -281,7 +281,8 @@ jobs:
             || true && echo "No stale imagestreams"
 
           # Create frontend config
-          oc delete configmap ${{ env.NAME }}-${{ github.event.number }}-frontend
+          oc delete configmap ${{ env.NAME }}-${{ github.event.number }}-frontend 2> /dev/null \
+            || true && echo "No existing frontend config"
           oc create configmap ${{ env.NAME }}-${{ github.event.number }}-frontend --from-literal=VITE_BACKEND_URL=https://${{ env.NAME }}-${{ github.event.number }}-backend.apps.silver.devops.gov.bc.ca
 
           # Process and apply deployment templates

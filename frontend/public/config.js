@@ -3,5 +3,6 @@
 const config = (() => {
   return {
     // VITE_BACKEND_URL: '',
+    TEST: 123
   };
 })();

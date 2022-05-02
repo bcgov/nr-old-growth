@@ -92,7 +92,7 @@ objects:
                   value: https://${NAME}-${ZONE}-backend.${DOMAIN}
               volumeMounts:
                 - name: ${NAME}-${ZONE}-${COMPONENT}-config-volume
-                  mountPath: "/usr/share/nginx/html/config.ts"
+                  mountPath: "/usr/share/nginx/html/config.js"
               ports:
                 - containerPort: 3000
                   protocol: TCP
