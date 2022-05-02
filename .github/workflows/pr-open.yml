@@ -384,9 +384,9 @@ jobs:
             || true && echo "No stale imagestreams"
 
           # Create frontend config (Remove the old one if exists)
-          oc delete configmap ${{ env.NAME }}-${{ github.event.number }}-frontend 2> /dev/null \
+          oc delete configmap ${{ env.NAME }}-prod-frontend 2> /dev/null \
             || true && echo "No existing frontend config"
-          oc create configmap ${{ env.NAME }}-${{ github.event.number }}-frontend --from-file=./frontend/src/configs/config.js
+          oc create configmap ${{ env.NAME }}-prod-frontend --from-file=./frontend/src/configs/config.js
 
           # Process and apply deployment templates
           oc process -f .github/openshift/deploy.database.yml -p ZONE=prod | oc apply -f -
