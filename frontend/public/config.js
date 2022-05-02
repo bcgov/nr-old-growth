@@ -2,7 +2,6 @@
 // Development builds and production builds using yarn build will still work using .env files
 const config = (() => {
   return {
-    // VITE_BACKEND_URL: '',
-    TEST: 123
+    VITE_BACKEND_URL: 'https://nrog-31-backend.apps.silver.devops.gov.bc.ca',
   };
 })();
