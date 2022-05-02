@@ -84,7 +84,7 @@ export default defineComponent({
 
       // test api call
       console.log("backend", import.meta.env.VITE_BACKEND_URL);
-      console.log("test", config.VITE_BACKEND_URL);
+      console.log("config backend", config.VITE_BACKEND_URL);
 
       const backend =
         config.VITE_BACKEND_URL || import.meta.env.VITE_BACKEND_URL;
