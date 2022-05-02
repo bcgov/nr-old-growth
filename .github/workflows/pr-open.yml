@@ -117,7 +117,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           context: ./frontend/
-          build-args: BACKEND_URL=https://${{ env.NAME }}-${{ github.event.number }}-backend.apps.silver.devops.gov.bc.ca
+          # build-args: BACKEND_URL=https://${{ env.NAME }}-${{ github.event.number }}-backend.apps.silver.devops.gov.bc.ca
           push: true
           tags: ${{ env.REGISTRY }}/${{ github.repository }}:${{ github.event.number }}-frontend
           cache-from: type=gha
@@ -279,6 +279,9 @@ jobs:
             || true && echo "No stale imagestreams"
           oc delete is/${{ env.NAME }}-${{ github.event.number }}-frontend 2> /dev/null \
             || true && echo "No stale imagestreams"
+
+          # Create frontend config
+          oc create configmap ${{ env.NAME }}-${{ github.event.number }}-frontend --from-literal=https://${{ env.NAME }}-${{ github.event.number }}-backend.apps.silver.devops.gov.bc.ca
 
           # Process and apply deployment templates
           oc process -f .github/openshift/deploy.database.yml -p ZONE=${{ github.event.number }} | oc apply -f -

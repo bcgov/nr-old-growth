@@ -6,7 +6,7 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // enable cors for localhost and our frontend
+  // enable cors for localhost, docker frontend and deploy frontend address
   const whitelist = [
     'http://localhost:8080',
     'http://localhost:3000',
@@ -31,17 +31,15 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, config);
 
-  SwaggerModule.setup('api', app, document);
-
-  // if (process.env.NODE_ENV && process.env.NODE_ENV === 'development') {
-  //   SwaggerModule.setup('api', app, document);
-  // } else {
-  //   SwaggerModule.setup('api', app, document, {
-  //     swaggerOptions: {
-  //       supportedSubmitMethods: [],
-  //     },
-  //   });
-  // }
+  if (process.env.NODE_ENV && process.env.NODE_ENV === 'development') {
+    SwaggerModule.setup('api', app, document);
+  } else {
+    SwaggerModule.setup('api', app, document, {
+      swaggerOptions: {
+        supportedSubmitMethods: [],
+      },
+    });
+  }
 
   await app.listen(3000);
 }

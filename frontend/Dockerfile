@@ -3,10 +3,10 @@ FROM registry.access.redhat.com/ubi8/ubi as builder
 RUN dnf module install -y nodejs:14
 
 # Install packages, build and keep only prod packages
-ARG BACKEND_URL
+# ARG BACKEND_URL
 WORKDIR /app
 COPY . ./
-ENV VITE_BACKEND_URL=$BACKEND_URL
+# ENV VITE_BACKEND_URL=$BACKEND_URL
 RUN npm ci --only=prod && \
     npm i vue-tsc && \
     npm run build && \

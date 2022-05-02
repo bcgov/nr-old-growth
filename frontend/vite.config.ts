@@ -17,19 +17,16 @@ export default defineConfig(({ command, mode }) => {
         "@": fileURLToPath(new URL("./src", import.meta.url)),
       },
     },
-    // test: {
-    //   globals: true,
-    // },
     server: {
       port: port,
-      proxy: {
-        "/api": {
-          target: env.VITE_BACKEND_URL || "http://localhost:3000/",
-          changeOrigin: true,
-          secure: false,
-          rewrite: (path) => path.replace(/^\/api/, ""),
-        },
-      },
+      // proxy: {
+      //   "/api": {
+      //     target: env.VITE_BACKEND_URL || "http://localhost:3000/",
+      //     changeOrigin: true,
+      //     secure: false,
+      //     rewrite: (path) => path.replace(/^\/api/, ""),
+      //   },
+      // },
     },
   };
 });
