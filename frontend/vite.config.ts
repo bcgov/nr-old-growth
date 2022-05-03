@@ -8,8 +8,6 @@ export default defineConfig(({ command, mode }) => {
   const env = loadEnv(mode, process.cwd());
   const port = parseInt(env.VITE_PORT || "8080");
 
-  console.log("env.VITE_BACKEND_URL", env.VITE_BACKEND_URL);
-
   return {
     plugins: [vue()],
     resolve: {
