@@ -14,11 +14,7 @@ async function bootstrap() {
   ];
   app.enableCors({
     origin: (origin, callback) => {
-      if (
-        !origin ||
-        whitelist.indexOf(origin) !== -1 ||
-        origin.substring(0, 12) == 'http://10.97.' // openshift readiness probe
-      ) {
+      if (!origin || whitelist.indexOf(origin) !== -1) {
         callback(null, true);
       } else {
         callback(new Error('Not allowed by CORS'));
