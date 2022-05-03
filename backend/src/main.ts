@@ -6,7 +6,7 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // enable cors for localhost, docker frontend and deploy frontend address
+  // enable cors for localhost, local build, docker frontend and deploied frontend address
   const whitelist = [
     'http://localhost:8080',
     'http://localhost:3000',

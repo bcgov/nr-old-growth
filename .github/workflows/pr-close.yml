@@ -10,7 +10,7 @@ on:
 
 env:
   NAME: nrog
-  REPONAME: nr-old-growth-integration
+  REPONAME: nr-old-growth
 
 jobs:
   cleanup-openshift:
