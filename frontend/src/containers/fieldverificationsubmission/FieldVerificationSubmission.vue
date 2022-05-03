@@ -27,10 +27,12 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import html2pdf from "html2pdf.js";
+import axios from "axios";
 import LicenseeSection from "./LicenseeSection.vue";
 import SubmitterSection from "./SubmitterSection.vue";
 import TenureSection from "./TenureSection.vue";
 import AttachSection from "./AttachSection.vue";
+import { getClient } from "../../api/OldGrowthRequest";
 
 import {
   licenseeData,
@@ -74,17 +76,15 @@ export default defineComponent({
       html2pdf()
         .from(element)
         .toPdf()
-        // .output("datauristring")
-        // .then(function (pdfAsString: string) {
-        //   // The PDF has been converted to a Data URI string and passed to this function.
-        //   // Use pdfAsString however you like (send as email, etc)! For instance:
-        //   console.log("doc", pdfAsString);
-        // });
-        .get("pdf")
-        .then(function (pdf: object) {
-          // Use the pdf object as desired, e.g.:
-          console.log(pdf);
+        .output("datauristring")
+        .then(function (pdfAsString: string) {
+          // The PDF has been converted to a Data URI string and passed to this function.
+          // Use pdfAsString however you like (send as email, etc)! For instance:
+          console.log("doc", pdfAsString);
         });
+
+      // test api call
+      getClient();
 
       // // if want to access the form data, could just read by
       //console.log("form data licensee section", this.tenureGridData);

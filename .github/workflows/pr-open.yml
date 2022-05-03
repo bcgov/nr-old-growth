@@ -279,6 +279,12 @@ jobs:
           oc delete is/${{ env.NAME }}-${{ github.event.number }}-frontend 2> /dev/null \
             || true && echo "No stale imagestreams"
 
+          # Create frontend config (Remove the old one if exists)
+          oc delete configmap ${{ env.NAME }}-${{ github.event.number }}-frontend 2> /dev/null \
+            || true && echo "No existing frontend config"
+          oc create configmap ${{ env.NAME }}-${{ github.event.number }}-frontend  \
+            --from-literal=config.js="const config = (() => { return { VITE_BACKEND_URL: 'https://${{ env.NAME }}-${{ github.event.number }}-backend.apps.silver.devops.gov.bc.ca'}; })();"
+
           # Process and apply deployment templates
           oc process -f .github/openshift/deploy.database.yml -p ZONE=${{ github.event.number }} | oc apply -f -
           oc process -f .github/openshift/deploy.backend.yml -p ZONE=${{ github.event.number }} \
@@ -376,6 +382,12 @@ jobs:
             || true && echo "No stale imagestreams"
           oc delete is/${{ env.NAME }}-prod-frontend 2> /dev/null \
             || true && echo "No stale imagestreams"
+
+          # Create frontend config (Remove the old one if exists)
+          oc delete configmap ${{ env.NAME }}-prod-frontend 2> /dev/null \
+            || true && echo "No existing frontend config"
+           oc create configmap ${{ env.NAME }}-prod-frontend  \
+            --from-literal=config.js="const config = (() => { return { VITE_BACKEND_URL: 'https://${{ env.NAME }}-prod-backend.apps.silver.devops.gov.bc.ca'}; })();"
 
           # Process and apply deployment templates
           oc process -f .github/openshift/deploy.database.yml -p ZONE=prod | oc apply -f -

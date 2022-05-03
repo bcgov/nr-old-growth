@@ -101,6 +101,8 @@ objects:
                     secretKeyRef:
                       name: ${NAME}-${ZONE}-database
                       key: database-user
+                - name: FRONTEND_URL
+                  value: https://${NAME}-${ZONE}-frontend.${DOMAIN}
               ports:
                 - containerPort: 3000
                   protocol: TCP
