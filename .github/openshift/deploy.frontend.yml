@@ -79,13 +79,18 @@ objects:
             app: ${NAME}-${ZONE}
             deploymentconfig: ${NAME}-${ZONE}-${COMPONENT}
         spec:
+          volumes:
+            - name: ${NAME}-${ZONE}-${COMPONENT}-config-volume
+              configMap:
+                name: ${NAME}-${ZONE}-${COMPONENT}
           containers:
             - image: ${NAME}-${ZONE}-${COMPONENT}:${IMAGE_TAG}
               imagePullPolicy: Always
               name: ${NAME}
-              env:
-                - name: VITE_BACKEND_URL
-                  value: https://${NAME}-${ZONE}-backend.${DOMAIN}
+              volumeMounts:
+                - name: ${NAME}-${ZONE}-${COMPONENT}-config-volume
+                  mountPath: "/app/dist/config.js"
+                  subPath: config.js
               ports:
                 - containerPort: 3000
                   protocol: TCP
