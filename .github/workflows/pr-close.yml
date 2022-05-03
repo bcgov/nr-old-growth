@@ -26,6 +26,7 @@ jobs:
           oc project ${{ secrets.NAMESPACE }}
           # Remove old build runs, build pods and deployment pods
           oc delete all,pvc,secret -l app=${{ env.NAME }}-${{ github.event.number }}
+          oc delete configmap ${{ env.NAME }}-${{ github.event.number }}-frontend
   cleanup-ghcr:
     name: Cleanup ghcr.io
     runs-on: ubuntu-latest
