@@ -6,7 +6,7 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // enable cors for localhost, docker frontend and deploy frontend address
+  // enable cors for localhost, local build, docker frontend and deploied frontend address
   const whitelist = [
     'http://localhost:8080',
     'http://localhost:3000',
@@ -14,7 +14,11 @@ async function bootstrap() {
   ];
   app.enableCors({
     origin: (origin, callback) => {
-      if (!origin || whitelist.indexOf(origin) !== -1) {
+      if (
+        !origin ||
+        whitelist.indexOf(origin) !== -1 ||
+        origin.substring(0, 12) == 'http://10.97.' // openshift readiness probe
+      ) {
         callback(null, true);
       } else {
         callback(new Error('Not allowed by CORS'));
