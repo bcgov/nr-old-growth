@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ClientModule } from './client/client.module';
+import { NaturalResourceDistModule } from './naturalresourcedist/naturalResourceDist.module';
 
 @Module({
   imports: [
@@ -16,9 +17,10 @@ import { ClientModule } from './client/client.module';
       username: process.env.POSTGRESQL_USER || 'postgres',
       password: process.env.POSTGRESQL_PASSWORD,
       autoLoadEntities: true, // Auto load all entities regiestered by typeorm forFeature method.
-      synchronize: true, // This changes the DB schema to match changes to entities, which we might not want.
+      synchronize: false, // This changes the DB schema to match changes to entities, which we might not want.
     }),
     ClientModule,
+    NaturalResourceDistModule,
   ],
   controllers: [AppController],
   providers: [AppService],
