@@ -33,6 +33,7 @@ import SubmitterSection from "./SubmitterSection.vue";
 import TenureSection from "./TenureSection.vue";
 import AttachSection from "./AttachSection.vue";
 import { getClient } from "../../api/OldGrowthRequest";
+import type { CodeDescr } from "../../helpers/CodeDescr";
 
 import {
   licenseeData,
@@ -89,6 +90,15 @@ export default defineComponent({
       // // if want to access the form data, could just read by
       //console.log("form data licensee section", this.tenureGridData);
     },
+    getNaturalResourceDistricts() {
+      let nrdCodes: CodeDescr[] = [];      
+      nrdCodes.push({value: '1', text: 'Mayis'}, {value: '2', text: 'Isabella'});
+      
+      this.tenureSelectData.options = nrdCodes;
+  }
+  },
+  beforeMount(){
+    this.getNaturalResourceDistricts();
   },
 });
 </script>
