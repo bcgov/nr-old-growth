@@ -1,11 +1,12 @@
 import {
+  BaseEntity,
     Column,
     Entity,
     PrimaryGeneratedColumn,
   } from 'typeorm';
   
 @Entity({ name: 'natural_resource_dist'})
-export class NaturalResourceDistEntity {
+export class NaturalResourceDistEntity extends BaseEntity {
 
   @PrimaryGeneratedColumn({ name: "natural_resource_dist_code" })
   code: string;
