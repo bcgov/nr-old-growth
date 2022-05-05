@@ -1,4 +1,4 @@
-export interface CodeDescr {
+export class CodeDescr {
     value?: string;
     text?: string;
 }
