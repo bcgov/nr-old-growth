@@ -11,7 +11,7 @@
           :selectData="tenureSelectData"
           :gridData="tenureGridData"
         />
-        <AttachSection :files="attachmentData" />
+        <AttachSection />
       </div>
     </div>
     <b-button
@@ -27,7 +27,6 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import html2pdf from "html2pdf.js";
-import axios from "axios";
 import LicenseeSection from "./LicenseeSection.vue";
 import SubmitterSection from "./SubmitterSection.vue";
 import TenureSection from "./TenureSection.vue";
@@ -56,7 +55,6 @@ export default defineComponent({
       tenureInputData,
       tenureSelectData,
       tenureGridData,
-      attachmentData: [],
     };
   },
   methods: {
