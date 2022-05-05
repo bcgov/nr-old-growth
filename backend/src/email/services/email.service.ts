@@ -29,13 +29,13 @@ export class EmailService {
   }
 
   create(email: EmailEntity) {
-    const email_subject = 'TEST Old Growth Email';
+    const email_subject = 'Field verification submission';
     const email_tag = 'field_verification_email'; // might link this tag to the submission id
     const email_type = 'text';
 
     if (
       !process.env.EMAIL_TOKEN_URL ||
-      !process.env.EMAIL_POST_URL ||
+      !process.env.EMAIL_API_URL ||
       !process.env.EMAIL_FROM
     ) {
       throw new HttpException(
@@ -56,7 +56,7 @@ export class EmailService {
         if (access_token) {
           return this.httpService
             .post(
-              process.env.EMAIL_POST_URL,
+              `${process.env.EMAIL_API_URL}/email`,
               {
                 bcc: [],
                 bodyType: email_type,

@@ -85,7 +85,7 @@ export default defineComponent({
             }
           }
 
-          if (fileContent !== "" && import.meta.env.VITE_EMAIL_TO) {
+          if (fileContent !== "") {
             sendEmail(
               "Hello there, attached is a field verification application form",
               [
@@ -96,7 +96,7 @@ export default defineComponent({
                   filename: "field_verification_form.pdf",
                 },
               ],
-              [import.meta.env.VITE_EMAIL_TO]
+              ["catherine.meng@gov.bc.ca"]
             );
           } else {
             console.log("Failed to convert webform to pdf");

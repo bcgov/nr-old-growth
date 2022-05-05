@@ -19,7 +19,7 @@ async function bootstrap() {
     },
   });
 
-  app.use(bodyParser.json({ limit: '20mb' }));
+  app.use(bodyParser.json({ limit: '100mb' }));
 
   const config = new DocumentBuilder()
     .setTitle('DB example')
