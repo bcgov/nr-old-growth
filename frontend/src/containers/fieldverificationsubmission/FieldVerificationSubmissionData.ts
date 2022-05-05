@@ -1,41 +1,32 @@
-export const licenseeData = [
+export const contactData = [
   {
-    label: "Licensee or agreement holder",
+    label: "Licensee, agreement holder, or BCTS office",
     id: "licensee_name",
     modelValue: "",
-    note: "Enter the licensee or agreement holder",
+    required: true,
   },
   {
-    label: "Address",
-    id: "licensee_address",
+    label: "Submitter fist name",
+    id: "submitter_firstname",
     modelValue: "",
   },
   {
-    label: "City/Town",
-    id: "licensee_city",
+    label: "Submitter last name",
+    id: "submitter_lastname",
     modelValue: "",
+    required: true,
   },
   {
-    label: "Province",
-    id: "licensee_province",
+    label: "Submitter phone number",
+    id: "submitter_phone",
     modelValue: "",
+    required: true,
   },
   {
-    label: "Postal code",
-    id: "licensee_postal_code",
+    label: "Submitter email",
+    id: "submitter_email",
     modelValue: "",
-  },
-  {
-    label: "Phone number",
-    id: "licensee_phone",
-    modelValue: "",
-    note: "Licensee or agreement holder's phone number",
-  },
-  {
-    label: "Email",
-    id: "licensee_email",
-    modelValue: "",
-    note: "Licensee or agreement holder's email",
+    required: true,
   },
 ];
 

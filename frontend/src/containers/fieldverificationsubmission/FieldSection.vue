@@ -1,7 +1,9 @@
 <template>
   <CollapseCard
-    title="Tenure details, defferal mapping and field observations"
-    id="form-tenure"
+    title="Field observations"
+    id="form-field"
+    nextId="header-form-attachment"
+    nextText="Attach Files"
   >
     <FormSelect
       :label="selectData.label"

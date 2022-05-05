@@ -1,12 +1,11 @@
 <template>
   <div id="form-container">
     <div id="pdf-form-div" style="margin: 40px">
-      <h4 style="margin-bottom: 8px">Field Verification submission form</h4>
-      <p style="color: gray; margin-bottom: 24">All fields are mandatory</p>
+      <h4 style="margin-bottom: 24px">Field Verification submission form</h4>
       <div class="accordion" role="tablist">
-        <LicenseeSection :data="licenseeData" />
-        <SubmitterSection :data="submitterData" />
-        <TenureSection
+        <InstructionSection />
+        <ContactSection :data="contactData" />
+        <FieldSection
           :inputData="tenureInputData"
           :selectData="tenureSelectData"
           :gridData="tenureGridData"
@@ -27,14 +26,14 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import html2pdf from "html2pdf.js";
-import LicenseeSection from "./LicenseeSection.vue";
-import SubmitterSection from "./SubmitterSection.vue";
-import TenureSection from "./TenureSection.vue";
+import InstructionSection from "./InstructionSection.vue";
+import ContactSection from "./ContactSection.vue";
+import FieldSection from "./FieldSection.vue";
 import AttachSection from "./AttachSection.vue";
 import { getClient, sendEmail } from "../../api/OldGrowthRequest";
 
 import {
-  licenseeData,
+  contactData,
   submitterData,
   tenureInputData,
   tenureSelectData,
@@ -43,14 +42,14 @@ import {
 
 export default defineComponent({
   components: {
-    LicenseeSection,
-    SubmitterSection,
-    TenureSection,
+    InstructionSection,
+    ContactSection,
+    FieldSection,
     AttachSection,
   },
   data() {
     return {
-      licenseeData,
+      contactData,
       submitterData,
       tenureInputData,
       tenureSelectData,
@@ -62,10 +61,10 @@ export default defineComponent({
       var element = document.getElementById("pdf-form-div");
 
       // display all the hidden content
-      document.getElementById("form-licensee")!.classList.add("show");
-      document.getElementById("form-submitter")!.classList.add("show");
-      document.getElementById("form-tenure")!.classList.add("show");
-      document.getElementById("form-attachment")!.classList.add("show");
+      document.getElementById("header-form-licensee")!.click();
+      document.getElementById("header-form-submitter")!.click();
+      document.getElementById("header-form-tenure")!.click();
+      document.getElementById("header-form-attachment")!.click();
 
       // save pdf web form to a variable
       html2pdf()
@@ -83,22 +82,22 @@ export default defineComponent({
             }
           }
 
-          if (fileContent !== "") {
-            sendEmail(
-              "Hello there, attached is a field verification application form",
-              [
-                {
-                  content: fileContent,
-                  contentType: "application/pdf",
-                  encoding: "base64",
-                  filename: "field_verification_form.pdf",
-                },
-              ],
-              ["catherine.meng@gov.bc.ca"]
-            );
-          } else {
-            console.log("Failed to convert webform to pdf");
-          }
+          // if (fileContent !== "") {
+          //   sendEmail(
+          //     "An Old Growth Field Observation form and package is attached.",
+          //     [
+          //       {
+          //         content: fileContent,
+          //         contentType: "application/pdf",
+          //         encoding: "base64",
+          //         filename: "field_verification_form.pdf",
+          //       },
+          //     ],
+          //     ["catherine.meng@gov.bc.ca"]
+          //   );
+          // } else {
+          //   console.log("Failed to convert webform to pdf");
+          // }
         });
 
       // test api call

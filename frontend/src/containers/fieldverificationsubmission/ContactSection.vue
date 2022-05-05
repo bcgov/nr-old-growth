@@ -1,5 +1,10 @@
 <template>
-  <CollapseCard title="Submitter details" id="form-submitter">
+  <CollapseCard
+    title="Contact information"
+    id="form-contact"
+    nextId="header-form-field"
+    nextText="Enter Field Oberservation Data"
+  >
     <FormInput
       v-for="row in data"
       :key="row.id"

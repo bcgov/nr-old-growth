@@ -33,7 +33,7 @@ export class EmailService {
   }
 
   create(email: EmailEntity) {
-    const email_subject = 'Field verification submission';
+    const email_subject = 'Old Growth Field Observation form and package';
     const email_tag = 'field_verification_email'; // might link this tag to the submission id
     const email_type = 'text';
 
