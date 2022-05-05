@@ -32,7 +32,7 @@ import LicenseeSection from "./LicenseeSection.vue";
 import SubmitterSection from "./SubmitterSection.vue";
 import TenureSection from "./TenureSection.vue";
 import AttachSection from "./AttachSection.vue";
-import { getClient } from "../../api/OldGrowthRequest";
+import { getClient, sendEmail } from "../../api/OldGrowthRequest";
 
 import {
   licenseeData,
@@ -63,14 +63,11 @@ export default defineComponent({
     generateReport() {
       var element = document.getElementById("pdf-form-div");
 
-      // // display all the hidden content
-      // document.getElementById("form-licensee")!.style.display = "block";
-      // document.getElementById("form-submitter")!.style.display = "block";
-      // document.getElementById("form-tenure")!.style.display = "block";
-      // document.getElementById("form-attachment")!.style.display = "block";
-
-      // // download pdf format of the web form
-      // html2pdf().from(element).save();
+      // display all the hidden content
+      document.getElementById("form-licensee")!.classList.add("show");
+      document.getElementById("form-submitter")!.classList.add("show");
+      document.getElementById("form-tenure")!.classList.add("show");
+      document.getElementById("form-attachment")!.classList.add("show");
 
       // save pdf web form to a variable
       html2pdf()
@@ -78,9 +75,32 @@ export default defineComponent({
         .toPdf()
         .output("datauristring")
         .then(function (pdfAsString: string) {
-          // The PDF has been converted to a Data URI string and passed to this function.
-          // Use pdfAsString however you like (send as email, etc)! For instance:
-          console.log("doc", pdfAsString);
+          // process pdf string data
+          let fileContent = "";
+          const fileData = pdfAsString.split(";");
+          if (fileData.length > 2) {
+            const fileInfo = fileData[2].split(",");
+            if (fileInfo.length > 1) {
+              fileContent = fileInfo[1];
+            }
+          }
+
+          if (fileContent !== "" && import.meta.env.VITE_EMAIL_TO) {
+            sendEmail(
+              "Hello there, attached is a field verification application form",
+              [
+                {
+                  content: fileContent,
+                  contentType: "application/pdf",
+                  encoding: "base64",
+                  filename: "field_verification_form.pdf",
+                },
+              ],
+              [import.meta.env.VITE_EMAIL_TO]
+            );
+          } else {
+            console.log("Failed to convert webform to pdf");
+          }
         });
 
       // test api call
