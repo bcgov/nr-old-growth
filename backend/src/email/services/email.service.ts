@@ -1,8 +1,8 @@
-import { Injectable, HttpException } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import axios from 'axios';
 import { map, catchError } from 'rxjs/operators';
-import { CreateEmailDto } from '../dto/create-email.dto';
+import { EmailEntity } from '../model/email.entity';
 
 @Injectable()
 export class EmailService {
@@ -28,61 +28,71 @@ export class EmailService {
       });
   }
 
-  create(email: CreateEmailDto) {
-    const email_to = ['catherine.meng@gov.bc.ca'];
+  create(email: EmailEntity) {
     const email_subject = 'TEST Old Growth Email';
     const email_tag = 'field_verification_email'; // might link this tag to the submission id
     const email_type = 'text';
 
-    if (process.env.EMAIL_TOKEN_URL && process.env.EMAIL_SEND_URL) {
-      return this.getToken()
-        .then((access_token) => {
-          if (access_token) {
-            return this.httpService
-              .post(
-                process.env.EMAIL_SEND_URL,
-                {
-                  bcc: [],
-                  bodyType: email_type,
-                  body: email.emailBody || 'Hello World',
-                  cc: [],
-                  delayTS: 0,
-                  encoding: 'utf-8',
-                  from: process.env.EMAIL_FROM,
-                  priority: 'normal',
-                  subject: email_subject,
-                  to: email_to,
-                  tag: email_tag,
-                  attachments: email.emailAttachments || [],
-                },
-                {
-                  headers: { Authorization: `Bearer ${access_token}` },
-                },
-              )
-              .pipe(
-                map((r) => {
-                  return [true, r.data];
-                }),
-              )
-              .pipe(
-                catchError((e) => {
-                  throw new HttpException(e.response.data, e.response.status);
-                }),
-              );
-          }
-          return [
-            false,
-            'Failed to send email, failed to get the authentication token',
-          ];
-        })
-        .catch((e) => {
-          throw new HttpException(e.response.data, e.response.status);
-        });
+    if (
+      !process.env.EMAIL_TOKEN_URL ||
+      !process.env.EMAIL_POST_URL ||
+      !process.env.EMAIL_FROM
+    ) {
+      throw new HttpException(
+        'Failed to send email, server side missing config of authentication url or CHES email server url or from email address or to email address',
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
-    return [
-      false,
-      'Failed to send email, missing authentication url or CHES email server url',
-    ];
+    if (!email.emailTo) {
+      throw new HttpException(
+        'Failed to send email, missing required emailTo parameter',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    return this.getToken()
+      .then((access_token) => {
+        if (access_token) {
+          return this.httpService
+            .post(
+              process.env.EMAIL_POST_URL,
+              {
+                bcc: [],
+                bodyType: email_type,
+                body: email.emailBody || 'Hello World',
+                cc: [],
+                delayTS: 0,
+                encoding: 'utf-8',
+                from: process.env.EMAIL_FROM,
+                priority: 'normal',
+                subject: email_subject,
+                to: email.emailTo,
+                tag: email_tag,
+                attachments: email.emailAttachments || [],
+              },
+              {
+                headers: { Authorization: `Bearer ${access_token}` },
+              },
+            )
+            .pipe(
+              map((r) => {
+                return { status: r.status, data: r.data };
+              }),
+            )
+            .pipe(
+              catchError((e) => {
+                throw new HttpException(e.response.data, e.response.status);
+              }),
+            );
+        }
+        throw new HttpException(
+          'Failed to send email, failed to get the authentication token',
+          HttpStatus.BAD_REQUEST,
+        );
+      })
+      .catch((e) => {
+        throw new HttpException(e.response.data, e.response.status);
+      });
   }
 }

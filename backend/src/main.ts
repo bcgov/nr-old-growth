@@ -1,17 +1,14 @@
-import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
+import * as bodyParser from 'body-parser';
+import 'dotenv/config';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // enable cors for localhost, local build, docker frontend and deploied frontend address
-  const whitelist = [
-    'http://localhost:8080',
-    'http://localhost:3000',
-    process.env.FRONTEND_URL,
-  ];
+  // enable cors only for frontend address
+  const whitelist = [process.env.FRONTEND_URL];
   app.enableCors({
     origin: (origin, callback) => {
       if (!origin || whitelist.indexOf(origin) !== -1) {
@@ -21,6 +18,8 @@ async function bootstrap() {
       }
     },
   });
+
+  app.use(bodyParser.json({ limit: '20mb' }));
 
   const config = new DocumentBuilder()
     .setTitle('DB example')
