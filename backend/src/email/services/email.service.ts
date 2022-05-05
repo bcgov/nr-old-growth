@@ -24,7 +24,7 @@ export class EmailService {
         return null;
       })
       .catch((e) => {
-        console.log('token error', e.response);
+        console.log('token error', e);
         throw new HttpException(
           `Failed to get token, ${e.response.data}`,
           e.response.status,
