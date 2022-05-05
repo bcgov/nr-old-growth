@@ -34,7 +34,6 @@ import TenureSection from "./TenureSection.vue";
 import AttachSection from "./AttachSection.vue";
 import { backendUrl } from "../../coretypes/AppType";
 import { CodeDescr } from "../../coretypes/CodeDescrType";
-import { getClient } from "../../api/OldGrowthRequest";
 
 import {
   licenseeData,
@@ -84,9 +83,6 @@ export default defineComponent({
           // Use pdfAsString however you like (send as email, etc)! For instance:
           console.log("doc", pdfAsString);
         });
-
-      // test api call
-      getClient();
 
       // // if want to access the form data, could just read by
       //console.log("form data licensee section", this.tenureGridData);
