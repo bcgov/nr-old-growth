@@ -20,12 +20,11 @@ export class EmailService {
         },
       })
       .then((res) => {
-        console.log('res', res);
         if (res && res.data.access_token) return res.data.access_token;
         return null;
       })
       .catch((e) => {
-        console.log('token error', e);
+        console.log('token error', e.response);
         throw new HttpException(
           `Failed to get token, ${e.response.data}`,
           e.response.status,
