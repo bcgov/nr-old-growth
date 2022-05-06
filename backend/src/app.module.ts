@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { NaturalResourceDistModule } from './naturalresourcedist/naturalResourceDist.module';
+import { EmailModule } from './email/email.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { NaturalResourceDistModule } from './naturalresourcedist/naturalResource
       synchronize: false, // This changes the DB schema to match changes to entities, which we might not want.
     }),
     NaturalResourceDistModule,
+    EmailModule,
   ],
   controllers: [AppController],
   providers: [AppService],

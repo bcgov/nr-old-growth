@@ -18,7 +18,7 @@
       :key="'file' + index"
       style="margin-top: 16px"
     >
-      File: {{ file.name }} Uploaded successfully
+      File: {{ file.filename }} Uploaded successfully
       <b-button
         variant="outline-primary"
         class="btn-sm"
@@ -32,10 +32,11 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
+import { store } from "../helpers/AppState";
 import FormFieldTemplate from "./FormFieldTemplate.vue";
 
 export default defineComponent({
-  name: "FormInput",
+  name: "FormUpload",
   components: {
     FormFieldTemplate,
   },
@@ -57,32 +58,56 @@ export default defineComponent({
       type: String,
       default: "",
     },
-    // files data got from parent component through v-model
-    modelValue: Array as Proptype<Array<File>>,
   },
   data() {
     return {
-      rows: [] as Array<File>,
+      rows: store.formUploadFiles,
     };
   },
   methods: {
     handleChange(e: Event | any) {
-      // const newModelValue = this.modelValue;
       if (e.target.files && e.target.files) {
-        console.log("e", e.target.files);
         e.target.files.forEach((f: File) => {
-          // console.log(f);
-          // newModelValue.push(f);
-          this.rows.push(f);
+          this.getBase64(f).then((data) => {
+            const formattedFile = this.formatFileData(data);
+            if (formattedFile) {
+              this.rows.push({
+                ...formattedFile,
+                filename: f.name,
+              });
+            }
+          });
         });
       }
-      // console.log("newModelValue", newModelValue);
-      console.log("this.rows", this.rows);
-      // this.$emit("update:modelValue", newModelValue);
+      store.updateFormUploadFiles(this.rows);
     },
     deleteFile(index: number) {
       const newRows = this.rows.filter((m, i) => i !== index);
       this.rows = newRows;
+      store.updateFormUploadFiles(this.rows);
+    },
+    getBase64(file: File) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = (error) => reject(error);
+      });
+    },
+    formatFileData(filestring: string) {
+      const fileData = filestring.split(";");
+      if (fileData.length > 1) {
+        const fileType = fileData[0].split(":")[1];
+        const fileEncode = fileData[1].split(",")[0];
+        const fileContent = fileData[1].split(",")[1];
+
+        return {
+          content: fileContent,
+          contentType: fileType,
+          encoding: fileEncode,
+        };
+      }
+      return null;
     },
   },
 });
