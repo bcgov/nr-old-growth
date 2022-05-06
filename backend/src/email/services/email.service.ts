@@ -4,36 +4,49 @@ import axios from 'axios';
 import { map, catchError } from 'rxjs/operators';
 import { EmailEntity } from '../model/email.entity';
 
+const oauth = require('axios-oauth-client');
+
 @Injectable()
 export class EmailService {
   constructor(private httpService: HttpService) {}
 
   getToken() {
-    return axios
-      .post(
-        process.env.EMAIL_TOKEN_URL,
-        `grant_type=client_credentials&client_id=${process.env.EMAIL_USERNAME}&client_secret=${process.env.EMAIL_PASSWORD}`,
-        {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          // auth: {
-          //   username: process.env.EMAIL_USERNAME,
-          //   password: process.env.EMAIL_PASSWORD,
-          // },
-        },
-      )
-      .then((res) => {
-        if (res && res.data.access_token) return res.data.access_token;
-        return null;
-      })
-      .catch((e) => {
-        console.log('token error', e);
-        throw new HttpException(
-          `Failed to get token, ${e.response.data}`,
-          e.response.status,
-        );
-      });
+    const getClientCredentials = oauth.client(axios.create(), {
+      url: process.env.EMAIL_TOKEN_URL,
+      grant_type: 'client_credentials',
+      client_id: process.env.EMAIL_USERNAME,
+      client_secret: process.env.EMAIL_PASSWORD,
+      scope: '',
+    });
+
+    return getClientCredentials().then((res) => {
+      if (res) return res.access_token;
+    });
+    // return axios
+    //   .post(
+    //     process.env.EMAIL_TOKEN_URL,
+    //     `grant_type=client_credentials&client_id=${process.env.EMAIL_USERNAME}&client_secret=${process.env.EMAIL_PASSWORD}&scope=""`,
+    //     {
+    //       headers: {
+    //         'Content-Type': 'application/x-www-form-urlencoded',
+    //       },
+    //       // auth: {
+    //       //   username: process.env.EMAIL_USERNAME,
+    //       //   password: process.env.EMAIL_PASSWORD,
+    //       // },
+    //     },
+    //   )
+    //   .then((res) => {
+    //     if (res && res.data.access_token) return res.data.access_token;
+    //     return null;
+    //   })
+    //   .catch((e) => {
+    //     console.log('token error', e);
+    //     throw new HttpException(
+    //       `Failed to get token, ${e.response.data}`,
+    //       e.response.status,
+    //     );
+    //   });
   }
 
   create(email: EmailEntity) {
@@ -61,6 +74,7 @@ export class EmailService {
 
     return this.getToken()
       .then((access_token) => {
+        console.log('access_token', access_token);
         if (access_token) {
           return this.httpService
             .post(

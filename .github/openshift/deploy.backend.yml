@@ -127,6 +127,8 @@ objects:
                       key: database-user
                 - name: FRONTEND_URL
                   value: https://${NAME}-${ZONE}-frontend.${DOMAIN}
+                - name: BACKEND_URL
+                  value: https://${NAME}-${ZONE}-backend.${DOMAIN}
                 - name: EMAIL_USERNAME
                   valueFrom:
                     secretKeyRef:
@@ -145,6 +147,7 @@ objects:
                   value: "FSA_donotreply@gov.bc.ca"
                 - name: NODE_ENV
                   value: ${NODE_ENV}
+
               ports:
                 - containerPort: 3000
                   protocol: TCP
