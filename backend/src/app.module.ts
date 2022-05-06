@@ -3,7 +3,6 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { ClientModule } from './client/client.module';
 import { NaturalResourceDistModule } from './naturalresourcedist/naturalResourceDist.module';
 
 @Module({
@@ -19,7 +18,6 @@ import { NaturalResourceDistModule } from './naturalresourcedist/naturalResource
       autoLoadEntities: true, // Auto load all entities regiestered by typeorm forFeature method.
       synchronize: false, // This changes the DB schema to match changes to entities, which we might not want.
     }),
-    ClientModule,
     NaturalResourceDistModule,
   ],
   controllers: [AppController],

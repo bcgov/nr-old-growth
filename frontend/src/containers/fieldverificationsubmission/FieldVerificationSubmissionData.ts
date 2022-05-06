@@ -83,11 +83,8 @@ export const tenureSelectData = {
   id: "natural_resource_distrct",
   modelValue: "",
   note: "Select the district",
-  // options need to be in the format of [{value:"", text:""}]
-  //TODO: Make it dynamic, not hard-coded
   options: [
-    { value: "a", text: "First option" },
-    { value: "b", text: "Selected Option" },
+    //i.e.: { value: "a", text: "First option" },
   ],
 };
 
@@ -115,9 +112,9 @@ export const tenureGridData = {
       type: "checkbox",
       //TODO: Make it dynamic, not hard-coded
       options: [
-        { label: "Big Tree", value: "big_tree" },
-        { label: "Ancient", value: "ancient" },
-        { label: "Remnant", value: "remnant" },
+        { text: "Big Tree", value: "big_tree" },
+        { text: "Ancient", value: "ancient" },
+        { text: "Remnant", value: "remnant" },
       ],
     },
     {

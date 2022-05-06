@@ -32,7 +32,8 @@ import LicenseeSection from "./LicenseeSection.vue";
 import SubmitterSection from "./SubmitterSection.vue";
 import TenureSection from "./TenureSection.vue";
 import AttachSection from "./AttachSection.vue";
-import { getClient } from "../../api/OldGrowthRequest";
+import { backendUrl } from "../../coretypes/AppType";
+import { CodeDescr } from "../../coretypes/CodeDescrType";
 
 import {
   licenseeData,
@@ -83,12 +84,28 @@ export default defineComponent({
           console.log("doc", pdfAsString);
         });
 
-      // test api call
-      getClient();
-
       // // if want to access the form data, could just read by
       //console.log("form data licensee section", this.tenureGridData);
     },
+    getNaturalResourceDistricts() {
+      axios.get(backendUrl + "/naturalResourceDist").then((response) => {
+        let naturalResourceDistCodes: CodeDescr[] = [];
+
+        //console.log("response: ", response.data);
+
+        Object.keys(response.data).forEach((key) => {
+          let nrd = new CodeDescr();
+          nrd.value = response.data[key].code;
+          nrd.text = response.data[key].description;
+          naturalResourceDistCodes.push(nrd);
+        });
+
+        this.tenureSelectData.options = naturalResourceDistCodes;
+      });
+    },
+  },
+  beforeMount() {
+    this.getNaturalResourceDistricts();
   },
 });
 </script>
