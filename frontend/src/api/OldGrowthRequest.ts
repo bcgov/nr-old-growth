@@ -2,12 +2,6 @@ import axios from "axios";
 
 const backendUrl = config.VITE_BACKEND_URL || import.meta.env.VITE_BACKEND_URL;
 
-export const getClient = () => {
-  axios.get(`${backendUrl}/client`).then((response) => {
-    console.log("client", response.data);
-  });
-};
-
 export const sendEmail = (
   emailBody: string,
   emailAttachments: Array<{
