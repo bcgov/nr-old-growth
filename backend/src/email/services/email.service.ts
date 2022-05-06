@@ -10,15 +10,19 @@ export class EmailService {
 
   getToken() {
     return axios
-      .post(process.env.EMAIL_TOKEN_URL, 'grant_type=client_credentials', {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
+      .post(
+        process.env.EMAIL_TOKEN_URL,
+        `grant_type=client_credentials&client_id=${process.env.EMAIL_USERNAME}&client_secret=${process.env.EMAIL_PASSWORD}`,
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          // auth: {
+          //   username: process.env.EMAIL_USERNAME,
+          //   password: process.env.EMAIL_PASSWORD,
+          // },
         },
-        auth: {
-          username: process.env.EMAIL_USERNAME,
-          password: process.env.EMAIL_PASSWORD,
-        },
-      })
+      )
       .then((res) => {
         if (res && res.data.access_token) return res.data.access_token;
         return null;
