@@ -91,8 +91,6 @@ export default defineComponent({
       axios.get(backendUrl + "/naturalResourceDist").then((response) => {
         let naturalResourceDistCodes: CodeDescr[] = [];
 
-        //console.log("response: ", response.data);
-
         Object.keys(response.data).forEach((key) => {
           let nrd = new CodeDescr();
           nrd.value = response.data[key].code;
