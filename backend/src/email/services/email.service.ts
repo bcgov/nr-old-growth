@@ -22,15 +22,11 @@ export class EmailService {
 
     return getClientCredentials()
       .then((res) => {
-        console.log('res', res);
         if (res) return res.access_token;
       })
       .catch((e) => {
         console.log('token error', e);
-        throw new HttpException(
-          `Failed to get token, ${e.response.data}`,
-          e.response.status,
-        );
+        throw new HttpException(e, HttpStatus.INTERNAL_SERVER_ERROR);
       });
     // return axios
     //   .post(
@@ -114,8 +110,7 @@ export class EmailService {
             )
             .pipe(
               catchError((e) => {
-                console.log('email e', e);
-                throw new HttpException(e.response.data, e.response.status);
+                throw new HttpException(e, HttpStatus.INTERNAL_SERVER_ERROR);
               }),
             );
         }
@@ -125,8 +120,7 @@ export class EmailService {
         );
       })
       .catch((e) => {
-        console.log('email token e', e);
-        throw new HttpException(e.response.data, e.response.status);
+        throw new HttpException(e, HttpStatus.INTERNAL_SERVER_ERROR);
       });
   }
 }
