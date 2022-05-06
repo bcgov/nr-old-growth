@@ -19,4 +19,8 @@ export const store = reactive({
   ) {
     this.formUploadFiles = newFile;
   },
+  testEmail: "" as String,
+  updateTestEmail(newValue: String) {
+    this.testEmail = newValue;
+  },
 });

@@ -38,7 +38,7 @@
         <b-button
           v-if="nextId"
           variant="primary"
-          :style="`background-color:` + primary + ';margin-top: 16px'"
+          :style="'background-color:' + primary + ';margin-top: 16px'"
           @click="openNext"
           >{{ nextText }}</b-button
         >
