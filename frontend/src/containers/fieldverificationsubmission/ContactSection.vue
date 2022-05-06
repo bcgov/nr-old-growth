@@ -2,14 +2,14 @@
   <CollapseCard
     title="Contact information"
     id="form-contact"
-    nextId="header-form-field"
+    nextId="header-form-field-obs"
     nextText="Enter Field Oberservation Data"
   >
     <FormInput
       v-for="row in data"
       :key="row.id"
-      :label="row.label"
       v-model="row.modelValue"
+      :label="row.label"
       :required="row.required"
       :note="row.note"
       :info="row.info"

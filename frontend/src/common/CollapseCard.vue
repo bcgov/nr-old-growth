@@ -5,16 +5,30 @@
       :id="'header-' + id"
       role="tab"
       style="display: flex"
-      @click="visible = !visible"
+      @click="handleClick"
     >
       <div
         :class="visible ? null : 'collapsed'"
         :aria-expanded="visible ? 'true' : 'false'"
         :aria-controls="id"
-        style="width: 100%; margin: 8px; font-weight: bold"
+        style="
+          width: 100%;
+          margin-top: 8px;
+          margin-bottom: 8px;
+          font-weight: bold;
+          display: flex;
+        "
       >
-        <b-icon-arrow-up-short v-if="visible" />
-        <b-icon-arrow-down-short v-else />
+        <div v-if="!alwaysOpen">
+          <b-icon-arrow-up-short
+            v-if="visible"
+            style="margin-bottom: 2px; margin-right: 2px"
+          />
+          <b-icon-arrow-down-short
+            v-else
+            style="margin-bottom: 2px; margin-right: 2px"
+          />
+        </div>
         {{ title }}
       </div>
     </b-card-header>
@@ -45,6 +59,7 @@ export default defineComponent({
     defaultOpen: { type: Boolean, default: false },
     nextId: { type: String || null, default: null },
     nextText: { type: String, default: "" },
+    alwaysOpen: { type: Boolean, default: false },
   },
   data() {
     return {
@@ -55,6 +70,11 @@ export default defineComponent({
   methods: {
     openNext() {
       document.getElementById(this.nextId).click();
+    },
+    handleClick() {
+      if (!this.alwaysOpen) {
+        this.visible = !this.visible;
+      }
     },
   },
 });

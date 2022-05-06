@@ -5,11 +5,7 @@
       <div class="accordion" role="tablist">
         <InstructionSection />
         <ContactSection :data="contactData" />
-        <FieldSection
-          :inputData="tenureInputData"
-          :selectData="tenureSelectData"
-          :gridData="tenureGridData"
-        />
+        <FieldObsSection :cutBlockData="fieldObsBlockData" />
         <AttachSection />
       </div>
     </div>
@@ -28,32 +24,26 @@ import { defineComponent } from "vue";
 import html2pdf from "html2pdf.js";
 import InstructionSection from "./InstructionSection.vue";
 import ContactSection from "./ContactSection.vue";
-import FieldSection from "./FieldSection.vue";
+import FieldObsSection from "./FieldObsSection.vue";
 import AttachSection from "./AttachSection.vue";
 import { getClient, sendEmail } from "../../api/OldGrowthRequest";
 
 import {
   contactData,
-  submitterData,
-  tenureInputData,
-  tenureSelectData,
-  tenureGridData,
+  fieldObsBlockData,
 } from "./FieldVerificationSubmissionData";
 
 export default defineComponent({
   components: {
     InstructionSection,
     ContactSection,
-    FieldSection,
+    FieldObsSection,
     AttachSection,
   },
   data() {
     return {
       contactData,
-      submitterData,
-      tenureInputData,
-      tenureSelectData,
-      tenureGridData,
+      fieldObsBlockData,
     };
   },
   methods: {
@@ -82,22 +72,22 @@ export default defineComponent({
             }
           }
 
-          // if (fileContent !== "") {
-          //   sendEmail(
-          //     "An Old Growth Field Observation form and package is attached.",
-          //     [
-          //       {
-          //         content: fileContent,
-          //         contentType: "application/pdf",
-          //         encoding: "base64",
-          //         filename: "field_verification_form.pdf",
-          //       },
-          //     ],
-          //     ["catherine.meng@gov.bc.ca"]
-          //   );
-          // } else {
-          //   console.log("Failed to convert webform to pdf");
-          // }
+          if (fileContent !== "") {
+            sendEmail(
+              "An Old Growth Field Observation form and package is attached.",
+              [
+                {
+                  content: fileContent,
+                  contentType: "application/pdf",
+                  encoding: "base64",
+                  filename: "field_verification_form.pdf",
+                },
+              ],
+              ["catherine.meng@gov.bc.ca"]
+            );
+          } else {
+            console.log("Failed to convert webform to pdf");
+          }
         });
 
       // test api call
