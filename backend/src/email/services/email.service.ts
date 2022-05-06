@@ -11,6 +11,7 @@ export class EmailService {
   constructor(private httpService: HttpService) {}
 
   getToken() {
+    console.log('getting token');
     const getClientCredentials = oauth.client(axios.create(), {
       url: process.env.EMAIL_TOKEN_URL,
       grant_type: 'client_credentials',
@@ -19,9 +20,18 @@ export class EmailService {
       scope: '',
     });
 
-    return getClientCredentials().then((res) => {
-      if (res) return res.access_token;
-    });
+    return getClientCredentials()
+      .then((res) => {
+        console.log('res', res);
+        if (res) return res.access_token;
+      })
+      .catch((e) => {
+        console.log('token error', e);
+        throw new HttpException(
+          `Failed to get token, ${e.response.data}`,
+          e.response.status,
+        );
+      });
     // return axios
     //   .post(
     //     process.env.EMAIL_TOKEN_URL,
@@ -71,7 +81,7 @@ export class EmailService {
         HttpStatus.BAD_REQUEST,
       );
     }
-
+    console.log('prepare to send email');
     return this.getToken()
       .then((access_token) => {
         console.log('access_token', access_token);
@@ -104,6 +114,7 @@ export class EmailService {
             )
             .pipe(
               catchError((e) => {
+                console.log('email e', e);
                 throw new HttpException(e.response.data, e.response.status);
               }),
             );
@@ -114,6 +125,7 @@ export class EmailService {
         );
       })
       .catch((e) => {
+        console.log('email token e', e);
         throw new HttpException(e.response.data, e.response.status);
       });
   }
