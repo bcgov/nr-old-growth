@@ -95,6 +95,7 @@ export default defineComponent({
           let nrd = new CodeDescr();
           nrd.value = response.data[key].code;
           nrd.text = response.data[key].description;
+          nrd.emailAddress = response.data[key].emailAddress;
           naturalResourceDistCodes.push(nrd);
         });
 
