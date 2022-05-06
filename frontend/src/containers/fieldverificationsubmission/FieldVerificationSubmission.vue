@@ -8,7 +8,7 @@
         <FieldObsSection
           :inputData="fieldObsInputData"
           :selectData="fieldObsSelectData"
-          :cutBlockData="fieldObsBlockData"
+          v-model="fieldObsBlockData"
         />
         <AttachSection />
       </div>
@@ -34,6 +34,7 @@ import AttachSection from "./AttachSection.vue";
 import { sendEmail } from "../../api/OldGrowthRequest";
 import { backendUrl } from "../../coretypes/AppType";
 import { CodeDescr } from "../../coretypes/CodeDescrType";
+import { store } from "../../helpers/AppState";
 
 import {
   contactData,
@@ -62,9 +63,9 @@ export default defineComponent({
       var element = document.getElementById("pdf-form-div");
 
       // display all the hidden content
-      document.getElementById("header-form-contact")!.click();
-      document.getElementById("header-form-field-obs")!.click();
-      document.getElementById("header-form-attachment")!.click();
+      this.showHiddenContent("form-contact");
+      this.showHiddenContent("form-field-obs");
+      this.showHiddenContent("form-attachment");
 
       // save pdf web form to a variable
       html2pdf()
@@ -82,11 +83,13 @@ export default defineComponent({
             }
           }
 
+          console.log("store form uploaded files", store.formUploadFiles);
+
           if (
             fileContent !== ""
             // &&
-            // this.tenureSelectData.modelValue &&
-            // this.tenureSelectData.modelValue !== ""
+            // this.fieldObsSelectData.modelValue &&
+            // this.fieldObsSelectData.modelValue !== ""
           ) {
             sendEmail(
               "An Old Growth Field Observation form and package is attached.",
@@ -97,8 +100,9 @@ export default defineComponent({
                   encoding: "base64",
                   filename: "field_verification_form.pdf",
                 },
+                ...store.formUploadFiles,
               ],
-              ["catherine.meng@gov.bc.ca"] // this.tenureSelectData.modelValue
+              ["catherine.meng@gov.bc.ca"] //[this.fieldObsSelectData.modelValue]
             );
           } else {
             console.log("Failed to convert webform to pdf");
@@ -121,8 +125,13 @@ export default defineComponent({
           naturalResourceDistCodes.push(nrd);
         });
 
-        this.tenureSelectData.options = naturalResourceDistCodes;
+        this.fieldObsSelectData.options = naturalResourceDistCodes;
       });
+    },
+    showHiddenContent(childId: string) {
+      if (!document.getElementById(childId).classList.contains("show")) {
+        document.getElementById(`header-${childId}`)!.click();
+      }
     },
   },
   beforeMount() {

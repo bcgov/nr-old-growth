@@ -68,3 +68,65 @@ export const fieldObsBlockData = [
     ha_deleted_org_mapping: "",
   },
 ];
+
+export const fieldObsBlockColumns = [
+  {
+    id: "cut_block_id",
+    label: "Cut Block ID",
+    type: "input",
+    required: true,
+  },
+  {
+    id: "total_block_ha",
+    label: "Total cut block hectares",
+    type: "input",
+    required: true,
+  },
+  {
+    id: "ha_org_mapped_def_area",
+    label: "Hectares originally mapped as priority deferral area",
+    type: "input",
+    required: true,
+    info: "put info here",
+  },
+  {
+    id: "deferral_category_code",
+    label: "Check all that apply",
+    type: "checkbox",
+    //TODO: Make it dynamic, not hard-coded
+    options: [
+      { text: "Big Tree", value: "big_tree" },
+      { text: "Ancient", value: "ancient" },
+      { text: "Remnant", value: "remnant" },
+    ],
+    required: true,
+  },
+  {
+    id: "ha_added_org_mapping",
+    label: "Hectares added to deferral area mapping",
+    type: "input",
+    info: "put info here",
+  },
+  {
+    id: "ha_deleted_org_mapping",
+    label: "Hectares deleted from deferral area mapping",
+    type: "input",
+    info: "put info here",
+  },
+  {
+    id: "ha_kept_org_mapping",
+    label: "Hectares unchanged from deferral area mapping",
+    info: "put info here",
+    type: "input",
+  },
+];
+
+export const fieldObsBlockDefaultNew = {
+  cut_block_id: "",
+  total_block_ha: "",
+  ha_org_mapped_def_area: "",
+  deferral_category_code: [],
+  ha_kept_org_mapping: "",
+  ha_added_org_mapping: "",
+  ha_deleted_org_mapping: "",
+};

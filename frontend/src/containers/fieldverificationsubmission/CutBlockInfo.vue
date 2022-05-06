@@ -21,6 +21,22 @@
         :required="columns[dataIndex].required"
       ></FormCheckboxGroup>
     </div>
+    <b-button
+      v-if="enableAdd"
+      variant="primary"
+      :style="
+        `background-color:` + primary + ';margin-top: 16px; margin-right: 16px'
+      "
+      @click="addCutBlock"
+      >+ Add Another Cut Block</b-button
+    >
+    <b-button
+      v-if="enableDelete"
+      variant="primary"
+      :style="`background-color:` + primary + ';margin-top: 16px;'"
+      @click="deleteCutBlock"
+      >- Remove this Cut Block</b-button
+    >
   </CollapseCard>
 </template>
 
@@ -30,6 +46,7 @@ import CollapseCard from "../../common/CollapseCard.vue";
 import FormInput from "../../common/FormInput.vue";
 import FormCheckboxGroup from "../../common/FormCheckboxGroup.vue";
 import type { FromGridColumnType } from "../../helpers/AppType";
+import { primary } from "../../utils/color";
 
 export default defineComponent({
   components: {
@@ -54,6 +71,27 @@ export default defineComponent({
     id: {
       type: String,
       default: "form-fieldobs-cutblock",
+    },
+    enableAdd: {
+      type: Boolean,
+      default: true,
+    },
+    enableDelete: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  data() {
+    return {
+      primary,
+    };
+  },
+  methods: {
+    addCutBlock() {
+      this.$emit("addCutBlock");
+    },
+    deleteCutBlock() {
+      this.$emit("deleteCutBlock");
     },
   },
 });

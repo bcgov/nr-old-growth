@@ -23,12 +23,16 @@
       :info="row.info"
     />
     <CutBlockInfo
-      v-for="(block, index) in cutBlockData"
+      v-for="(block, index) in modelValue"
       :key="index"
       :columns="columns"
-      v-model="cutBlockData[index]"
+      v-model="modelValue[index]"
       :defaultNewData="defaultNewData"
       :id="'form-fieldobs-cutblock-' + index"
+      :enableAdd="index === modelValue.length - 1 ? true : false"
+      :enableDelete="modelValue.length > 1"
+      @addCutBlock="addCutBlock"
+      @deleteCutBlock="deleteCutBlock(index)"
     />
   </CollapseCard>
 </template>
@@ -40,6 +44,10 @@ import FormInput from "../../common/FormInput.vue";
 import FormSelect from "../../common/FormSelect.vue";
 import CutBlockInfo from "./CutBlockInfo.vue";
 import type { FormInputType } from "../../helpers/AppType";
+import {
+  fieldObsBlockColumns,
+  fieldObsBlockDefaultNew,
+} from "./FieldVerificationSubmissionData";
 
 export default defineComponent({
   components: {
@@ -76,7 +84,7 @@ export default defineComponent({
         options: [{ value: "1", text: "Option 1" }],
       },
     },
-    cutBlockData: {
+    modelValue: {
       type: Array as PropType<Array<{ [key: string]: any }>>,
       default: [
         {
@@ -92,69 +100,21 @@ export default defineComponent({
   },
   data() {
     return {
-      columns: [
-        {
-          id: "cut_block_id",
-          label: "Cut Block ID",
-          type: "input",
-          required: true,
-        },
-        {
-          id: "total_block_ha",
-          label: "Total cut block hectares",
-          type: "input",
-          required: true,
-        },
-        {
-          id: "ha_org_mapped_def_area",
-          label: "Hectares originally mapped as priority deferral area",
-          type: "input",
-          required: true,
-          info: "put info here",
-        },
-        {
-          id: "deferral_category_code",
-          label: "Check all that apply",
-          type: "checkbox",
-          //TODO: Make it dynamic, not hard-coded
-          options: [
-            { text: "Big Tree", value: "big_tree" },
-            { text: "Ancient", value: "ancient" },
-            { text: "Remnant", value: "remnant" },
-          ],
-          required: true,
-        },
-        {
-          id: "ha_added_org_mapping",
-          label: "Hectares added to deferral area mapping",
-          type: "input",
-          info: "put info here",
-        },
-        {
-          id: "ha_deleted_org_mapping",
-          label: "Hectares deleted from deferral area mapping",
-          type: "input",
-          info: "put info here",
-        },
-        {
-          id: "ha_kept_org_mapping",
-          label: "Hectares unchanged from deferral area mapping",
-          info: "put info here",
-          type: "input",
-        },
-      ],
-      defaultNewData: [
-        {
-          cut_block_id: "",
-          total_block_ha: "",
-          ha_org_mapped_def_area: "",
-          deferral_category_code: [],
-          ha_kept_org_mapping: "",
-          ha_added_org_mapping: "",
-          ha_deleted_org_mapping: "",
-        },
-      ],
+      columns: fieldObsBlockColumns,
+      defaultNewData: fieldObsBlockDefaultNew,
     };
+  },
+  methods: {
+    addCutBlock() {
+      const defaultNew = JSON.parse(JSON.stringify(this.defaultNewData));
+      const newModelValue = this.modelValue;
+      newModelValue.push(defaultNew);
+      this.$emit("update:modelValue", newModelValue);
+    },
+    deleteCutBlock(index: number) {
+      const newModelValue = this.modelValue.filter((m, i) => i !== index);
+      this.$emit("update:modelValue", newModelValue);
+    },
   },
 });
 </script>

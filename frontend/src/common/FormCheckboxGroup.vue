@@ -66,7 +66,6 @@ export default defineComponent({
   },
   methods: {
     updateValue(event: any) {
-      console.log(event.target.value);
       let newModelValue = this.modelValue;
       if (newModelValue?.includes(event.target.value)) {
         newModelValue = newModelValue.filter((m) => m != event.target.value);

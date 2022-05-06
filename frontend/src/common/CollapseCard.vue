@@ -69,7 +69,13 @@ export default defineComponent({
   },
   methods: {
     openNext() {
-      document.getElementById(this.nextId).click();
+      if (
+        !document
+          .getElementById(this.nextId.slice(7)) // remove the "header-" part in the nextId, the rest is the child id
+          .classList.contains("show")
+      ) {
+        document.getElementById(this.nextId).click();
+      }
     },
     handleClick() {
       if (!this.alwaysOpen) {
