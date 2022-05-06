@@ -100,6 +100,12 @@ export default defineComponent({
           required: true,
         },
         {
+          id: "total_block_ha",
+          label: "Total cut block hectares",
+          type: "input",
+          required: true,
+        },
+        {
           id: "ha_org_mapped_def_area",
           label: "Hectares originally mapped as priority deferral area",
           type: "input",
@@ -112,9 +118,9 @@ export default defineComponent({
           type: "checkbox",
           //TODO: Make it dynamic, not hard-coded
           options: [
-            { label: "Big Tree", value: "big_tree" },
-            { label: "Ancient", value: "ancient" },
-            { label: "Remnant", value: "remnant" },
+            { text: "Big Tree", value: "big_tree" },
+            { text: "Ancient", value: "ancient" },
+            { text: "Remnant", value: "remnant" },
           ],
           required: true,
         },
@@ -140,6 +146,7 @@ export default defineComponent({
       defaultNewData: [
         {
           cut_block_id: "",
+          total_block_ha: "",
           ha_org_mapped_def_area: "",
           deferral_category_code: [],
           ha_kept_org_mapping: "",

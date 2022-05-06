@@ -1,9 +1,9 @@
 import axios from "axios";
 
-const backend = config.VITE_BACKEND_URL || import.meta.env.VITE_BACKEND_URL;
+const backendUrl = config.VITE_BACKEND_URL || import.meta.env.VITE_BACKEND_URL;
 
 export const getClient = () => {
-  axios.get(`${backend}/client`).then((response) => {
+  axios.get(`${backendUrl}/client`).then((response) => {
     console.log("client", response.data);
   });
 };
@@ -19,7 +19,7 @@ export const sendEmail = (
   emailTo: Array<string>
 ) => {
   axios
-    .post(`${backend}/email`, { emailBody, emailAttachments, emailTo })
+    .post(`${backendUrl}/email`, { emailBody, emailAttachments, emailTo })
     .then((response) => {
       console.log("email", response.data);
     })

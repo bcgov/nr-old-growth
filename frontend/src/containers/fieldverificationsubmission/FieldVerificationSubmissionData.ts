@@ -46,23 +46,21 @@ export const fieldObsSelectData = {
 
 export const fieldObsInputData = [
   {
-    label: "Tenure",
-    id: "tenure",
+    label: "Forest file ID or timber sale licence",
+    id: "forest_file_id",
     modelValue: "",
-    note: "Enter the forest file ID",
   },
   {
-    label: "Cutting permit or timber sale license",
+    label: "Cutting permit",
     id: "cutting_permit",
     modelValue: "",
-    note: "Enter the cutting permit number",
-    required: true,
   },
 ];
 
 export const fieldObsBlockData = [
   {
     cut_block_id: "",
+    total_block_ha: "",
     ha_org_mapped_def_area: "",
     deferral_category_code: [],
     ha_kept_org_mapping: "",

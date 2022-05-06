@@ -1,3 +1,5 @@
+export const backendUrl = config.VITE_BACKEND_URL || import.meta.env.VITE_BACKEND_URL;
+
 export interface FormInputType {
   label: string;
   required?: boolean;
