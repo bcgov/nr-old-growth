@@ -5,7 +5,11 @@
       <div class="accordion" role="tablist">
         <InstructionSection />
         <ContactSection :data="contactData" />
-        <FieldObsSection :cutBlockData="fieldObsBlockData" />
+        <FieldObsSection
+          :inputData="fieldObsInputData"
+          :selectData="fieldObsSelectData"
+          :cutBlockData="fieldObsBlockData"
+        />
         <AttachSection />
       </div>
     </div>
@@ -30,6 +34,8 @@ import { getClient, sendEmail } from "../../api/OldGrowthRequest";
 
 import {
   contactData,
+  fieldObsInputData,
+  fieldObsSelectData,
   fieldObsBlockData,
 } from "./FieldVerificationSubmissionData";
 
@@ -43,6 +49,8 @@ export default defineComponent({
   data() {
     return {
       contactData,
+      fieldObsInputData,
+      fieldObsSelectData,
       fieldObsBlockData,
     };
   },
