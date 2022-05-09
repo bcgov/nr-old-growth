@@ -1,5 +1,5 @@
 <template>
-  <div style="margin-bottom: 18px">
+  <div style="margin-bottom: 24px">
     <FormFieldTitle
       v-if="props.label"
       :label="props.label"

@@ -17,6 +17,8 @@ The backend for nr-old-growth project is written in [NestJS](https://github.com/
 
   FRONTEND_URL=[enable cors for this frontend url]
 
+  BACKEND_URL=[enable cors for this backend url to enable try in swagger]
+
   EMAIL_USERNAME=[CHES service dev username]
 
   EMAIL_PASSWORD=[CHES service dev password]

@@ -1,20 +1,20 @@
 <template>
-  <div style="margin-bottom: 8px">
-    {{ props.label }}
+  <div style="margin-bottom: 8px; display: flex">
+    <div v-html="props.label"></div>
     <b-icon-asterisk
       v-if="props.required"
       style="
-        margin-left: 2px;
         font-size: 8px;
         color: red;
-        margin-top: -8px;
+        margin-top: 4px;
         margin-right: 2px;
+        margin-left: 4px;
       "
     />
     <b-icon-question-circle
       v-if="props.info"
       v-b-popover.hover.top="props.info"
-      style="margin-left: 2px; font-size: 10px; margin-top: -6px"
+      style="margin-left: 4px; font-size: 10px; margin-top: 4px"
     />
   </div>
 </template>
