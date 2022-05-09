@@ -50,6 +50,7 @@ export default defineComponent({
   },
   methods: {
     updateValue(newValue: CodeDescr) {
+      console.log('Selected value: ' + JSON.stringify(newValue));
       this.$emit("update:modelValue", newValue);
     },
   },
