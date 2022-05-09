@@ -93,9 +93,10 @@ export default defineComponent({
 
         Object.keys(response.data).forEach((key) => {
           let nrd = new CodeDescr();
-          nrd.value = response.data[key].code;
+          nrd.code = response.data[key].code;
           nrd.text = response.data[key].description;
           nrd.emailAddress = response.data[key].emailAddress;
+          nrd.value = JSON.parse(JSON.stringify(nrd));
           naturalResourceDistCodes.push(nrd);
         });
 

@@ -35,7 +35,7 @@ import CollapseCard from "../../common/CollapseCard.vue";
 import FormInput from "../../common/FormInput.vue";
 import FormSelect from "../../common/FormSelect.vue";
 import FormGrid from "../../common/FormGrid.vue";
-import type { FormInputType, FromGridColumnType } from "../../helpers/AppType";
+import type { FormInputType, FromGridColumnType } from "../../coretypes/AppType";
 
 export default defineComponent({
   components: {
@@ -62,13 +62,13 @@ export default defineComponent({
         note?: string;
         required?: boolean;
         info?: string;
-        modelValue: string;
-        options: Array<{ value: string; text: string }>;
+        modelValue: {};
+        options: Array<{ value: {}; text: string }>;
       }>,
       default: {
         label: "Select from below",
         id: "form-select-example",
-        modelValue: "",
+        modelValue: {},
         options: [{ value: "1", text: "Option 1" }],
       },
     },
