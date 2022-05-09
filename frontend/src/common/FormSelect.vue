@@ -15,6 +15,7 @@
 
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
+import { CodeDescr } from "../coretypes/CodeDescrType";
 import FormFieldTemplate from "./FormFieldTemplate.vue";
 
 export default defineComponent({
@@ -28,7 +29,6 @@ export default defineComponent({
       type: String,
       default: null,
     },
-
     required: {
       type: Boolean,
       default: false,
@@ -42,14 +42,15 @@ export default defineComponent({
       default: null,
     },
     // selected option got from parent component through v-model
-    modelValue: String,
+    modelValue: {},
     options: {
       type: Array as PropType<Array<{ value: string; text: string }>>,
       required: true,
     },
   },
   methods: {
-    updateValue(newValue: String) {
+    updateValue(newValue: CodeDescr) {
+      console.log('Selected value: ' + JSON.stringify(newValue));
       this.$emit("update:modelValue", newValue);
     },
   },
