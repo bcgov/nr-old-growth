@@ -10,7 +10,6 @@
       :options="options"
       @change="updateValue"
     ></b-form-select>
-    ---{{modelValue}}
   </FormFieldTemplate>
 </template>
 
@@ -51,7 +50,6 @@ export default defineComponent({
   },
   methods: {
     updateValue(newValue: CodeDescr) {
-      alert(newValue);
       this.$emit("update:modelValue", newValue);
     },
   },
