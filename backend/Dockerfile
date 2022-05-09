@@ -1,4 +1,4 @@
-# RedHat UBI 8 with nodejs 14
+# RedHat UBI 8 with nodejs 16
 FROM registry.access.redhat.com/ubi8/ubi
 RUN dnf module install -y nodejs:16
 

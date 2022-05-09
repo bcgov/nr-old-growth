@@ -34,7 +34,7 @@ export const fieldObsSelectData = {
   label: "Natural resource district",
   id: "natural_resource_distrct",
   modelValue: "",
-  note: "Select the district",
+  // note: "Select the district",
   options: [
     //i.e.: { code: "a", text: "First option", emailAddress: "m@m.com", value: {myObj} },
   ],
@@ -46,6 +46,7 @@ export const fieldObsInputData = [
     label: "Forest file ID or timber sale licence",
     id: "forest_file_id",
     modelValue: "",
+    info: "Enter the forest file ID (tenure) or timber sale licence (BCTS).",
   },
   {
     label: "Cutting permit",
@@ -84,7 +85,7 @@ export const fieldObsBlockColumns = [
     label: "Hectares originally mapped as priority deferral area",
     type: "input",
     required: true,
-    info: "put info here",
+    info: "'Mapped' refers to polygons identified as priority deferral areas in the operational (vector) mapping version of Map 1 Priority Deferral Areas. Map 1 can be downloaded at https://catalogue.data.gov.bc.ca/dataset/5e257660-02ae-4f22-b861-4b2f53aefb4e/resource/47333f4e-1c84-4bb5-b3fe-6031fa78de20",
   },
   {
     id: "deferral_category_code",
@@ -100,21 +101,24 @@ export const fieldObsBlockColumns = [
   },
   {
     id: "ha_added_org_mapping",
-    label: "Hectares added to deferral area mapping",
+    label:
+      "Hectares <text style='font-weight: bold'>added</text> to deferral area mapping",
     type: "input",
-    info: "put info here",
+    info: "Adding areas to deferrals.",
   },
   {
     id: "ha_deleted_org_mapping",
-    label: "Hectares deleted from deferral area mapping",
+    label:
+      "Hectares <text style='font-weight: bold'>deleted</text> from deferral area mapping",
     type: "input",
-    info: "put info here",
+    info: "Areas that were mapped as deferrals but do not meet criteria.",
   },
   {
     id: "ha_kept_org_mapping",
-    label: "Hectares unchanged from deferral area mapping",
-    info: "put info here",
+    label:
+      "Hectares <text style='font-weight: bold'>unchanged</text> from deferral area mapping",
     type: "input",
+    info: "Maintaining deferral or non-deferral status as mapped.",
   },
 ];
 

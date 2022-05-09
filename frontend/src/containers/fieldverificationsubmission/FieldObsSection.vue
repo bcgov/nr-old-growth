@@ -116,6 +116,9 @@ export default defineComponent({
       this.$emit("update:modelValue", newModelValue);
     },
   },
+  mounted() {
+    console.log(fieldObsBlockColumns);
+  },
 });
 </script>
 
