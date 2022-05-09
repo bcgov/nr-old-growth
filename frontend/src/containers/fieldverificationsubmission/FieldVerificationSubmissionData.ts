@@ -35,10 +35,8 @@ export const fieldObsSelectData = {
   id: "natural_resource_distrct",
   modelValue: "",
   // note: "Select the district",
-  // options need to be in the format of [{value:"", text:""}]
   options: [
-    { value: "a", text: "First option" },
-    { value: "b", text: "Selected Option" },
+    //i.e.: { code: "a", text: "First option", emailAddress: "m@m.com", value: {myObj} },
   ],
   required: true,
 };

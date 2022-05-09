@@ -20,4 +20,7 @@ export class NaturalResourceDistEntity extends BaseEntity {
   @Column({ name: "expiry_date" })
   expiryDate: Date;
 
+  @Column({ name: "email_address" })
+  emailAddress: string;
+
 }

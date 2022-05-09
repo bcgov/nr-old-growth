@@ -43,7 +43,7 @@ import CollapseCard from "../../common/CollapseCard.vue";
 import FormInput from "../../common/FormInput.vue";
 import FormSelect from "../../common/FormSelect.vue";
 import CutBlockInfo from "./CutBlockInfo.vue";
-import type { FormInputType } from "../../helpers/AppType";
+import type { FormInputType } from "../../coretypes/AppType";
 import {
   fieldObsBlockColumns,
   fieldObsBlockDefaultNew,
@@ -74,8 +74,8 @@ export default defineComponent({
         note?: string;
         required?: boolean;
         info?: string;
-        modelValue: string;
-        options: Array<{ value: string; text: string }>;
+        modelValue: {};
+        options: Array<{ value: {}; text: string }>;
       }>,
       default: {
         label: "Select from below",

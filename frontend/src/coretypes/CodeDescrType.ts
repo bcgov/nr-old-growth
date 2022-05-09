@@ -1,4 +1,6 @@
 export class CodeDescr {
-    value?: string;
+    code?: string;
     text?: string;
+    emailAddress?: string;
+    value?: {};
 }
