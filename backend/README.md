@@ -2,38 +2,40 @@
 
 The backend for nr-old-growth project is written in [NestJS](https://github.com/nestjs/nest) with the openapi integration.
 
-## Installation and Run locally
+## Setup local development
 
-```bash
-$ npm install
-$ npm start
-```
+- Create a .env file inside this backend folder with the following options:
 
-## Running the app
+  ```
+  NODE_ENV=development
 
-```bash
-# development
-$ npm run start
+  POSTGRESQL_USER=[local postgres username]
 
-# watch mode
-$ npm run start:dev
+  POSTGRESQL_PASSWORD=[local postgres password]
 
-# production mode
-$ npm run start:prod
-```
+  POSTGRESQL_DATABASE=[local postgres database]
 
-## Test
+  FRONTEND_URL=[enable cors for this frontend url]
 
-```bash
-# unit tests
-$ npm run test
+  BACKEND_URL=[enable cors for this backend url to enable try in swagger]
 
-# e2e tests
-$ npm run test:e2e
+  EMAIL_USERNAME=[CHES service dev username]
 
-# test coverage
-$ npm run test:cov
-```
+  EMAIL_PASSWORD=[CHES service dev password]
+
+  // CHES dev authentication url
+  EMAIL_TOKEN_URL=https://dev.oidc.gov.bc.ca/auth/realms/jbd6rnxw/protocol/openid-connect/token
+
+  // CHES dev email url
+  EMAIL_POST_URL=https://ches-dev.apps.silver.devops.gov.bc.ca/api/v1/email
+
+  EMAIL_FROM=[send from email address]
+
+  ```
+
+- Install dependencies `npm install`
+- Start the server `npm start`
+- Run test `npm run test`
 
 ## Reference reading
 

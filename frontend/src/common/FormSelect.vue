@@ -1,0 +1,60 @@
+<template>
+  <FormFieldTemplate
+    :label="label"
+    :required="required"
+    :note="note"
+    :tooltip="tooltip"
+  >
+    <b-form-select
+      :value="modelValue"
+      :options="options"
+      @change="updateValue"
+    ></b-form-select>
+  </FormFieldTemplate>
+</template>
+
+<script lang="ts">
+import { defineComponent, PropType } from "vue";
+import { CodeDescr } from "../coretypes/CodeDescrType";
+import FormFieldTemplate from "./FormFieldTemplate.vue";
+
+export default defineComponent({
+  name: "FormSelect",
+  components: {
+    FormFieldTemplate,
+  },
+  props: {
+    // form field template props (optional): label, required, tooltip, note
+    label: {
+      type: String,
+      default: null,
+    },
+    required: {
+      type: Boolean,
+      default: false,
+    },
+    tooltip: {
+      type: String,
+      default: null,
+    },
+    note: {
+      type: String,
+      default: null,
+    },
+    // selected option got from parent component through v-model
+    modelValue: {},
+    options: {
+      type: Array as PropType<Array<{ value: string; text: string }>>,
+      required: true,
+    },
+  },
+  methods: {
+    updateValue(newValue: CodeDescr) {
+      console.log("Selected value: " + JSON.stringify(newValue));
+      this.$emit("update:modelValue", newValue);
+    },
+  },
+});
+</script>
+
+<style scoped></style>
