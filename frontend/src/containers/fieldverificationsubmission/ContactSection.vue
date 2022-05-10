@@ -3,7 +3,7 @@
     title="Contact information"
     id="form-contact"
     nextId="header-form-field-obs"
-    nextText="Enter Field Oberservation Data"
+    nextText="Enter Field Obeservation Data"
   >
     <FormInput
       v-for="row in data"
@@ -12,7 +12,7 @@
       :label="row.label"
       :required="row.required"
       :note="row.note"
-      :info="row.info"
+      :tooltip="row.tooltip"
     />
   </CollapseCard>
 </template>

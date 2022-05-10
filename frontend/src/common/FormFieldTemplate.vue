@@ -4,7 +4,7 @@
       v-if="props.label"
       :label="props.label"
       :required="props.required"
-      :info="props.info"
+      :tooltip="props.tooltip"
     />
     <slot />
     <p v-if="props.note" class="form-field-note">
@@ -25,7 +25,7 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  info: {
+  tooltip: {
     type: String,
     default: null,
   },

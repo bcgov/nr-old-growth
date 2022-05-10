@@ -3,7 +3,7 @@
     :label="label"
     :required="required"
     :note="note"
-    :info="info"
+    :tooltip="tooltip"
   >
     <b-form-select
       :value="modelValue"
@@ -24,7 +24,7 @@ export default defineComponent({
     FormFieldTemplate,
   },
   props: {
-    // form field template props (optional): label, required, info, note
+    // form field template props (optional): label, required, tooltip, note
     label: {
       type: String,
       default: null,
@@ -33,7 +33,7 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
-    info: {
+    tooltip: {
       type: String,
       default: null,
     },
@@ -50,7 +50,7 @@ export default defineComponent({
   },
   methods: {
     updateValue(newValue: CodeDescr) {
-      console.log('Selected value: ' + JSON.stringify(newValue));
+      console.log("Selected value: " + JSON.stringify(newValue));
       this.$emit("update:modelValue", newValue);
     },
   },

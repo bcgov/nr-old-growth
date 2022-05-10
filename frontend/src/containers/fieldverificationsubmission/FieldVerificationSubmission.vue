@@ -1,6 +1,6 @@
 <template>
   <div id="form-container" style="margin: 40px">
-    <h4 style="margin-bottom: 24px">Field Verification submission form</h4>
+    <h4 style="margin-bottom: 24px">Field verification submission form</h4>
     <div class="accordion" role="tablist">
       <InstructionSection />
       <div id="pdf-form-div">
@@ -74,6 +74,7 @@ export default defineComponent({
       this.showHiddenContent("form-contact");
       this.showHiddenContent("form-field-obs");
       this.showHiddenContent("form-attachment");
+
       if (this.testEmail !== "") {
         // save pdf web form to a variable
         html2pdf()
@@ -116,6 +117,7 @@ export default defineComponent({
         console.log("no email adderess provided");
       }
     },
+
     getNaturalResourceDistricts() {
       axios.get(backendUrl + "/naturalResourceDist").then((response) => {
         let naturalResourceDistCodes: CodeDescr[] = [];
@@ -131,11 +133,13 @@ export default defineComponent({
         this.fieldObsSelectData.options = naturalResourceDistCodes;
       });
     },
+
     showHiddenContent(childId: string) {
       if (!document.getElementById(childId).classList.contains("show")) {
         document.getElementById(`header-${childId}`)!.click();
       }
     },
+
     updateTestEmail(e: any) {
       this.testEmail = e.target.value;
       store.updateTestEmail(e.target.value);
