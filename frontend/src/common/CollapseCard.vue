@@ -57,8 +57,8 @@ export default defineComponent({
     title: String,
     id: String,
     defaultOpen: { type: Boolean, default: false },
-    nextId: { type: String || null, default: null },
-    nextText: { type: String, default: "" },
+    nextId: { type: String || null, default: null }, // id of the collapse content to open when click next button
+    nextText: { type: String, default: "" }, // text on the next button
     alwaysOpen: { type: Boolean, default: false },
   },
   data() {
