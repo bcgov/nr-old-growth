@@ -4,7 +4,7 @@
       :label="label"
       :required="required"
       :note="note"
-      :info="info"
+      :tooltip="tooltip"
     >
       <!-- title row -->
       <b-row align-h="center" class="form-grid-row">
@@ -16,7 +16,7 @@
           <FormFieldTitle
             :label="title.label"
             :required="title.required"
-            :info="title.info"
+            :tooltip="title.tooltip"
           />
         </b-col>
         <b-col v-if="modelValue.length > 0" cols="1" class="form-grid-column" />
@@ -75,7 +75,7 @@ export default defineComponent({
     FormCheckboxGroup,
   },
   props: {
-    // form field template props (optional): label, required, info, note
+    // form field template props (optional): label, required, tooltip, note
     label: {
       type: String,
       default: null,
@@ -84,7 +84,7 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
-    info: {
+    tooltip: {
       type: String,
       default: null,
     },

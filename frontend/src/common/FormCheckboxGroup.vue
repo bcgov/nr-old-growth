@@ -3,7 +3,7 @@
     :label="label"
     :required="required"
     :note="note"
-    :info="info"
+    :tooltip="tooltip"
   >
     <label
       v-for="(option, index) in options"
@@ -32,7 +32,7 @@ export default defineComponent({
     FormFieldTemplate,
   },
   props: {
-    // form field template props (optional): label, required, info, note
+    // form field template props (optional): label, required, tooltip, note
     label: {
       type: String,
       default: null,
@@ -41,7 +41,7 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
-    info: {
+    tooltip: {
       type: String,
       default: null,
     },

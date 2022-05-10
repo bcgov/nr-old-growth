@@ -12,8 +12,8 @@
       "
     />
     <b-icon-question-circle
-      v-if="props.info"
-      v-b-popover.hover.top="props.info"
+      v-if="props.tooltip"
+      v-b-popover.hover.top="props.tooltip"
       style="margin-left: 4px; font-size: 10px; margin-top: 4px"
     />
   </div>
@@ -26,7 +26,7 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  info: {
+  tooltip: {
     type: String,
     default: null,
   },

@@ -10,7 +10,7 @@
         :label="columns[dataIndex].label"
         :required="columns[dataIndex].required"
         :note="columns[dataIndex].note"
-        :info="columns[dataIndex].info"
+        :tooltip="columns[dataIndex].tooltip"
       ></FormInput>
       <FormCheckboxGroup
         v-if="columns[dataIndex].type == 'checkbox'"

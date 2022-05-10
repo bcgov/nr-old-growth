@@ -1,4 +1,5 @@
-export const backendUrl = config.VITE_BACKEND_URL || import.meta.env.VITE_BACKEND_URL;
+export const backendUrl =
+  config.VITE_BACKEND_URL || import.meta.env.VITE_BACKEND_URL;
 
 export interface FormInputType {
   label: string;
@@ -6,14 +7,14 @@ export interface FormInputType {
   id: string;
   modelValue: string;
   note?: string;
-  info?: string;
+  tooltip?: string;
 }
 
 export interface FromGridColumnType {
   label: string;
   required?: boolean;
   id: string;
-  info?: string;
+  tooltip?: string;
   type: string;
   options?: Array<{ value: string; label: string }>;
 }

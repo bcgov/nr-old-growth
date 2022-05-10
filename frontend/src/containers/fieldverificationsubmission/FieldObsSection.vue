@@ -11,7 +11,7 @@
       :required="selectData.required"
       :note="selectData.note"
       :options="selectData.options"
-      :info="selectData.info"
+      :tooltip="selectData.tooltip"
     />
     <FormInput
       v-for="row in inputData"
@@ -20,7 +20,7 @@
       v-model="row.modelValue"
       :required="row.required"
       :note="row.note"
-      :info="row.info"
+      :tooltip="row.tooltip"
     />
     <CutBlockInfo
       v-for="(block, index) in modelValue"
@@ -73,7 +73,7 @@ export default defineComponent({
         id: string;
         note?: string;
         required?: boolean;
-        info?: string;
+        tooltip?: string;
         modelValue: {};
         options: Array<{ value: {}; text: string }>;
       }>,
