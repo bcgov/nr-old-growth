@@ -211,7 +211,7 @@ comment on column submission.email_address is 'Submitters email address in the f
 ;
 comment on column submission.natural_resource_dist_code is 'A code representing an administrative area established by the ministry, within natural resource regions.'
 ;
-comment on column submission.forest_file_id is 'File identification assigned to provincial forest use files. assigned file number. usually the licence, tenure or private mark number. also know as forest file id.'
+comment on column submission.forest_file_id is 'File identification assigned to provincial forest use files. assigned file number. Usually the licence, tenure or private mark number. also know as forest file id.'
 ;
 comment on column submission.cutting_permit_id is 'Identifier for a cutting permit associated with a quota type harvesting tenure. This can also include a timber sale licence  '
 ;
