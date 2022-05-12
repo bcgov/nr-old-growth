@@ -10,11 +10,19 @@ export interface FormInputType {
   tooltip?: string;
 }
 
-export interface FromGridColumnType {
+export interface FormGridColumnType {
   label: string;
   required?: boolean;
   id: string;
   tooltip?: string;
   type: string;
   options?: Array<{ value: string; label: string }>;
+}
+
+export interface FormUploadFileType {
+  content: string;
+  contentType: string;
+  encoding: string;
+  filename: string;
+  filesize: number;
 }

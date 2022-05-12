@@ -1,22 +1,11 @@
 import { reactive } from "vue";
+import type { FormUploadFileType } from "../coretypes/AppType";
 
 // global app state
 export const store = reactive({
   // form upload files
-  formUploadFiles: [] as Array<{
-    content: string;
-    contentType: string;
-    encoding: string;
-    filename: string;
-  }>,
-  updateFormUploadFiles(
-    newFile: Array<{
-      content: string;
-      contentType: string;
-      encoding: string;
-      filename: string;
-    }>
-  ) {
+  formUploadFiles: [] as Array<FormUploadFileType>,
+  updateFormUploadFiles(newFile: Array<FormUploadFileType>) {
     this.formUploadFiles = newFile;
   },
   testEmail: "" as String,
