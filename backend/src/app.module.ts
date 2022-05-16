@@ -5,6 +5,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { NaturalResourceDistModule } from './naturalresourcedist/naturalResourceDist.module';
 import { EmailModule } from './email/email.module';
+import { FormModule } from './form/form.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { EmailModule } from './email/email.module';
     }),
     NaturalResourceDistModule,
     EmailModule,
+    FormModule,
   ],
   controllers: [AppController],
   providers: [AppService],
