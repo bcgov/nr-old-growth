@@ -7,8 +7,8 @@ import { FormService } from '../services/form.service';
 export class FormController {
   constructor(private FormService: FormService) {}
 
-  @Get(':formId')
-  get(@Param('formId') formId: string) {
-    return this.FormService.handleSubmission(formId);
+  @Get()
+  get() {
+    return this.FormService.handleSubmission();
   }
 }
