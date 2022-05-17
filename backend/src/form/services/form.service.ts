@@ -15,7 +15,7 @@ export class FormService {
         `https://chefs.nrs.gov.bc.ca/app/api/v1/forms/${formId}/submissions`,
         {
           auth: {
-            username: process.env.FORM_USERNAME,
+            username: process.env.FORM_ID,
             password: process.env.FORM_PASSWORD,
           },
         },
@@ -48,7 +48,7 @@ export class FormService {
                 `https://chefs.nrs.gov.bc.ca/app/api/v1/forms/${formId}/versions/${formVersionId}/submissions/discover`,
                 {
                   auth: {
-                    username: process.env.FORM_USERNAME,
+                    username: process.env.FORM_ID,
                     password: process.env.FORM_PASSWORD,
                   },
                   params: {
