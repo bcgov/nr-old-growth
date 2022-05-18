@@ -49,6 +49,9 @@ parameters:
   - name: NODE_ENV
     description: environment mode
     required: true
+  - name: FORM_PASSWORD
+    description: CHEFS form password
+    required: true
 objects:
   - apiVersion: v1
     kind: Secret
@@ -147,6 +150,12 @@ objects:
                   value: "FSA_donotreply@gov.bc.ca"
                 - name: NODE_ENV
                   value: ${NODE_ENV}
+                - name: FORM_ID
+                  value: "b6803f31-269b-4406-8cc7-b2bdc80d94dc"
+                - name: FORM_VERSION_ID
+                  value: "30243ebe-8e45-4568-b697-6cbc685abe32"
+                - name: FORM_PASSWORD
+                  value: ${FORM_PASSWORD}
 
               ports:
                 - containerPort: 3000
