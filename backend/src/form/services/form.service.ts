@@ -35,7 +35,7 @@ export class FormService {
       });
   }
 
-  @Cron('*/5 * * * *')
+  // @Cron('*/5 * * * *')
   handleSubmission(emailTo: String) {
     this.logger.debug('Called every 5 mins');
 
@@ -78,14 +78,17 @@ export class FormService {
                       }
                     });
 
-                    console.log(emailList);
+                    console.log(
+                      'submissions need to send notification: ',
+                      emailList,
+                    );
 
                     var response = [];
                     emailList.forEach((d) => {
                       response.push(
                         this.sendEmail(d.id, d.confirmationId, testEmail)
                           .then((mailResponse) => {
-                            console.log('mailResponse', mailResponse.data);
+                            console.log('mailResponse: ', mailResponse.data);
                             return {
                               status: mailResponse.status,
                               data: mailResponse.data,
