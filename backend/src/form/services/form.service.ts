@@ -19,10 +19,10 @@ export class FormService {
           },
         },
       )
-      .then((r) => {
-        if (r && r.data) {
+      .then((response) => {
+        if (response && response.data) {
           const newSubmission = {};
-          r.data.forEach((s) => {
+          response.data.forEach((s) => {
             // todo: filter the submissionList to only select the createdAt date within the last cron job interval
             newSubmission[s.submissionId] = s;
           });
@@ -35,7 +35,7 @@ export class FormService {
       });
   }
 
-  // @Cron('*/5 * * * *')
+  //@Cron('*/5 * * * *')
   handleSubmission(emailTo: String) {
     this.logger.debug('Called every 5 mins');
 
@@ -61,18 +61,18 @@ export class FormService {
                   },
                 },
               )
-              .then((r) => {
-                if (r && r.data) {
-                  const fieldList = r.data;
-                  if (fieldList.length > 0) {
-                    // fieldList is in the format of [{id: submission_id, naturalResourceDistrict: email_address}]
-                    // fieldList contains data for all submissions, so need to select only the new submission data
+              .then((submissionListResponse) => {
+                if (submissionListResponse && submissionListResponse.data) {
+                  const submissionListData = submissionListResponse.data;
+                  if (submissionListData.length > 0) {
+                    // submissionListData is in the format of [{id: submission_id, naturalResourceDistrict: email_address}]
+                    // submissionListData contains data for all submissions, so need to select only the new submission data
                     const emailList = [];
-                    fieldList.forEach((f) => {
-                      if (newSubmissionIds.includes(f.id)) {
+                    submissionListData.forEach((item) => {
+                      if (newSubmissionIds.includes(item.id)) {
                         emailList.push({
-                          ...f,
-                          confirmationId: newSubmission[f.id].confirmationId,
+                          ...item,
+                          confirmationId: newSubmission[item.id].confirmationId,
                         });
                       }
                     });
@@ -83,10 +83,10 @@ export class FormService {
                     );
 
                     var response = [];
-                    emailList.forEach((d) => {
-                      const testEmail = emailTo || d.naturalResourceDistrict;
+                    submissionListData.forEach((item) => {
+                      const testEmail = emailTo || item.naturalResourceDistrict;
                       response.push(
-                        this.sendEmail(d.id, d.confirmationId, testEmail)
+                        this.sendEmail(item.id, item.confirmationId, testEmail)
                           .then((mailResponse) => {
                             console.log('mailResponse: ', mailResponse.data);
                             return {
