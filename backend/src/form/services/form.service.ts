@@ -8,7 +8,7 @@ const oauth = require('axios-oauth-client');
 export class FormService {
   private readonly logger = new Logger(FormService.name);
 
-  getSubmissionList(formId: String) {
+  getNewSubmissionList(formId: String) {
     return axios
       .get(
         `https://chefs.nrs.gov.bc.ca/app/api/v1/forms/${formId}/submissions`,
@@ -43,7 +43,7 @@ export class FormService {
     const formVersionId = process.env.FORM_VERSION_ID;
     const testEmail = emailTo || 'catherine.meng@gov.bc.ca';
 
-    return this.getSubmissionList(formId)
+    return this.getNewSubmissionList(formId)
       .then((newSubmission) => {
         if (newSubmission) {
           const newSubmissionIds = Object.keys(newSubmission);
@@ -63,39 +63,53 @@ export class FormService {
                 },
               )
               .then((r) => {
-                // fieldList is in the format of [{id: submission_id, naturalResourceDistrict: email_address}]
-                const fieldList = r.data;
-                const emailList = [];
-                fieldList.forEach((f) => {
-                  // fieldList contains data for all submissions, so need to select the new submission data
-                  if (newSubmissionIds.includes(f.id)) {
-                    emailList.push({
-                      ...f,
-                      confirmationId: newSubmission[f.id].confirmationId,
+                if (r && r.data) {
+                  const fieldList = r.data;
+                  if (fieldList.length > 0) {
+                    // fieldList is in the format of [{id: submission_id, naturalResourceDistrict: email_address}]
+                    // fieldList contains data for all submissions, so need to select only the new submission data
+                    const emailList = [];
+                    fieldList.forEach((f) => {
+                      if (newSubmissionIds.includes(f.id)) {
+                        emailList.push({
+                          ...f,
+                          confirmationId: newSubmission[f.id].confirmationId,
+                        });
+                      }
                     });
+
+                    console.log(emailList);
+
+                    var response = [];
+                    emailList.forEach((d) => {
+                      response.push(
+                        this.sendEmail(d.id, d.confirmationId, testEmail)
+                          .then((mailResponse) => {
+                            console.log('mailResponse', mailResponse.data);
+                            return {
+                              status: mailResponse.status,
+                              data: mailResponse.data,
+                            };
+                          })
+                          .catch((err) => {
+                            throw new HttpException(
+                              err,
+                              HttpStatus.INTERNAL_SERVER_ERROR,
+                            );
+                          }),
+                      );
+                    });
+
+                    return Promise.all(response);
+                  } else {
+                    console.log('No submission fields data found');
                   }
-                });
-
-                console.log(emailList);
-
-                var response = [];
-                emailList.forEach((d) => {
-                  response.push(
-                    this.sendEmail(d.id, d.confirmationId, testEmail)
-                      .then((remail) => {
-                        console.log('remail', remail.data);
-                        return { status: remail.status, data: remail.data };
-                      })
-                      .catch((err) => {
-                        throw new HttpException(
-                          err,
-                          HttpStatus.INTERNAL_SERVER_ERROR,
-                        );
-                      }),
+                } else {
+                  throw new HttpException(
+                    'Failed to get submission field data, failed to get response data',
+                    HttpStatus.BAD_REQUEST,
                   );
-                });
-
-                return Promise.all(response);
+                }
               })
               .catch((e) => {
                 throw new HttpException(e, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -105,7 +119,7 @@ export class FormService {
           }
         } else {
           throw new HttpException(
-            'Failed to get submission list',
+            'Failed to get new submission list, failed to get response data',
             HttpStatus.BAD_REQUEST,
           );
         }
