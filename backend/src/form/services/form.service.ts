@@ -1,5 +1,4 @@
 import { Injectable, HttpException, HttpStatus, Logger } from '@nestjs/common';
-import { HttpService } from '@nestjs/axios';
 import axios from 'axios';
 import { Cron } from '@nestjs/schedule';
 
@@ -60,12 +59,16 @@ export class FormService {
                 // emailList in the format of [{id: submission_id, naturalResourceDistrict: email_address}]
                 const emailList = r.data;
 
+                if (emailList.length === 0) {
+                  return 'There are no new submissions';
+                }
+
                 // todo: based on the submissionList, get naturalResourceDistrict email address from emailList
                 // todo: for each new submission, send email to the correspond office
 
                 // test to send first record from emailList to myself
-                return this.sendEmail(
-                  emailList[0].id,
+                this.sendEmail(
+                  emailList[0].id, 
                   'test_email_address',
                 ).then((remail) => {
                   return { status: remail.status, data: remail.data };
