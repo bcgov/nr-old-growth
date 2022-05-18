@@ -1,5 +1,4 @@
 import { Injectable, HttpException, HttpStatus, Logger } from '@nestjs/common';
-import { HttpService } from '@nestjs/axios';
 import axios from 'axios';
 import { Cron } from '@nestjs/schedule';
 
@@ -22,8 +21,13 @@ export class FormService {
       )
       .then((r) => {
         if (r && r.data) {
-          // todo: filter the submissionList to only select the createdAt date within the last cron job interval
-          return r.data;
+          const newSubmission = {};
+          r.data.forEach((s) => {
+            // todo: filter the submissionList to only select the createdAt date within the last cron job interval
+            newSubmission[s.submissionId] = s;
+          });
+          // newSubmission is in the format of {submission_id: {...submission_data}}
+          return newSubmission;
         } else return null;
       })
       .catch((e) => {
@@ -31,17 +35,19 @@ export class FormService {
       });
   }
 
-  @Cron('45 * * * * *')
-  handleSubmission() {
-    this.logger.debug('Called when the current second is 45');
+  @Cron('*/5 * * * *')
+  handleSubmission(emailTo: String) {
+    this.logger.debug('Called every 5 mins');
 
     const formId = process.env.FORM_ID;
     const formVersionId = process.env.FORM_VERSION_ID;
+    const testEmail = emailTo || 'catherine.meng@gov.bc.ca';
 
     return this.getSubmissionList(formId)
-      .then((submissionList) => {
-        if (submissionList) {
-          if (submissionList.length > 0) {
+      .then((newSubmission) => {
+        if (newSubmission) {
+          const newSubmissionIds = Object.keys(newSubmission);
+          if (newSubmissionIds.length > 0) {
             // get naturalResourceDistrict field value to send email to
             return axios
               .get(
@@ -57,19 +63,39 @@ export class FormService {
                 },
               )
               .then((r) => {
-                // emailList in the format of [{id: submission_id, naturalResourceDistrict: email_address}]
-                const emailList = r.data;
-
-                // todo: based on the submissionList, get naturalResourceDistrict email address from emailList
-                // todo: for each new submission, send email to the correspond office
-
-                // test to send first record from emailList to myself
-                return this.sendEmail(
-                  emailList[0].id,
-                  'test_email_address',
-                ).then((remail) => {
-                  return { status: remail.status, data: remail.data };
+                // fieldList is in the format of [{id: submission_id, naturalResourceDistrict: email_address}]
+                const fieldList = r.data;
+                const emailList = [];
+                fieldList.forEach((f) => {
+                  // fieldList contains data for all submissions, so need to select the new submission data
+                  if (newSubmissionIds.includes(f.id)) {
+                    emailList.push({
+                      ...f,
+                      confirmationId: newSubmission[f.id].confirmationId,
+                    });
+                  }
                 });
+
+                console.log(emailList);
+
+                var response = [];
+                emailList.forEach((d) => {
+                  response.push(
+                    this.sendEmail(d.id, d.confirmationId, testEmail)
+                      .then((remail) => {
+                        console.log('remail', remail.data);
+                        return { status: remail.status, data: remail.data };
+                      })
+                      .catch((err) => {
+                        throw new HttpException(
+                          err,
+                          HttpStatus.INTERNAL_SERVER_ERROR,
+                        );
+                      }),
+                  );
+                });
+
+                return Promise.all(response);
               })
               .catch((e) => {
                 throw new HttpException(e, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -107,12 +133,12 @@ export class FormService {
       });
   }
 
-  sendEmail(submissionId: String, emailTo: String) {
-    const email_subject = 'Old Growth Field Observation form and package';
+  sendEmail(submissionId: String, confirmationId: String, emailTo: String) {
+    const email_subject = `Old Growth Field Observation form and package, ${confirmationId}`;
     const email_tag = 'field_verification_email'; // might link this tag to the submission id
     const email_type = 'html';
     const email_body =
-      '<div style="margin-bottom: 16px">An Old Growth Field Observation form and package has been submitted.</div>' +
+      `<div style="margin-bottom: 16px">An Old Growth Field Observation form and package has been submitted. Confirmation Number: ${confirmationId}</div>` +
       `<div><a href="https://chefs.nrs.gov.bc.ca/app/form/view?s=${submissionId}">View the submission</a></div>`;
 
     if (
@@ -121,7 +147,8 @@ export class FormService {
       !process.env.EMAIL_FROM
     ) {
       throw new HttpException(
-        'Failed to send email, server side missing config of authentication url or CHES email server url or from email address or to email address',
+        'Failed to send email, server side missing config of authentication url' +
+          'or CHES email server url or from email address or to email address',
         HttpStatus.BAD_REQUEST,
       );
     }
