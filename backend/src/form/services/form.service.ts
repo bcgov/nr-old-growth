@@ -41,7 +41,6 @@ export class FormService {
 
     const formId = process.env.FORM_ID;
     const formVersionId = process.env.FORM_VERSION_ID;
-    const testEmail = emailTo || 'catherine.meng@gov.bc.ca';
 
     return this.getNewSubmissionList(formId)
       .then((newSubmission) => {
@@ -85,6 +84,7 @@ export class FormService {
 
                     var response = [];
                     emailList.forEach((d) => {
+                      const testEmail = emailTo || d.naturalResourceDistrict;
                       response.push(
                         this.sendEmail(d.id, d.confirmationId, testEmail)
                           .then((mailResponse) => {
