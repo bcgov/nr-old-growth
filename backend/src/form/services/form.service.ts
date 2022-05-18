@@ -61,16 +61,16 @@ export class FormService {
                   },
                 },
               )
-              .then((submissionListResponse) => {
-                if (submissionListResponse && submissionListResponse.data) {
-                  const submissionListData = submissionListResponse.data;
-                  if (submissionListData.length > 0) {
-                    // submissionListData is in the format of [{id: submission_id, naturalResourceDistrict: email_address}]
-                    // submissionListData contains data for all submissions, so need to select only the new submission data
-                    const emailList = [];
-                    submissionListData.forEach((item) => {
+              .then((submissionValueResponse) => {
+                if (submissionValueResponse && submissionValueResponse.data) {
+                  const submissionValueList = submissionValueResponse.data;
+                  if (submissionValueList.length > 0) {
+                    // submissionValueList is in the format of [{id: submission_id, naturalResourceDistrict: email_address}]
+                    // submissionValueList contains data for all submissions, so need to select only the new submission data
+                    const filteredSubmissionValueList = [];
+                    submissionValueList.forEach((item) => {
                       if (newSubmissionIds.includes(item.id)) {
-                        emailList.push({
+                        filteredSubmissionValueList.push({
                           ...item,
                           confirmationId: newSubmission[item.id].confirmationId,
                         });
@@ -79,11 +79,11 @@ export class FormService {
 
                     console.log(
                       'submissions need to send notification: ',
-                      emailList,
+                      filteredSubmissionValueList,
                     );
 
                     var response = [];
-                    submissionListData.forEach((item) => {
+                    filteredSubmissionValueList.forEach((item) => {
                       const testEmail = emailTo || item.naturalResourceDistrict;
                       response.push(
                         this.sendEmail(item.id, item.confirmationId, testEmail)
