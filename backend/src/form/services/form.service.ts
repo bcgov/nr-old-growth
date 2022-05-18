@@ -55,24 +55,27 @@ export class FormService {
                   },
                 },
               )
-              .then((r) => {
-                // emailList in the format of [{id: submission_id, naturalResourceDistrict: email_address}]
-                const emailList = r.data;
+              .then((submissionListResponse) => {
+                // submissionListData in the format of [{id: submission_id, naturalResourceDistrict: email_address}]
+                const submissionListData = submissionListResponse.data;
 
-                if (emailList.length === 0) {
+                if (submissionListData.length === 0) {
                   return 'There are no new submissions';
                 }
+                else {
+                  Object.keys(submissionListData).forEach((key) => {
+                    this.sendEmail(
+                      // todo: based on the submissionList, get naturalResourceDistrict email address from submissionListData
+                      // todo: for each new submission, send email to the correspond office
 
-                // todo: based on the submissionList, get naturalResourceDistrict email address from emailList
-                // todo: for each new submission, send email to the correspond office
-
-                // test to send first record from emailList to myself
-                this.sendEmail(
-                  emailList[0].id, 
-                  'test_email_address',
-                ).then((remail) => {
-                  return { status: remail.status, data: remail.data };
-                });
+                      // test to send first record from submissionListData to myself
+                      submissionListData[key].id,
+                      submissionListData[key].naturalResourceDistrict,
+                    ).then((mailResponse) => {
+                      return { status: mailResponse.status, data: mailResponse.data };
+                    });
+                  });
+                }
               })
               .catch((e) => {
                 throw new HttpException(e, HttpStatus.INTERNAL_SERVER_ERROR);
