@@ -67,10 +67,10 @@ export class FormService {
                   if (submissionValueList.length > 0) {
                     // submissionValueList is in the format of [{id: submission_id, naturalResourceDistrict: email_address}]
                     // submissionValueList contains data for all submissions, so need to select only the new submission data
-                    const filteredSubmissionValueList = [];
+                    const filteredSubmValueList = [];
                     submissionValueList.forEach((item) => {
                       if (newSubmissionIds.includes(item.id)) {
-                        filteredSubmissionValueList.push({
+                        filteredSubmValueList.push({
                           ...item,
                           confirmationId: newSubmission[item.id].confirmationId,
                         });
@@ -79,12 +79,14 @@ export class FormService {
 
                     console.log(
                       'submissions need to send notification: ',
-                      filteredSubmissionValueList,
+                      filteredSubmValueList,
                     );
 
                     var response = [];
-                    filteredSubmissionValueList.forEach((item) => {
-                      const testEmail = emailTo || item.naturalResourceDistrict;
+                    filteredSubmValueList.forEach((item) => {
+                      const testEmail = emailTo || item.naturalResourceDistrict.email;
+                      this.logger.debug(testEmail);
+
                       response.push(
                         this.sendEmail(item.id, item.confirmationId, testEmail)
                           .then((mailResponse) => {
