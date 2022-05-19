@@ -8,10 +8,10 @@ const oauth = require('axios-oauth-client');
 export class FormService {
   private readonly logger = new Logger(FormService.name);
 
-  getNewSubmissionList(formId: String) {
+  getNewSubmissionList(formId: String, formVersionId: String) {
     return axios
       .get(
-        `https://chefs.nrs.gov.bc.ca/app/api/v1/forms/${formId}/submissions`,
+        `https://chefs.nrs.gov.bc.ca/app/api/v1/forms/${formId}/versions/${formVersionId}/submissions`,
         {
           auth: {
             username: process.env.FORM_ID,
@@ -19,15 +19,28 @@ export class FormService {
           },
         },
       )
-      .then((response) => {
-        if (response && response.data) {
-          const newSubmission = {};
-          response.data.forEach((s) => {
-            // todo: filter the submissionList to only select the createdAt date within the last cron job interval
-            newSubmission[s.submissionId] = s;
+      .then((subListResponse) => {
+        if (subListResponse && subListResponse.data) {
+          const newSubmissions = [];
+          const currTime = new Date();
+          const lastTime = new Date(currTime.getTime() - 1000 * 60 * 60);
+          const currTimeValue = currTime.valueOf();
+          const lastTimeValue = lastTime.valueOf();
+
+          subListResponse.data.forEach((s) => {
+            // filter the submissionList to only select the createdAt date within the last cron job interval
+            // and status is submitted
+            const createdAtValue = new Date(s.createdAt).valueOf();
+            if (
+              createdAtValue > lastTimeValue &&
+              createdAtValue <= currTimeValue &&
+              s.submission.state == 'submitted'
+            ) {
+              newSubmissions.push(s);
+            }
           });
-          // newSubmission is in the format of {submission_id: {...submission_data}}
-          return newSubmission;
+
+          return newSubmissions;
         } else return null;
       })
       .catch((e) => {
@@ -35,92 +48,51 @@ export class FormService {
       });
   }
 
-  //@Cron('*/5 * * * *')
+  // @Cron('*/5 * * * *')
   handleSubmission(emailTo: String) {
     this.logger.debug('Called every 5 mins');
 
     const formId = process.env.FORM_ID;
     const formVersionId = process.env.FORM_VERSION_ID;
 
-    return this.getNewSubmissionList(formId)
-      .then((newSubmission) => {
-        if (newSubmission) {
-          const newSubmissionIds = Object.keys(newSubmission);
-          if (newSubmissionIds.length > 0) {
-            // get naturalResourceDistrict field value to send email to
-            return axios
-              .get(
-                `https://chefs.nrs.gov.bc.ca/app/api/v1/forms/${formId}/versions/${formVersionId}/submissions/discover`,
-                {
-                  auth: {
-                    username: process.env.FORM_ID,
-                    password: process.env.FORM_PASSWORD,
-                  },
-                  params: {
-                    fields: 'naturalResourceDistrict',
-                  },
-                },
-              )
-              .then((submissionValueResponse) => {
-                if (submissionValueResponse && submissionValueResponse.data) {
-                  const submissionValueList = submissionValueResponse.data;
-                  if (submissionValueList.length > 0) {
-                    // submissionValueList is in the format of [{id: submission_id, naturalResourceDistrict: email_address}]
-                    // submissionValueList contains data for all submissions, so need to select only the new submission data
-                    const filteredSubmValueList = [];
-                    submissionValueList.forEach((item) => {
-                      if (newSubmissionIds.includes(item.id)) {
-                        filteredSubmValueList.push({
-                          ...item,
-                          confirmationId: newSubmission[item.id].confirmationId,
-                        });
-                      }
-                    });
+    return this.getNewSubmissionList(formId, formVersionId)
+      .then((newSubmissionList) => {
+        if (newSubmissionList) {
+          if (newSubmissionList.length > 0) {
+            console.log(
+              'submissions need to send notification: ',
+              newSubmissionList,
+            );
+            var response = [];
+            newSubmissionList.forEach((item) => {
+              const testEmail =
+                emailTo || item.submission.data.naturalResourceDistrict.email;
 
-                    console.log(
-                      'submissions need to send notification: ',
-                      filteredSubmValueList,
+              console.log('mail to:', testEmail);
+
+              response.push(
+                this.sendEmail(item.id, item.confirmationId, testEmail)
+                  .then((mailResponse) => {
+                    console.log('mailResponse: ', mailResponse.data);
+                    return {
+                      status: mailResponse.status,
+                      data: mailResponse.data,
+                    };
+                  })
+                  .catch((err) => {
+                    throw new HttpException(
+                      err,
+                      HttpStatus.INTERNAL_SERVER_ERROR,
                     );
+                  }),
+              );
+            });
 
-                    var response = [];
-                    filteredSubmValueList.forEach((item) => {
-                      const testEmail = emailTo || item.naturalResourceDistrict.email;
-                      this.logger.debug(testEmail);
-
-                      response.push(
-                        this.sendEmail(item.id, item.confirmationId, testEmail)
-                          .then((mailResponse) => {
-                            console.log('mailResponse: ', mailResponse.data);
-                            return {
-                              status: mailResponse.status,
-                              data: mailResponse.data,
-                            };
-                          })
-                          .catch((err) => {
-                            throw new HttpException(
-                              err,
-                              HttpStatus.INTERNAL_SERVER_ERROR,
-                            );
-                          }),
-                      );
-                    });
-
-                    return Promise.all(response);
-                  } else {
-                    console.log('No submission fields data found');
-                  }
-                } else {
-                  throw new HttpException(
-                    'Failed to get submission field data, failed to get response data',
-                    HttpStatus.BAD_REQUEST,
-                  );
-                }
-              })
-              .catch((e) => {
-                throw new HttpException(e, HttpStatus.INTERNAL_SERVER_ERROR);
-              });
+            return Promise.all(response);
           } else {
-            console.log('No new submission within the last cron job interval');
+            this.logger.debug(
+              'No new submission within the last cron job interval',
+            );
           }
         } else {
           throw new HttpException(
