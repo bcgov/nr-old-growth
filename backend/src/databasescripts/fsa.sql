@@ -352,7 +352,7 @@ create table email_submision_log(
     email_submision_log_id      int4            not null,
     code                        varchar(10)     not null,
     exception_log               varchar(100)    null,
-    submision_id                int4            null,
+    submision_id                varchar(10)     null,
     create_timestamp            timestamp       default current_timestamp not null
 )
 ;
