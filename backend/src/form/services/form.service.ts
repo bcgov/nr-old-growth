@@ -8,14 +8,18 @@ const oauth = require('axios-oauth-client');
 export class FormService {
   private readonly logger = new Logger(FormService.name);
 
-  getNewSubmissionList(formId: String, formVersionId: String) {
+  getNewSubmissionList(
+    formId: string,
+    formVersionId: string,
+    fromPassword: string,
+  ) {
     return axios
       .get(
         `https://chefs.nrs.gov.bc.ca/app/api/v1/forms/${formId}/versions/${formVersionId}/submissions`,
         {
           auth: {
-            username: process.env.FORM_ID,
-            password: process.env.FORM_PASSWORD,
+            username: formId,
+            password: fromPassword,
           },
         },
       )
@@ -49,13 +53,29 @@ export class FormService {
   }
 
   // @Cron('*/5 * * * *')
-  handleSubmission(emailTo: String) {
+  handleIDIRForm(emailTo: string) {
+    const formId = process.env.IDIR_FORM_ID;
+    const formVersionId = process.env.IDIR_FORM_VERSION_ID;
+    const formPassword = process.env.IDIR_FORM_PASSWORD;
+    this.handleSubmission(emailTo, formId, formVersionId, formPassword);
+  }
+
+  // @Cron('*/5 * * * *')
+  handleBCEIDForm() {
+    // const formId = "";
+    // const formVersionId = "";
+    // this.handleSubmission(null, formId, formVersionId);
+  }
+
+  handleSubmission(
+    emailTo: string,
+    formId: string,
+    formVersionId: string,
+    formPassword: string,
+  ) {
     this.logger.debug('Called every 5 mins');
 
-    const formId = process.env.FORM_ID;
-    const formVersionId = process.env.FORM_VERSION_ID;
-
-    return this.getNewSubmissionList(formId, formVersionId)
+    return this.getNewSubmissionList(formId, formVersionId, formPassword)
       .then((newSubmissionList) => {
         if (newSubmissionList) {
           if (newSubmissionList.length > 0) {

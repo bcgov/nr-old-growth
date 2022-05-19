@@ -9,6 +9,6 @@ export class FormController {
 
   @Get(':emailTo')
   get(@Param('emailTo') emailTo: string) {
-    return this.formService.handleSubmission(emailTo);
+    return this.formService.handleIDIRForm(emailTo);
   }
 }

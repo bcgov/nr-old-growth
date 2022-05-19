@@ -49,7 +49,7 @@ parameters:
   - name: NODE_ENV
     description: environment mode
     required: true
-  - name: FORM_PASSWORD
+  - name: IDIR_FORM_PASSWORD
     description: CHEFS form password
     required: true
 objects:
@@ -150,11 +150,11 @@ objects:
                   value: "FSA_donotreply@gov.bc.ca"
                 - name: NODE_ENV
                   value: ${NODE_ENV}
-                - name: FORM_ID
+                - name: IDIR_FORM_ID
                   value: "b6803f31-269b-4406-8cc7-b2bdc80d94dc"
-                - name: FORM_VERSION_ID
+                - name: IDIR_FORM_VERSION_ID
                   value: "639d1da0-3ce2-4f1f-a343-c257bcb6b7f4"
-                - name: FORM_PASSWORD
+                - name: IDIR_FORM_PASSWORD
                   value: ${FORM_PASSWORD}
 
               ports:
