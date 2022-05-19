@@ -347,12 +347,13 @@ INSERT INTO NATURAL_RESOURCE_DIST (NATURAL_RESOURCE_DIST_CODE, DESCRIPTION, EMAI
 -- 
 -- TABLE: email_submision_log
 --
+drop table if exists email_submision_log;
 
 create table email_submision_log(
     email_submision_log_id      int4            not null,
     code                        varchar(10)     not null,
     exception_log               varchar(100)    null,
-    submision_id                varchar(10)     null,
+    confirmation_id             varchar(10)     null,
     create_timestamp            timestamp       default current_timestamp not null
 )
 ;

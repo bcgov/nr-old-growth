@@ -17,8 +17,8 @@ export class EmailSubmissionLogEntity extends BaseEntity {
     @Column({ name: "exception_log" })
     exceptionLog: string;
 
-    @Column({ name: "submision_id" })
-    submissionId: string;
+    @Column({ name: "confirmation_id" })
+    confirmationId: string;
 
     @Column({ name: "create_timestamp" })
     createTimestamp: Date;
