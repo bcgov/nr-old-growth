@@ -117,7 +117,8 @@ export class FormService {
 
     return getClientCredentials()
       .then((res) => {
-        if (res) return res.access_token;
+        if (res && res.access_token) return res.access_token;
+        else return null;
       })
       .catch((e) => {
         throw new HttpException(e, HttpStatus.INTERNAL_SERVER_ERROR);
