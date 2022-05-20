@@ -5,7 +5,7 @@ import axios from 'axios';
 import { Cron } from '@nestjs/schedule';
 import { EmailSubmissionLogEntity } from '../entities/emailSubmissionLog.entity';
 import { EmailSubmissionLog } from '../entities/emailSubmissionLog.interface';
-import { Observable } from 'rxjs';
+import { from, Observable } from 'rxjs';
 
 const oauth = require('axios-oauth-client');
 
@@ -27,17 +27,10 @@ export class FormService {
       .getMany();
   }
   
+  @Cron('*/5 * * * * *')
   postEmailSubmisLog(emailSubmissionLog: EmailSubmissionLog): Observable<EmailSubmissionLog> {
-    return axios
-    .post("/api/emailSubmissionLog", newEmailSubmissionLog)
-    .then((response) => {
-      //this.setMenuSelection(1, response.data);
-      //console.log(response);
-      this.logger.debug(response);
-    })
-    .catch((error) => {
-      console.log(error);
-    });
+    this.logger.debug('Test');
+    return from(this.emailSubmissionLogRepository.save(emailSubmissionLog));
   }
 
   getNewSubmissionList(
