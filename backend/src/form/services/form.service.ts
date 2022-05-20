@@ -4,11 +4,14 @@ import { Repository } from 'typeorm';
 import axios from 'axios';
 import { Cron } from '@nestjs/schedule';
 import { EmailSubmissionLogEntity } from '../entities/emailSubmissionLog.entity';
+import { EmailSubmissionLog } from '../entities/emailSubmissionLog.interface';
+import { Observable } from 'rxjs';
 
 const oauth = require('axios-oauth-client');
 
 @Injectable()
 export class FormService {
+  
   private readonly logger = new Logger(FormService.name);
   constructor(
     @InjectRepository(EmailSubmissionLogEntity)
@@ -22,6 +25,19 @@ export class FormService {
       .from(EmailSubmissionLogEntity, 'eslog')
       .where('eslog.confirmationId is not null')
       .getMany();
+  }
+  
+  postEmailSubmisLog(emailSubmissionLog: EmailSubmissionLog): Observable<EmailSubmissionLog> {
+    return axios
+    .post("/api/emailSubmissionLog", newEmailSubmissionLog)
+    .then((response) => {
+      //this.setMenuSelection(1, response.data);
+      //console.log(response);
+      this.logger.debug(response);
+    })
+    .catch((error) => {
+      console.log(error);
+    });
   }
 
   getNewSubmissionList(
