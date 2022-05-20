@@ -1,12 +1,28 @@
 import { Injectable, HttpException, HttpStatus, Logger } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import axios from 'axios';
 import { Cron } from '@nestjs/schedule';
+import { EmailSubmissionLogEntity } from '../entities/emailSubmissionLog.entity';
 
 const oauth = require('axios-oauth-client');
 
 @Injectable()
 export class FormService {
   private readonly logger = new Logger(FormService.name);
+  constructor(
+    @InjectRepository(EmailSubmissionLogEntity)
+    private emailSubmissionLogRepository: Repository<EmailSubmissionLogEntity>,
+  ) {}
+
+  getStoredSubmissions(): Promise<EmailSubmissionLogEntity[]> {
+    return this.emailSubmissionLogRepository
+      .createQueryBuilder()
+      .select('eslog')
+      .from(EmailSubmissionLogEntity, 'eslog')
+      .where('eslog.confirmationId is not null')
+      .getMany();
+  }
 
   getNewSubmissionList(
     formId: string,
@@ -23,28 +39,56 @@ export class FormService {
           },
         },
       )
-      .then((subListResponse) => {
-        if (subListResponse && subListResponse.data) {
+      .then((subListRes) => {
+        if (subListRes && subListRes.data) {
           const newSubmissions = [];
           const currTime = new Date();
-          const lastTime = new Date(currTime.getTime() - 1000 * 60 * 60);
+          const lastTime = new Date(currTime.getTime() - 1000 * 60 * 60 * 4);
           const currTimeValue = currTime.valueOf();
           const lastTimeValue = lastTime.valueOf();
 
-          subListResponse.data.forEach((s) => {
-            // filter the submissionList to only select the createdAt date within the last cron job interval
-            // and status is submitted
-            const createdAtValue = new Date(s.createdAt).valueOf();
-            if (
-              createdAtValue > lastTimeValue &&
-              createdAtValue <= currTimeValue &&
-              s.submission.state == 'submitted'
-            ) {
-              newSubmissions.push(s);
-            }
-          });
+          return this.getStoredSubmissions()
+            .then((storedSubs) => {
+              const formatStoredSubs = {};
+              storedSubs.forEach((s) => {
+                formatStoredSubs[s.confirmationId] = s;
+              });
 
-          return newSubmissions;
+              subListRes.data.forEach((s) => {
+                const createdAtValue = new Date(s.createdAt).valueOf();
+                if (
+                  // filter the submissionList to only select the createdAt date within the last cron job interval and status is submitted
+                  createdAtValue > lastTimeValue &&
+                  createdAtValue <= currTimeValue &&
+                  s.submission.state == 'submitted'
+                ) {
+                  newSubmissions.push(s);
+                } else if (
+                  // or has no record in our db, or our code indicates failed
+                  !formatStoredSubs[s.confirmationId] ||
+                  formatStoredSubs[s.confirmationId].code == 'FAILED'
+                ) {
+                  newSubmissions.push(s);
+                }
+              });
+
+              return newSubmissions;
+            })
+            .catch((e) => {
+              this.logger.error('Failed to get log data from database');
+              this.logger.error(e);
+              subListRes.data.forEach((s) => {
+                const createdAtValue = new Date(s.createdAt).valueOf();
+                if (
+                  createdAtValue > lastTimeValue &&
+                  createdAtValue <= currTimeValue &&
+                  s.submission.state == 'submitted'
+                ) {
+                  newSubmissions.push(s);
+                }
+              });
+              return newSubmissions;
+            });
         } else return null;
       })
       .catch((e) => {
@@ -53,6 +97,7 @@ export class FormService {
   }
 
   // @Cron('*/5 * * * *')
+  // @Cron('45 * * * * *')
   handleIDIRForm(emailTo: string) {
     const formId = process.env.IDIR_FORM_ID;
     const formVersionId = process.env.IDIR_FORM_VERSION_ID;
@@ -100,7 +145,10 @@ export class FormService {
                     };
                   })
                   .catch((err) => {
-                    throw new HttpException(
+                    this.logger.error(
+                      new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR),
+                    );
+                    return new HttpException(
                       err,
                       HttpStatus.INTERNAL_SERVER_ERROR,
                     );
