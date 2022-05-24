@@ -39,8 +39,10 @@ export class FormService {
       return from(
         this.emailSubmissionLogRepository.save(newEmailSubmissionLog),
       );
-    } catch (error) {
-      // handle db write error
+    } catch (e) {
+      // todo: handle db write error
+      this.logger.error('Failed to write into db: ');
+      this.logger.error(e);
       return null;
     }
   }
