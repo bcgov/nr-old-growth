@@ -16,7 +16,7 @@ export class FormController {
 
   @Post()
   create(@Body() emailSubmissionLog: EmailSubmissionLog): Observable<EmailSubmissionLog> {
-    return this.formService.postEmailSubmisLog(emailSubmissionLog);
+    return this.formService.postEmailSubmissionLog(emailSubmissionLog);
   }
 
 }

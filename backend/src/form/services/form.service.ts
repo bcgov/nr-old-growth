@@ -11,12 +11,13 @@ const oauth = require('axios-oauth-client');
 
 @Injectable()
 export class FormService {
-  
+
   private readonly logger = new Logger(FormService.name);
+
   constructor(
     @InjectRepository(EmailSubmissionLogEntity)
     private emailSubmissionLogRepository: Repository<EmailSubmissionLogEntity>,
-  ) {}
+  ) { }
 
   getStoredSubmissions(): Promise<EmailSubmissionLogEntity[]> {
     return this.emailSubmissionLogRepository
@@ -26,11 +27,14 @@ export class FormService {
       .where('eslog.confirmationId is not null')
       .getMany();
   }
-  
-  @Cron('*/5 * * * * *')
-  postEmailSubmisLog(emailSubmissionLog: EmailSubmissionLog): Observable<EmailSubmissionLog> {
-    this.logger.debug('Test');
-    return from(this.emailSubmissionLogRepository.save(emailSubmissionLog));
+
+  postEmailSubmissionLog(emailSubmissionLog: EmailSubmissionLog): Observable<EmailSubmissionLog> {
+    const newEmailSubmissionLog = new EmailSubmissionLogEntity();
+    newEmailSubmissionLog.code = emailSubmissionLog.code;
+    newEmailSubmissionLog.exceptionLog = emailSubmissionLog.exceptionLog
+    newEmailSubmissionLog.confirmationId = emailSubmissionLog.confirmationId
+
+    return from(this.emailSubmissionLogRepository.save(newEmailSubmissionLog));
   }
 
   getNewSubmissionList(
@@ -84,8 +88,16 @@ export class FormService {
               return newSubmissions;
             })
             .catch((e) => {
-              this.logger.error('Failed to get log data from database');
+              this.logger.error('Failed to get submission data from API');
               this.logger.error(e);
+
+              const newEmailSubmissionLog : EmailSubmissionLog = {
+                code: 'FAILED',
+                exceptionLog: 'Failed to get submission data from API. ' + e
+              };
+          
+              this.postEmailSubmissionLog(newEmailSubmissionLog);
+
               subListRes.data.forEach((s) => {
                 const createdAtValue = new Date(s.createdAt).valueOf();
                 if (
@@ -101,12 +113,20 @@ export class FormService {
         } else return null;
       })
       .catch((e) => {
+        const newEmailSubmissionLog : EmailSubmissionLog = {
+          code: 'FAILED',
+          exceptionLog: 'Failed to get submission data from API. ' + e
+        };
+    
+        this.postEmailSubmissionLog(newEmailSubmissionLog);
+         
         throw new HttpException(e, HttpStatus.INTERNAL_SERVER_ERROR);
       });
   }
 
-  // @Cron('*/5 * * * *')
+  // @Cron('*/5 * * * *') //Runs every 5 minutes
   // @Cron('45 * * * * *')
+  @Cron('*/5 * * * * *') //Runs every 5 seconds
   handleIDIRForm(emailTo: string) {
     const formId = process.env.IDIR_FORM_ID;
     const formVersionId = process.env.IDIR_FORM_VERSION_ID;
@@ -154,6 +174,14 @@ export class FormService {
                     };
                   })
                   .catch((err) => {
+                    const newEmailSubmissionLog : EmailSubmissionLog = {
+                      code: 'FAILED',
+                      confirmationId: item.confirmationId,
+                      exceptionLog: 'Failed to send email. ' + err
+                    };
+                
+                    this.postEmailSubmissionLog(newEmailSubmissionLog);
+
                     this.logger.error(
                       new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR),
                     );
@@ -171,7 +199,17 @@ export class FormService {
               'No new submission within the last cron job interval',
             );
           }
-        } else {
+        } 
+        else {  
+          //TODO: Is this a real HttpException?
+
+          const newEmailSubmissionLog : EmailSubmissionLog = {
+            code: 'FAILED',
+            exceptionLog: 'Failed to get new submission list.'
+          };
+      
+          this.postEmailSubmissionLog(newEmailSubmissionLog);
+          
           throw new HttpException(
             'Failed to get new submission list, failed to get response data',
             HttpStatus.BAD_REQUEST,
@@ -179,6 +217,13 @@ export class FormService {
         }
       })
       .catch((e) => {
+        const newEmailSubmissionLog : EmailSubmissionLog = {
+          code: 'FAILED',
+          exceptionLog: 'Failed to get new submission list. ' + e
+        };
+    
+        this.postEmailSubmissionLog(newEmailSubmissionLog);
+
         throw new HttpException(e, HttpStatus.INTERNAL_SERVER_ERROR);
       });
   }
@@ -198,11 +243,26 @@ export class FormService {
         else return null;
       })
       .catch((e) => {
+        const newEmailSubmissionLog : EmailSubmissionLog = {
+          code: 'FAILED',
+          exceptionLog: 'Failed to get client credentials. ' + e
+        };
+    
+        this.postEmailSubmissionLog(newEmailSubmissionLog);
+
         throw new HttpException(e, HttpStatus.INTERNAL_SERVER_ERROR);
       });
   }
 
-  sendEmail(submissionId: String, confirmationId: String, emailTo: String) {
+  sendEmail(submissionId: string, confirmationId: string, emailTo: String) {
+    const newEmailSubmissionLog : EmailSubmissionLog = {
+      code: 'DELIVERED',
+      confirmationId: confirmationId,
+      exceptionLog: ''
+    };
+
+    this.postEmailSubmissionLog(newEmailSubmissionLog);
+
     const email_subject = `Old Growth Field Observation form and package, ${confirmationId}`;
     const email_tag = 'field_verification_email'; // might link this tag to the submission id
     const email_type = 'html';
@@ -215,9 +275,17 @@ export class FormService {
       !process.env.EMAIL_API_URL ||
       !process.env.EMAIL_FROM
     ) {
+      const newEmailSubmissionLog : EmailSubmissionLog = {
+        code: 'FAILED',
+        exceptionLog: 'Failed to send email, server side missing config of authentication url' +
+                      'or CHES email server url or from email address or to email address'
+      };
+  
+      this.postEmailSubmissionLog(newEmailSubmissionLog);
+
       throw new HttpException(
         'Failed to send email, server side missing config of authentication url' +
-          'or CHES email server url or from email address or to email address',
+        'or CHES email server url or from email address or to email address',
         HttpStatus.BAD_REQUEST,
       );
     }
@@ -250,6 +318,13 @@ export class FormService {
               return { status: r.status, data: r.data };
             })
             .catch((e) => {
+              const newEmailSubmissionLog : EmailSubmissionLog = {
+                code: 'FAILED',
+                exceptionLog: 'Failed to post email API. ' + e
+              };
+          
+              this.postEmailSubmissionLog(newEmailSubmissionLog);
+
               throw new HttpException(e, HttpStatus.INTERNAL_SERVER_ERROR);
             });
         }
@@ -259,6 +334,13 @@ export class FormService {
         );
       })
       .catch((e) => {
+        const newEmailSubmissionLog : EmailSubmissionLog = {
+          code: 'FAILED',
+          exceptionLog: 'Failed to get token. ' + e
+        };
+    
+        this.postEmailSubmissionLog(newEmailSubmissionLog);
+
         throw new HttpException(e, HttpStatus.INTERNAL_SERVER_ERROR);
       });
   }
