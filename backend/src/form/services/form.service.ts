@@ -11,13 +11,12 @@ const oauth = require('axios-oauth-client');
 
 @Injectable()
 export class FormService {
-
   private readonly logger = new Logger(FormService.name);
 
   constructor(
     @InjectRepository(EmailSubmissionLogEntity)
     private emailSubmissionLogRepository: Repository<EmailSubmissionLogEntity>,
-  ) { }
+  ) {}
 
   getStoredSubmissions(): Promise<EmailSubmissionLogEntity[]> {
     return this.emailSubmissionLogRepository
@@ -28,13 +27,60 @@ export class FormService {
       .getMany();
   }
 
-  postEmailSubmissionLog(emailSubmissionLog: EmailSubmissionLog): Observable<EmailSubmissionLog> {
+  postEmailSubmissionLog(
+    emailSubmissionLog: EmailSubmissionLog,
+  ): Observable<EmailSubmissionLog> {
     const newEmailSubmissionLog = new EmailSubmissionLogEntity();
     newEmailSubmissionLog.code = emailSubmissionLog.code;
-    newEmailSubmissionLog.exceptionLog = emailSubmissionLog.exceptionLog
-    newEmailSubmissionLog.confirmationId = emailSubmissionLog.confirmationId
+    newEmailSubmissionLog.exceptionLog = emailSubmissionLog.exceptionLog;
+    newEmailSubmissionLog.confirmationId = emailSubmissionLog.confirmationId;
 
-    return from(this.emailSubmissionLogRepository.save(newEmailSubmissionLog));
+    try {
+      return from(
+        this.emailSubmissionLogRepository.save(newEmailSubmissionLog),
+      );
+    } catch (error) {
+      // handle db write error
+      return null;
+    }
+  }
+
+  filterSubmissionList(
+    submissions: Array<{ [key: string]: any }>,
+    storedSubmission: Object,
+    currTimeValue: Number,
+    lastTimeValue: Number,
+  ) {
+    try {
+      const newSubmissions = [];
+      submissions.forEach((s) => {
+        const createdAtValue = new Date(s.createdAt).valueOf();
+        if (
+          // filter the submissionList to only select the createdAt date within the last cron job interval and status is submitted
+          createdAtValue > lastTimeValue &&
+          createdAtValue <= currTimeValue &&
+          s.submission.state == 'submitted'
+        ) {
+          newSubmissions.push(s);
+        } else if (
+          // or has no record in our db, or our code indicates failed
+          storedSubmission &&
+          (!storedSubmission[s.confirmationId] ||
+            storedSubmission[s.confirmationId].code == 'FAILED')
+        ) {
+          newSubmissions.push(s);
+        }
+      });
+
+      return newSubmissions;
+    } catch (e) {
+      const newEmailSubmissionLog: EmailSubmissionLog = {
+        code: 'FAILED',
+        exceptionLog: 'Failed to filter submission data: ' + e,
+      };
+      this.postEmailSubmissionLog(newEmailSubmissionLog);
+      return null;
+    }
   }
 
   getNewSubmissionList(
@@ -54,7 +100,6 @@ export class FormService {
       )
       .then((subListRes) => {
         if (subListRes && subListRes.data) {
-          const newSubmissions = [];
           const currTime = new Date();
           const lastTime = new Date(currTime.getTime() - 1000 * 60 * 60 * 4);
           const currTimeValue = currTime.valueOf();
@@ -67,67 +112,49 @@ export class FormService {
                 formatStoredSubs[s.confirmationId] = s;
               });
 
-              subListRes.data.forEach((s) => {
-                const createdAtValue = new Date(s.createdAt).valueOf();
-                if (
-                  // filter the submissionList to only select the createdAt date within the last cron job interval and status is submitted
-                  createdAtValue > lastTimeValue &&
-                  createdAtValue <= currTimeValue &&
-                  s.submission.state == 'submitted'
-                ) {
-                  newSubmissions.push(s);
-                } else if (
-                  // or has no record in our db, or our code indicates failed
-                  !formatStoredSubs[s.confirmationId] ||
-                  formatStoredSubs[s.confirmationId].code == 'FAILED'
-                ) {
-                  newSubmissions.push(s);
-                }
-              });
-
-              return newSubmissions;
+              return this.filterSubmissionList(
+                subListRes.data,
+                formatStoredSubs,
+                currTimeValue,
+                lastTimeValue,
+              );
             })
             .catch((e) => {
-              this.logger.error('Failed to get submission data from API');
-              this.logger.error(e);
+              this.logger.error('Failed to get log data from database');
 
-              const newEmailSubmissionLog : EmailSubmissionLog = {
+              const newEmailSubmissionLog: EmailSubmissionLog = {
                 code: 'FAILED',
-                exceptionLog: 'Failed to get submission data from API. ' + e
+                exceptionLog: 'Failed to get log data from database: ' + e,
               };
-          
+
               this.postEmailSubmissionLog(newEmailSubmissionLog);
 
-              subListRes.data.forEach((s) => {
-                const createdAtValue = new Date(s.createdAt).valueOf();
-                if (
-                  createdAtValue > lastTimeValue &&
-                  createdAtValue <= currTimeValue &&
-                  s.submission.state == 'submitted'
-                ) {
-                  newSubmissions.push(s);
-                }
-              });
-              return newSubmissions;
+              return this.filterSubmissionList(
+                subListRes.data,
+                null,
+                currTimeValue,
+                lastTimeValue,
+              );
             });
-        } else return null;
+        } else
+          throw new HttpException(
+            'Failed to get new submission data: response or response data is null',
+            HttpStatus.BAD_REQUEST,
+          );
       })
       .catch((e) => {
-        const newEmailSubmissionLog : EmailSubmissionLog = {
-          code: 'FAILED',
-          exceptionLog: 'Failed to get submission data from API. ' + e
-        };
-    
-        this.postEmailSubmissionLog(newEmailSubmissionLog);
-         
-        throw new HttpException(e, HttpStatus.INTERNAL_SERVER_ERROR);
+        throw new HttpException(
+          `Failed to get submission data from API: ${e}`,
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
       });
   }
 
   // @Cron('*/5 * * * *') //Runs every 5 minutes
-  // @Cron('45 * * * * *')
-  @Cron('*/5 * * * * *') //Runs every 5 seconds
+  // @Cron('45 * * * * *') // Run every 45 seconds
+  // @Cron('*/5 * * * * *') //Runs every 5 seconds
   handleIDIRForm(emailTo: string) {
+    this.logger.debug('called every 45 sec');
     const formId = process.env.IDIR_FORM_ID;
     const formVersionId = process.env.IDIR_FORM_VERSION_ID;
     const formPassword = process.env.IDIR_FORM_PASSWORD;
@@ -147,8 +174,6 @@ export class FormService {
     formVersionId: string,
     formPassword: string,
   ) {
-    this.logger.debug('Called every 5 mins');
-
     return this.getNewSubmissionList(formId, formVersionId, formPassword)
       .then((newSubmissionList) => {
         if (newSubmissionList) {
@@ -168,23 +193,32 @@ export class FormService {
                 this.sendEmail(item.id, item.confirmationId, testEmail)
                   .then((mailResponse) => {
                     console.log('mailResponse: ', mailResponse.data);
+
+                    const newEmailSubmissionLog: EmailSubmissionLog = {
+                      code: 'DELIVERED',
+                      confirmationId: item.confirmationId,
+                      exceptionLog: '',
+                    };
+                    this.postEmailSubmissionLog(newEmailSubmissionLog);
+
                     return {
                       status: mailResponse.status,
                       data: mailResponse.data,
                     };
                   })
                   .catch((err) => {
-                    const newEmailSubmissionLog : EmailSubmissionLog = {
+                    const newEmailSubmissionLog: EmailSubmissionLog = {
                       code: 'FAILED',
                       confirmationId: item.confirmationId,
-                      exceptionLog: 'Failed to send email. ' + err
+                      exceptionLog: 'Failed to send email: ' + err,
                     };
-                
+
                     this.postEmailSubmissionLog(newEmailSubmissionLog);
 
                     this.logger.error(
-                      new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR),
+                      'Failed to send email, error logged in db',
                     );
+
                     return new HttpException(
                       err,
                       HttpStatus.INTERNAL_SERVER_ERROR,
@@ -198,33 +232,25 @@ export class FormService {
             this.logger.debug(
               'No new submission within the last cron job interval',
             );
+            return null;
           }
-        } 
-        else {  
-          //TODO: Is this a real HttpException?
-
-          const newEmailSubmissionLog : EmailSubmissionLog = {
-            code: 'FAILED',
-            exceptionLog: 'Failed to get new submission list.'
-          };
-      
-          this.postEmailSubmissionLog(newEmailSubmissionLog);
-          
-          throw new HttpException(
-            'Failed to get new submission list, failed to get response data',
-            HttpStatus.BAD_REQUEST,
-          );
+        } else {
+          this.logger.error('New submission returns null, error logged in db');
+          return null;
         }
       })
       .catch((e) => {
-        const newEmailSubmissionLog : EmailSubmissionLog = {
+        const newEmailSubmissionLog: EmailSubmissionLog = {
           code: 'FAILED',
-          exceptionLog: 'Failed to get new submission list. ' + e
+          exceptionLog: 'Failed to get new submission list from API: ' + e,
         };
-    
+
         this.postEmailSubmissionLog(newEmailSubmissionLog);
 
-        throw new HttpException(e, HttpStatus.INTERNAL_SERVER_ERROR);
+        this.logger.error(
+          'Failed to get new submission list from API, error logged in db',
+        );
+        return new HttpException(e, HttpStatus.INTERNAL_SERVER_ERROR);
       });
   }
 
@@ -243,26 +269,14 @@ export class FormService {
         else return null;
       })
       .catch((e) => {
-        const newEmailSubmissionLog : EmailSubmissionLog = {
-          code: 'FAILED',
-          exceptionLog: 'Failed to get client credentials. ' + e
-        };
-    
-        this.postEmailSubmissionLog(newEmailSubmissionLog);
-
-        throw new HttpException(e, HttpStatus.INTERNAL_SERVER_ERROR);
+        throw new HttpException(
+          `Failed to get email auth token from API: ${e}`,
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
       });
   }
 
   sendEmail(submissionId: string, confirmationId: string, emailTo: String) {
-    const newEmailSubmissionLog : EmailSubmissionLog = {
-      code: 'DELIVERED',
-      confirmationId: confirmationId,
-      exceptionLog: ''
-    };
-
-    this.postEmailSubmissionLog(newEmailSubmissionLog);
-
     const email_subject = `Old Growth Field Observation form and package, ${confirmationId}`;
     const email_tag = 'field_verification_email'; // might link this tag to the submission id
     const email_type = 'html';
@@ -275,17 +289,9 @@ export class FormService {
       !process.env.EMAIL_API_URL ||
       !process.env.EMAIL_FROM
     ) {
-      const newEmailSubmissionLog : EmailSubmissionLog = {
-        code: 'FAILED',
-        exceptionLog: 'Failed to send email, server side missing config of authentication url' +
-                      'or CHES email server url or from email address or to email address'
-      };
-  
-      this.postEmailSubmissionLog(newEmailSubmissionLog);
-
       throw new HttpException(
-        'Failed to send email, server side missing config of authentication url' +
-        'or CHES email server url or from email address or to email address',
+        'Failed to config email, server side missing config of authentication url' +
+          'or CHES email server url or from email address or to email address',
         HttpStatus.BAD_REQUEST,
       );
     }
@@ -318,29 +324,18 @@ export class FormService {
               return { status: r.status, data: r.data };
             })
             .catch((e) => {
-              const newEmailSubmissionLog : EmailSubmissionLog = {
-                code: 'FAILED',
-                exceptionLog: 'Failed to post email API. ' + e
-              };
-          
-              this.postEmailSubmissionLog(newEmailSubmissionLog);
-
-              throw new HttpException(e, HttpStatus.INTERNAL_SERVER_ERROR);
+              throw new HttpException(
+                `Failed to post email to API: ${e}`,
+                HttpStatus.INTERNAL_SERVER_ERROR,
+              );
             });
         }
         throw new HttpException(
-          'Failed to send email, failed to get the authentication token',
+          'Failed to get email auth token: response or response access token is null',
           HttpStatus.BAD_REQUEST,
         );
       })
       .catch((e) => {
-        const newEmailSubmissionLog : EmailSubmissionLog = {
-          code: 'FAILED',
-          exceptionLog: 'Failed to get token. ' + e
-        };
-    
-        this.postEmailSubmissionLog(newEmailSubmissionLog);
-
         throw new HttpException(e, HttpStatus.INTERNAL_SERVER_ERROR);
       });
   }
