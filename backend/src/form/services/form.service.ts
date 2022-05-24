@@ -103,7 +103,7 @@ export class FormService {
       .then((subListRes) => {
         if (subListRes && subListRes.data) {
           const currTime = new Date();
-          const lastTime = new Date(currTime.getTime() - 1000 * 60 * 60 * 4);
+          const lastTime = new Date(currTime.getTime() - 1000 * 60 * 60);
           const currTimeValue = currTime.valueOf();
           const lastTimeValue = lastTime.valueOf();
 
@@ -167,7 +167,8 @@ export class FormService {
   handleBCEIDForm() {
     // const formId = "";
     // const formVersionId = "";
-    // this.handleSubmission(null, formId, formVersionId);
+    // const formPassword = "";
+    // return this.handleSubmission(null, formId, formVersionId, formPassword);
   }
 
   handleSubmission(
