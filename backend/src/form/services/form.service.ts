@@ -160,7 +160,7 @@ export class FormService {
     const formId = process.env.IDIR_FORM_ID;
     const formVersionId = process.env.IDIR_FORM_VERSION_ID;
     const formPassword = process.env.IDIR_FORM_PASSWORD;
-    this.handleSubmission(emailTo, formId, formVersionId, formPassword);
+    return this.handleSubmission(emailTo, formId, formVersionId, formPassword);
   }
 
   // @Cron('*/5 * * * *')

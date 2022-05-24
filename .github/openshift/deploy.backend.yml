@@ -62,6 +62,7 @@ objects:
     stringData:
       email-username: "${EMAIL_USERNAME}"
       email-password: "${EMAIL_PASSWORD}"
+      idir-form-password: "${IDIR_FORM_PASSWORD}"
   - apiVersion: v1
     kind: ImageStream
     metadata:
@@ -155,7 +156,10 @@ objects:
                 - name: IDIR_FORM_VERSION_ID
                   value: "dcb7e628-0e9e-47e6-810b-4479cc580944"
                 - name: IDIR_FORM_PASSWORD
-                  value: ${FORM_PASSWORD}
+                  valueFrom:
+                    secretKeyRef:
+                      name: ${NAME}-${ZONE}-${COMPONENT}
+                      key: idir-form-password
 
               ports:
                 - containerPort: 3000
