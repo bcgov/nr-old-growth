@@ -7,15 +7,22 @@ import { FormService } from '../services/form.service';
 @ApiTags('form')
 @Controller('form')
 export class FormController {
-  constructor(private formService: FormService) { }
+  constructor(private formService: FormService) {}
 
-  @Get(':emailTo')
-  get(@Param('emailTo') emailTo: string) {
-    return this.formService.handleIDIRForm(emailTo);
+  @Get('/idir/:idirEmailTo')
+  sendIdirEmail(@Param('idirEmailTo') idirEmailTo: string) {
+    return this.formService.handleIDIRForm(idirEmailTo);
+  }
+
+  @Get('/bceid/:bceidEmailTo')
+  sendBceidEmail(@Param('bceidEmailTo') bceidEmailTo: string) {
+    return this.formService.handleBCEIDForm(bceidEmailTo);
   }
 
   @Post()
-  create(@Body() emailSubmissionLog: EmailSubmissionLog): Observable<EmailSubmissionLog> {
+  create(
+    @Body() emailSubmissionLog: EmailSubmissionLog,
+  ): Observable<EmailSubmissionLog> {
     return this.formService.postEmailSubmissionLog(emailSubmissionLog);
   }
 
@@ -23,5 +30,4 @@ export class FormController {
   findAllEmailSubmissionLogs() {
     return this.formService.findAllEmailSubmissionLogs();
   }
-
 }

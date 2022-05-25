@@ -18,6 +18,26 @@ export class FormService {
     private emailSubmissionLogRepository: Repository<EmailSubmissionLogEntity>,
   ) {}
 
+  @Cron('*/5 * * * *') //Runs every 5 minutes
+  // @Cron('45 * * * * *') // Run every 45 seconds
+  // @Cron('*/5 * * * * *') //Runs every 5 seconds
+  handleIDIRForm(emailTo: string) {
+    this.logger.debug('called every 5 mins for idir form');
+    const formId = process.env.IDIR_FORM_ID;
+    const formVersionId = process.env.IDIR_FORM_VERSION_ID;
+    const formPassword = process.env.IDIR_FORM_PASSWORD;
+    return this.handleSubmission(emailTo, formId, formVersionId, formPassword);
+  }
+
+  @Cron('*/5 * * * *')
+  handleBCEIDForm(emailTo: string) {
+    this.logger.debug('called every 5 mins for bceid form');
+    const formId = process.env.BCEID_FORM_ID;
+    const formVersionId = process.env.BCEID_FORM_VERSION_ID;
+    const formPassword = process.env.BCEID_FORM_PASSWORD;
+    return this.handleSubmission(emailTo, formId, formVersionId, formPassword);
+  }
+
   getStoredSubmissions(): Promise<EmailSubmissionLogEntity[]> {
     return this.emailSubmissionLogRepository
       .createQueryBuilder()
@@ -140,7 +160,9 @@ export class FormService {
               );
             })
             .catch((e) => {
-              this.logger.error('Failed to get log data from database');
+              this.logger.error(
+                `${formId}: Failed to get log data from database`,
+              );
 
               const newEmailSubmissionLogEntity: EmailSubmissionLog = {
                 code: 'FAILED',
@@ -174,25 +196,6 @@ export class FormService {
       });
   }
 
-  @Cron('*/5 * * * *') //Runs every 5 minutes
-  // @Cron('45 * * * * *') // Run every 45 seconds
-  // @Cron('*/5 * * * * *') //Runs every 5 seconds
-  handleIDIRForm(emailTo: string) {
-    this.logger.debug('called every 5 mins');
-    const formId = process.env.IDIR_FORM_ID;
-    const formVersionId = process.env.IDIR_FORM_VERSION_ID;
-    const formPassword = process.env.IDIR_FORM_PASSWORD;
-    return this.handleSubmission(emailTo, formId, formVersionId, formPassword);
-  }
-
-  // @Cron('*/5 * * * *')
-  handleBCEIDForm() {
-    // const formId = "";
-    // const formVersionId = "";
-    // const formPassword = "";
-    // return this.handleSubmission(null, formId, formVersionId, formPassword);
-  }
-
   handleSubmission(
     emailTo: string,
     formId: string,
@@ -204,6 +207,7 @@ export class FormService {
         if (newSubmissionList) {
           if (newSubmissionList.length > 0) {
             console.log(
+              formId,
               'submissions need to send notification: ',
               newSubmissionList,
             );
@@ -212,12 +216,12 @@ export class FormService {
               const testEmail =
                 emailTo || item.submission.data.naturalResourceDistrict.email;
 
-              console.log('mail to:', testEmail);
+              console.log(formId, 'mail to:', testEmail);
 
               response.push(
                 this.sendEmail(item.id, item.confirmationId, testEmail)
                   .then((mailResponse) => {
-                    console.log('mailResponse: ', mailResponse.data);
+                    console.log(formId, 'mailResponse: ', mailResponse.data);
 
                     const newEmailSubmissionLogEntity: EmailSubmissionLog = {
                       code: 'DELIVERED',
@@ -245,7 +249,7 @@ export class FormService {
                     this.postEmailSubmissionLog(newEmailSubmissionLogEntity);
 
                     this.logger.error(
-                      'Failed to send email, error logged in db',
+                      `${formId}: Failed to send email, error logged in db`,
                     );
 
                     return new HttpException(
@@ -259,14 +263,16 @@ export class FormService {
             return Promise.all(response);
           } else {
             this.logger.debug(
-              'No new submission within the last cron job interval',
+              `${formId}: No new submission within the last cron job interval`,
             );
             return [
               { msg: 'No new submission within the last cron job interval' },
             ];
           }
         } else {
-          this.logger.error('New submission returns null, error logged in db');
+          this.logger.error(
+            `${formId}: New submission returns null, error logged in db`,
+          );
           return [{ msg: 'New submission returns null, error logged in db' }];
         }
       })
@@ -281,7 +287,7 @@ export class FormService {
         this.postEmailSubmissionLog(newEmailSubmissionLogEntity);
 
         this.logger.error(
-          'Failed to get new submission list from API, error logged in db',
+          `${formId}: Failed to get new submission list from API, error logged in db`,
         );
         return new HttpException(e, HttpStatus.INTERNAL_SERVER_ERROR);
       });
@@ -332,10 +338,7 @@ export class FormService {
     return this.getToken()
       .then((access_token) => {
         if (access_token) {
-          if (
-            process.env.NODE_ENV === 'test' ||
-            process.env.NODE_ENV === 'production'
-          ) {
+          if (process.env.NODE_ENV !== 'development') {
             return axios
               .post(
                 `${process.env.EMAIL_API_URL}/email`,
@@ -367,7 +370,10 @@ export class FormService {
                 );
               });
           } else {
-            return { status: 200, data: 'Not send email in development mode' };
+            return {
+              status: 200,
+              data: 'Not send email in dev deployment',
+            };
           }
         }
         throw new HttpException(

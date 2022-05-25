@@ -294,7 +294,8 @@ jobs:
             -p EMAIL_TOKEN_URL='https://dev.oidc.gov.bc.ca/auth/realms/jbd6rnxw/protocol/openid-connect/token' \
             -p EMAIL_API_URL='https://ches-dev.apps.silver.devops.gov.bc.ca/api/v1' \
             -p NODE_ENV='development' \
-            -p IDIR_FORM_PASSWORD=${{ secrets.CHEFS_FORM_PASSWORD}} | oc apply -f -
+            -p BCEID_FORM_PASSWORD=${{ secrets.CHEFS_BCEID_FORM_PASSWORD}} \
+            -p IDIR_FORM_PASSWORD=${{ secrets.CHEFS_IDIR_FORM_PASSWORD}} | oc apply -f -
             
           oc process -f .github/openshift/deploy.frontend.yml -p ZONE=${{ github.event.number }} \
             -p PROMOTE=${{ github.repository }}:${{ github.event.number }}-frontend | oc apply -f -
@@ -405,7 +406,8 @@ jobs:
             -p EMAIL_TOKEN_URL='https://oidc.gov.bc.ca/auth/realms/jbd6rnxw/protocol/openid-connect/token' \
             -p EMAIL_API_URL='https://ches.apps.silver.devops.gov.bc.ca/api/v1' \
             -p NODE_ENV='production' \
-            -p IDIR_FORM_PASSWORD=${{ secrets.CHEFS_FORM_PASSWORD}} | oc apply -f -
+            -p BCEID_FORM_PASSWORD=${{ secrets.CHEFS_BCEID_FORM_PASSWORD}} \
+            -p IDIR_FORM_PASSWORD=${{ secrets.CHEFS_IDIR_FORM_PASSWORD}} | oc apply -f -
           oc process -f .github/openshift/deploy.frontend.yml -p ZONE=prod \
             -p PROMOTE=${{ github.repository }}:${{ github.event.number }}-frontend | oc apply -f -
 
