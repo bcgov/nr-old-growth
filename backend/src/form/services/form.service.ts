@@ -16,22 +16,22 @@ export class FormService {
   constructor(
     @InjectRepository(EmailSubmissionLogEntity)
     private emailSubmissionLogRepository: Repository<EmailSubmissionLogEntity>,
-  ) {}
+  ) { }
 
-  @Cron('*/5 * * * *') //Runs every 5 minutes
+  @Cron('*/1 * * * *') //Runs every 1 minutes
   // @Cron('45 * * * * *') // Run every 45 seconds
   // @Cron('*/5 * * * * *') //Runs every 5 seconds
   handleIDIRForm(emailTo: string) {
-    this.logger.debug('called every 5 mins for idir form');
+    this.logger.debug('called every 1 min for idir form');
     const formId = process.env.IDIR_FORM_ID;
     const formVersionId = process.env.IDIR_FORM_VERSION_ID;
     const formPassword = process.env.IDIR_FORM_PASSWORD;
     return this.handleSubmission(emailTo, formId, formVersionId, formPassword);
   }
 
-  @Cron('*/5 * * * *')
+  @Cron('*/1 * * * *')
   handleBCEIDForm(emailTo: string) {
-    this.logger.debug('called every 5 mins for bceid form');
+    this.logger.debug('called every 1 min for bceid form');
     const formId = process.env.BCEID_FORM_ID;
     const formVersionId = process.env.BCEID_FORM_VERSION_ID;
     const formPassword = process.env.BCEID_FORM_PASSWORD;
@@ -57,11 +57,9 @@ export class FormService {
     const newEmailSubmissionLogEntity = new EmailSubmissionLogEntity();
     newEmailSubmissionLogEntity.code = emailSubmissionLog.code;
     newEmailSubmissionLogEntity.exceptionLog = emailSubmissionLog.exceptionLog;
-    newEmailSubmissionLogEntity.confirmationId =
-      emailSubmissionLog.confirmationId;
+    newEmailSubmissionLogEntity.confirmationId = emailSubmissionLog.confirmationId;
     newEmailSubmissionLogEntity.formId = emailSubmissionLog.formId;
-    newEmailSubmissionLogEntity.formVersionId =
-      emailSubmissionLog.formVersionId;
+    newEmailSubmissionLogEntity.formVersionId = emailSubmissionLog.formVersionId;
 
     try {
       return from(
@@ -139,7 +137,8 @@ export class FormService {
       .then((subListRes) => {
         if (subListRes && subListRes.data) {
           const currTime = new Date();
-          const lastTime = new Date(currTime.getTime() - 1000 * 60 * 5); // 1000 * 60 * 60
+          //TODO: put time in variable so we only change it in 1 place
+          const lastTime = new Date(currTime.getTime() - 1000 * 60 * 1); // 1000 * 60 * 60
           const currTimeValue = currTime.valueOf();
           const lastTimeValue = lastTime.valueOf();
 
@@ -330,7 +329,7 @@ export class FormService {
     ) {
       throw new HttpException(
         'Failed to config email, server side missing config of authentication url' +
-          'or CHES email server url or from email address or to email address',
+        'or CHES email server url or from email address or to email address',
         HttpStatus.BAD_REQUEST,
       );
     }
