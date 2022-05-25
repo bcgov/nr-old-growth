@@ -11,12 +11,13 @@ const oauth = require('axios-oauth-client');
 
 @Injectable()
 export class FormService {
+
   private readonly logger = new Logger(FormService.name);
 
   constructor(
     @InjectRepository(EmailSubmissionLogEntity)
     private emailSubmissionLogRepository: Repository<EmailSubmissionLogEntity>,
-  ) {}
+  ) { }
 
   getStoredSubmissions(): Promise<EmailSubmissionLogEntity[]> {
     return this.emailSubmissionLogRepository
@@ -27,17 +28,23 @@ export class FormService {
       .getMany();
   }
 
+  findAllEmailSubmissionLogs(): Promise<EmailSubmissionLog[]> {
+    return this.emailSubmissionLogRepository.find();
+  }
+
   postEmailSubmissionLog(
     emailSubmissionLog: EmailSubmissionLog,
   ): Observable<EmailSubmissionLog> {
-    const newEmailSubmissionLog = new EmailSubmissionLogEntity();
-    newEmailSubmissionLog.code = emailSubmissionLog.code;
-    newEmailSubmissionLog.exceptionLog = emailSubmissionLog.exceptionLog;
-    newEmailSubmissionLog.confirmationId = emailSubmissionLog.confirmationId;
+    const newEmailSubmissionLogEntity = new EmailSubmissionLogEntity();
+    newEmailSubmissionLogEntity.code = emailSubmissionLog.code;
+    newEmailSubmissionLogEntity.exceptionLog = emailSubmissionLog.exceptionLog;
+    newEmailSubmissionLogEntity.confirmationId = emailSubmissionLog.confirmationId;
+    newEmailSubmissionLogEntity.formId = emailSubmissionLog.formId;
+    newEmailSubmissionLogEntity.formVersionId = emailSubmissionLog.formVersionId;
 
     try {
       return from(
-        this.emailSubmissionLogRepository.save(newEmailSubmissionLog),
+        this.emailSubmissionLogRepository.save(newEmailSubmissionLogEntity),
       );
     } catch (e) {
       // todo: handle db write error
@@ -52,6 +59,8 @@ export class FormService {
     storedSubmission: Object,
     currTimeValue: Number,
     lastTimeValue: Number,
+    formId: string,
+    formVersionId: string,
   ) {
     try {
       const newSubmissions = [];
@@ -76,11 +85,13 @@ export class FormService {
 
       return newSubmissions;
     } catch (e) {
-      const newEmailSubmissionLog: EmailSubmissionLog = {
+      const newEmailSubmissionLogEntity: EmailSubmissionLog = {
         code: 'FAILED',
         exceptionLog: 'Failed to filter submission data: ' + e,
+        formId: formId,
+        formVersionId: formVersionId,
       };
-      this.postEmailSubmissionLog(newEmailSubmissionLog);
+      this.postEmailSubmissionLog(newEmailSubmissionLogEntity);
       return null;
     }
   }
@@ -119,23 +130,29 @@ export class FormService {
                 formatStoredSubs,
                 currTimeValue,
                 lastTimeValue,
+                formId,
+                formVersionId,
               );
             })
             .catch((e) => {
               this.logger.error('Failed to get log data from database');
 
-              const newEmailSubmissionLog: EmailSubmissionLog = {
+              const newEmailSubmissionLogEntity: EmailSubmissionLog = {
                 code: 'FAILED',
                 exceptionLog: 'Failed to get log data from database: ' + e,
+                formId: formId,
+                formVersionId: formVersionId,
               };
 
-              this.postEmailSubmissionLog(newEmailSubmissionLog);
+              this.postEmailSubmissionLog(newEmailSubmissionLogEntity);
 
               return this.filterSubmissionList(
                 subListRes.data,
                 null,
                 currTimeValue,
                 lastTimeValue,
+                formId,
+                formVersionId,
               );
             });
         } else
@@ -197,12 +214,14 @@ export class FormService {
                   .then((mailResponse) => {
                     console.log('mailResponse: ', mailResponse.data);
 
-                    const newEmailSubmissionLog: EmailSubmissionLog = {
+                    const newEmailSubmissionLogEntity: EmailSubmissionLog = {
                       code: 'DELIVERED',
                       confirmationId: item.confirmationId,
                       exceptionLog: '',
+                      formId: formId,
+                      formVersionId: formVersionId,
                     };
-                    this.postEmailSubmissionLog(newEmailSubmissionLog);
+                    this.postEmailSubmissionLog(newEmailSubmissionLogEntity);
 
                     return {
                       status: mailResponse.status,
@@ -210,13 +229,15 @@ export class FormService {
                     };
                   })
                   .catch((err) => {
-                    const newEmailSubmissionLog: EmailSubmissionLog = {
+                    const newEmailSubmissionLogEntity: EmailSubmissionLog = {
                       code: 'FAILED',
                       confirmationId: item.confirmationId,
                       exceptionLog: 'Failed to send email: ' + err,
+                      formId: formId,
+                      formVersionId: formVersionId,
                     };
 
-                    this.postEmailSubmissionLog(newEmailSubmissionLog);
+                    this.postEmailSubmissionLog(newEmailSubmissionLogEntity);
 
                     this.logger.error(
                       'Failed to send email, error logged in db',
@@ -243,12 +264,14 @@ export class FormService {
         }
       })
       .catch((e) => {
-        const newEmailSubmissionLog: EmailSubmissionLog = {
+        const newEmailSubmissionLogEntity: EmailSubmissionLog = {
           code: 'FAILED',
           exceptionLog: 'Failed to get new submission list from API: ' + e,
+          formId: formId,
+          formVersionId: formVersionId,
         };
 
-        this.postEmailSubmissionLog(newEmailSubmissionLog);
+        this.postEmailSubmissionLog(newEmailSubmissionLogEntity);
 
         this.logger.error(
           'Failed to get new submission list from API, error logged in db',
@@ -294,7 +317,7 @@ export class FormService {
     ) {
       throw new HttpException(
         'Failed to config email, server side missing config of authentication url' +
-          'or CHES email server url or from email address or to email address',
+        'or CHES email server url or from email address or to email address',
         HttpStatus.BAD_REQUEST,
       );
     }
