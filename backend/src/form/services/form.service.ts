@@ -11,13 +11,12 @@ const oauth = require('axios-oauth-client');
 
 @Injectable()
 export class FormService {
-
   private readonly logger = new Logger(FormService.name);
 
   constructor(
     @InjectRepository(EmailSubmissionLogEntity)
     private emailSubmissionLogRepository: Repository<EmailSubmissionLogEntity>,
-  ) { }
+  ) {}
 
   getStoredSubmissions(): Promise<EmailSubmissionLogEntity[]> {
     return this.emailSubmissionLogRepository
@@ -38,9 +37,11 @@ export class FormService {
     const newEmailSubmissionLogEntity = new EmailSubmissionLogEntity();
     newEmailSubmissionLogEntity.code = emailSubmissionLog.code;
     newEmailSubmissionLogEntity.exceptionLog = emailSubmissionLog.exceptionLog;
-    newEmailSubmissionLogEntity.confirmationId = emailSubmissionLog.confirmationId;
+    newEmailSubmissionLogEntity.confirmationId =
+      emailSubmissionLog.confirmationId;
     newEmailSubmissionLogEntity.formId = emailSubmissionLog.formId;
-    newEmailSubmissionLogEntity.formVersionId = emailSubmissionLog.formVersionId;
+    newEmailSubmissionLogEntity.formVersionId =
+      emailSubmissionLog.formVersionId;
 
     try {
       return from(
@@ -114,7 +115,7 @@ export class FormService {
       .then((subListRes) => {
         if (subListRes && subListRes.data) {
           const currTime = new Date();
-          const lastTime = new Date(currTime.getTime() - 1000 * 60 * 60);
+          const lastTime = new Date(currTime.getTime() - 1000 * 60 * 5);
           const currTimeValue = currTime.valueOf();
           const lastTimeValue = lastTime.valueOf();
 
@@ -169,11 +170,11 @@ export class FormService {
       });
   }
 
-  // @Cron('*/5 * * * *') //Runs every 5 minutes
+  @Cron('*/5 * * * *') //Runs every 5 minutes
   // @Cron('45 * * * * *') // Run every 45 seconds
   // @Cron('*/5 * * * * *') //Runs every 5 seconds
   handleIDIRForm(emailTo: string) {
-    this.logger.debug('called every 45 sec');
+    this.logger.debug('called every 5 mins');
     const formId = process.env.IDIR_FORM_ID;
     const formVersionId = process.env.IDIR_FORM_VERSION_ID;
     const formPassword = process.env.IDIR_FORM_PASSWORD;
@@ -256,11 +257,13 @@ export class FormService {
             this.logger.debug(
               'No new submission within the last cron job interval',
             );
-            return null;
+            return [
+              { msg: 'No new submission within the last cron job interval' },
+            ];
           }
         } else {
           this.logger.error('New submission returns null, error logged in db');
-          return null;
+          return [{ msg: 'New submission returns null, error logged in db' }];
         }
       })
       .catch((e) => {
@@ -317,7 +320,7 @@ export class FormService {
     ) {
       throw new HttpException(
         'Failed to config email, server side missing config of authentication url' +
-        'or CHES email server url or from email address or to email address',
+          'or CHES email server url or from email address or to email address',
         HttpStatus.BAD_REQUEST,
       );
     }
