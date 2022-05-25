@@ -68,10 +68,14 @@ export class FormService {
       submissions.forEach((s) => {
         const createdAtValue = new Date(s.createdAt).valueOf();
         if (
-          // filter the submissionList to only select the createdAt date within the last cron job interval and status is submitted
+          // filter the submissionList to only select the createdAt date within the last cron job interval
+          // and status is submitted
+          // no stored submission or not stored in our db
           createdAtValue > lastTimeValue &&
           createdAtValue <= currTimeValue &&
-          s.submission.state == 'submitted'
+          s.submission.state == 'submitted' &&
+          (!storedSubmission ||
+            (storedSubmission && !storedSubmission[s.confirmationId]))
         ) {
           newSubmissions.push(s);
         } else if (
