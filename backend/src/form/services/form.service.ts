@@ -119,7 +119,7 @@ export class FormService {
       .then((subListRes) => {
         if (subListRes && subListRes.data) {
           const currTime = new Date();
-          const lastTime = new Date(currTime.getTime() - 1000 * 60 * 5);
+          const lastTime = new Date(currTime.getTime() - 1000 * 60 * 5); // 1000 * 60 * 60
           const currTimeValue = currTime.valueOf();
           const lastTimeValue = lastTime.valueOf();
 
@@ -332,36 +332,43 @@ export class FormService {
     return this.getToken()
       .then((access_token) => {
         if (access_token) {
-          return axios
-            .post(
-              `${process.env.EMAIL_API_URL}/email`,
-              {
-                bcc: [],
-                bodyType: email_type,
-                body: email_body,
-                cc: [],
-                delayTS: 0,
-                encoding: 'utf-8',
-                from: process.env.EMAIL_FROM,
-                priority: 'normal',
-                subject: email_subject,
-                to: [emailTo],
-                tag: email_tag,
-                attachments: [],
-              },
-              {
-                headers: { Authorization: `Bearer ${access_token}` },
-              },
-            )
-            .then((r) => {
-              return { status: r.status, data: r.data };
-            })
-            .catch((e) => {
-              throw new HttpException(
-                `Failed to post email to API: ${e}`,
-                HttpStatus.INTERNAL_SERVER_ERROR,
-              );
-            });
+          if (
+            process.env.NODE_ENV === 'test' ||
+            process.env.NODE_ENV === 'production'
+          ) {
+            return axios
+              .post(
+                `${process.env.EMAIL_API_URL}/email`,
+                {
+                  bcc: [],
+                  bodyType: email_type,
+                  body: email_body,
+                  cc: [],
+                  delayTS: 0,
+                  encoding: 'utf-8',
+                  from: process.env.EMAIL_FROM,
+                  priority: 'normal',
+                  subject: email_subject,
+                  to: [emailTo],
+                  tag: email_tag,
+                  attachments: [],
+                },
+                {
+                  headers: { Authorization: `Bearer ${access_token}` },
+                },
+              )
+              .then((r) => {
+                return { status: r.status, data: r.data };
+              })
+              .catch((e) => {
+                throw new HttpException(
+                  `Failed to post email to API: ${e}`,
+                  HttpStatus.INTERNAL_SERVER_ERROR,
+                );
+              });
+          } else {
+            return { status: 200, data: 'Not send email in development mode' };
+          }
         }
         throw new HttpException(
           'Failed to get email auth token: response or response access token is null',
