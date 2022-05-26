@@ -16,7 +16,7 @@ export class FormService {
   constructor(
     @InjectRepository(EmailSubmissionLogEntity)
     private emailSubmissionLogRepository: Repository<EmailSubmissionLogEntity>,
-  ) { }
+  ) {}
 
   @Cron('*/1 * * * *') //Runs every 1 minutes
   // @Cron('45 * * * * *') // Run every 45 seconds
@@ -57,9 +57,11 @@ export class FormService {
     const newEmailSubmissionLogEntity = new EmailSubmissionLogEntity();
     newEmailSubmissionLogEntity.code = emailSubmissionLog.code;
     newEmailSubmissionLogEntity.exceptionLog = emailSubmissionLog.exceptionLog;
-    newEmailSubmissionLogEntity.confirmationId = emailSubmissionLog.confirmationId;
+    newEmailSubmissionLogEntity.confirmationId =
+      emailSubmissionLog.confirmationId;
     newEmailSubmissionLogEntity.formId = emailSubmissionLog.formId;
-    newEmailSubmissionLogEntity.formVersionId = emailSubmissionLog.formVersionId;
+    newEmailSubmissionLogEntity.formVersionId =
+      emailSubmissionLog.formVersionId;
 
     try {
       return from(
@@ -141,7 +143,6 @@ export class FormService {
           const lastTime = new Date(currTime.getTime() - 1000 * 60 * 1); // 1000 * 60 * 60
           const currTimeValue = currTime.valueOf();
           const lastTimeValue = lastTime.valueOf();
-
           return this.getStoredSubmissions()
             .then((storedSubs) => {
               const formatStoredSubs = {};
@@ -201,12 +202,14 @@ export class FormService {
     formVersionId: string,
     formPassword: string,
   ) {
+    console.log('handle form', formId, formVersionId);
     return this.getNewSubmissionList(formId, formVersionId, formPassword)
       .then((newSubmissionList) => {
         if (newSubmissionList) {
           if (newSubmissionList.length > 0) {
             console.log(
               formId,
+              formVersionId,
               'submissions need to send notification: ',
               newSubmissionList,
             );
@@ -329,7 +332,7 @@ export class FormService {
     ) {
       throw new HttpException(
         'Failed to config email, server side missing config of authentication url' +
-        'or CHES email server url or from email address or to email address',
+          'or CHES email server url or from email address or to email address',
         HttpStatus.BAD_REQUEST,
       );
     }
