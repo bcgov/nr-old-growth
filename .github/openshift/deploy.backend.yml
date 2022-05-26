@@ -158,7 +158,7 @@ objects:
                 - name: IDIR_FORM_ID
                   value: "b15b1975-3caa-4984-a183-471c5610c8a5"
                 - name: IDIR_FORM_VERSION_ID
-                  value: "0d854f34-73fd-43f3-88df-6d7094a47c77"
+                  value: "1d68005c-e45d-4c16-9910-787b42edf7e0"
                 - name: IDIR_FORM_PASSWORD
                   valueFrom:
                     secretKeyRef:
@@ -167,7 +167,7 @@ objects:
                 - name: BCEID_FORM_ID
                   value: "e4591d9b-9005-4bd6-8145-2c92ce890d91"
                 - name: BCEID_FORM_VERSION_ID
-                  value: "1d68005c-e45d-4c16-9910-787b42edf7e0"
+                  value: "d4701f76-146f-4c6d-b4f8-41d7f72a4bbb"
                 - name: BCEID_FORM_PASSWORD
                   valueFrom:
                     secretKeyRef:
