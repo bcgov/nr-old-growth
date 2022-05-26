@@ -202,14 +202,12 @@ export class FormService {
     formVersionId: string,
     formPassword: string,
   ) {
-    console.log('handle form', formId, formVersionId);
     return this.getNewSubmissionList(formId, formVersionId, formPassword)
       .then((newSubmissionList) => {
         if (newSubmissionList) {
           if (newSubmissionList.length > 0) {
             console.log(
               formId,
-              formVersionId,
               'submissions need to send notification: ',
               newSubmissionList,
             );
