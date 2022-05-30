@@ -213,8 +213,9 @@ export class FormService {
             );
             var response = [];
             newSubmissionList.forEach((item) => {
-              const testEmail =
-                emailTo || item.submission.data.naturalResourceDistrict.email;
+              const emailString =
+                item.submission.data.naturalResourceDistrict.split('-')[1];
+              const testEmail = emailTo || emailString;
 
               console.log(formId, 'mail to:', testEmail);
 
