@@ -7,6 +7,8 @@ The backend for nr-old-growth project is written in [NestJS](https://github.com/
 - Create a .env file inside this backend folder with the following options:
 
   ```
+  NODE_ENV=development
+
   POSTGRESQL_USER=[local postgres username]
   POSTGRESQL_PASSWORD=[local postgres password]
   POSTGRESQL_DATABASE=[local postgres database]

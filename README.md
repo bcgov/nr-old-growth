@@ -11,7 +11,7 @@ The Old Growth Technical Advisory Panel identified old growth areas that are at 
 
 # Overview
 
-The nr-old-growth is a node.js application built with [Vue.js](https://vuejs.org) in typescript as frontend, [nestJS](https://docs.nestjs.com) as backend, integrated with the [greenfield-template](https://github.com/bcgov/greenfield-template) to automate the process for testing, security scanning, code quality checking, image building and deploying.
+The nr-old-growth is a node.js application built with [nestJS](https://docs.nestjs.com), integrated with the [greenfield-template](https://github.com/bcgov/greenfield-template) to automate the process for testing, security scanning, code quality checking, image building and deploying. We use [CHEFS](https://bcgov.github.io/common-service-showcase/services/chefs.html) to manage the submission and review of the field verification form. The nr-old-growth applicatin is developed based on the [CHEFS API](https://chefs.nrs.gov.bc.ca/app/api/v1/docs#operation/listSubmissions), that provides an notification system to notify the selected natural resource district office whenever there is a new submission.
 
 This project is in active development. Please visit our [issues](https://github.com/bcgov/nr-old-growth-integration/issues) page to view or request features.
 
@@ -31,9 +31,9 @@ Currently, we uses the [GitHub Actions](https://github.com/bcgov/greenfield-temp
 - [ESLint](https://eslint.org/) linting enforced in-pipeline and on code staging.
 - [TypeScript](https://www.typescriptlang.org/) strong-typing for JavaScript.
 
-# Get start
+# Setup
 
-We manage the frontend and backend in the same repository but in different folders. To start the frontend/backend project locally, check the Readme inside each frontend/backend folder.
+Please check the Readme in the backup folder
 
 ## Set up visual studio code
 
