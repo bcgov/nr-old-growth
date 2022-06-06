@@ -9,5 +9,5 @@ spec:
     users:
       - name: mamartinezmejia@gmail.com
         role: ROLE_TEAM_EDIT
-      - name: catherine.meng@gov.bc.ca
+      - name: mcatherine1994@gmail.com
         role: ROLE_TEAM_MANAGER

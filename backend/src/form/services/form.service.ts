@@ -57,11 +57,9 @@ export class FormService {
     const newEmailSubmissionLogEntity = new EmailSubmissionLogEntity();
     newEmailSubmissionLogEntity.code = emailSubmissionLog.code;
     newEmailSubmissionLogEntity.exceptionLog = emailSubmissionLog.exceptionLog;
-    newEmailSubmissionLogEntity.confirmationId =
-      emailSubmissionLog.confirmationId;
+    newEmailSubmissionLogEntity.confirmationId = emailSubmissionLog.confirmationId;
     newEmailSubmissionLogEntity.formId = emailSubmissionLog.formId;
-    newEmailSubmissionLogEntity.formVersionId =
-      emailSubmissionLog.formVersionId;
+    newEmailSubmissionLogEntity.formVersionId = emailSubmissionLog.formVersionId;
 
     try {
       return from(

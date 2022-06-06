@@ -26,7 +26,7 @@ export class FormController {
     return this.formService.postEmailSubmissionLog(emailSubmissionLog);
   }
 
-  @Get()
+  @Get('/getAllEmailSubmissionLogs')
   findAllEmailSubmissionLogs() {
     return this.formService.findAllEmailSubmissionLogs();
   }
