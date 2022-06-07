@@ -90,6 +90,17 @@ export class FormService {
       // todo: handle db write error
       this.logger.error('Failed to write into db: ');
       this.logger.error(e);
+      try {
+        this.sendEmail(
+          ['catherine.meng@gov.bc.ca', 'maria.martinez@gov.bc.ca'],
+          'Old Growth DB Write Error',
+          'database_error',
+          'text',
+          'There is an error when writing into the database',
+        );
+      } catch (error) {
+        this.logger.error(`Failed to send email: ${e}`);
+      }
       return null;
     }
   }
@@ -107,6 +118,17 @@ export class FormService {
       // todo: handle db update error
       this.logger.error('Failed to update the db: ');
       this.logger.error(e);
+      try {
+        this.sendEmail(
+          ['catherine.meng@gov.bc.ca', 'maria.martinez@gov.bc.ca'],
+          'Old Growth DB Update Error',
+          'database_error',
+          'text',
+          'There is an error when updating in the database',
+        );
+      } catch (error) {
+        this.logger.error(`Failed to send email: ${e}`);
+      }
       return null;
     }
   }
@@ -265,7 +287,7 @@ export class FormService {
 
               response.push(
                 this.sendEmail(
-                  testEmail,
+                  [testEmail],
                   email_subject,
                   email_tag,
                   email_type,
@@ -367,7 +389,7 @@ export class FormService {
   }
 
   sendEmail(
-    emailTo: String,
+    emailTo: Array<string>,
     email_subject: string,
     email_tag: string,
     email_type: string,
@@ -402,7 +424,7 @@ export class FormService {
                   from: process.env.EMAIL_FROM,
                   priority: 'normal',
                   subject: email_subject,
-                  to: [emailTo],
+                  to: emailTo,
                   tag: email_tag,
                   attachments: [],
                 },
