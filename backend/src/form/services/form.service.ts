@@ -51,9 +51,17 @@ export class FormService {
     return this.emailSubmissionLogRepository.find();
   }
 
-  postEmailSubmissionLog(
+  findEmailSubmissionLog(
+    confirmationId: string,
+  ): Promise<EmailSubmissionLog[]> {
+    return this.emailSubmissionLogRepository.find({
+      where: { confirmationId },
+    });
+  }
+
+  async postEmailSubmissionLog(
     emailSubmissionLog: EmailSubmissionLog,
-  ): Observable<EmailSubmissionLog> {
+  ): Promise<any> {
     const newEmailSubmissionLogEntity = new EmailSubmissionLogEntity();
     newEmailSubmissionLogEntity.code = emailSubmissionLog.code;
     newEmailSubmissionLogEntity.exceptionLog = emailSubmissionLog.exceptionLog;
@@ -64,12 +72,40 @@ export class FormService {
       emailSubmissionLog.formVersionId;
 
     try {
+      if (emailSubmissionLog.confirmationId) {
+        const foundLog = await this.findEmailSubmissionLog(
+          emailSubmissionLog.confirmationId,
+        );
+        if (foundLog && foundLog.length > 0) {
+          return this.updateEmailSubmissionLog(
+            emailSubmissionLog.confirmationId,
+            { code: emailSubmissionLog.code },
+          );
+        }
+      }
       return from(
         this.emailSubmissionLogRepository.save(newEmailSubmissionLogEntity),
       );
     } catch (e) {
       // todo: handle db write error
       this.logger.error('Failed to write into db: ');
+      this.logger.error(e);
+      return null;
+    }
+  }
+
+  updateEmailSubmissionLog(
+    confirmationId: string,
+    emailSubmissionLog: EmailSubmissionLog,
+  ): Promise<any> {
+    try {
+      return this.emailSubmissionLogRepository.update(
+        { confirmationId },
+        emailSubmissionLog,
+      );
+    } catch (e) {
+      // todo: handle db update error
+      this.logger.error('Failed to update the db: ');
       this.logger.error(e);
       return null;
     }
@@ -143,6 +179,7 @@ export class FormService {
           const lastTime = new Date(currTime.getTime() - 1000 * 60 * 1); // 1000 * 60 * 60
           const currTimeValue = currTime.valueOf();
           const lastTimeValue = lastTime.valueOf();
+
           return this.getStoredSubmissions()
             .then((storedSubs) => {
               const formatStoredSubs = {};
@@ -219,8 +256,21 @@ export class FormService {
 
               console.log(formId, 'mail to:', testEmail);
 
+              const email_subject = `Old Growth Field Observation form and package, ${item.confirmationId}`;
+              const email_tag = 'field_verification_email'; // might link this tag to the submission id
+              const email_type = 'html';
+              const email_body =
+                `<div style="margin-bottom: 16px">An Old Growth Field Observation form and package has been submitted. Confirmation Number: ${item.confirmationId}</div>` +
+                `<div><a href="https://chefs.nrs.gov.bc.ca/app/form/view?s=${item.id}">View the submission</a></div>`;
+
               response.push(
-                this.sendEmail(item.id, item.confirmationId, testEmail)
+                this.sendEmail(
+                  testEmail,
+                  email_subject,
+                  email_tag,
+                  email_type,
+                  email_body,
+                )
                   .then((mailResponse) => {
                     console.log(formId, 'mailResponse: ', mailResponse.data);
 
@@ -316,14 +366,13 @@ export class FormService {
       });
   }
 
-  sendEmail(submissionId: string, confirmationId: string, emailTo: String) {
-    const email_subject = `Old Growth Field Observation form and package, ${confirmationId}`;
-    const email_tag = 'field_verification_email'; // might link this tag to the submission id
-    const email_type = 'html';
-    const email_body =
-      `<div style="margin-bottom: 16px">An Old Growth Field Observation form and package has been submitted. Confirmation Number: ${confirmationId}</div>` +
-      `<div><a href="https://chefs.nrs.gov.bc.ca/app/form/view?s=${submissionId}">View the submission</a></div>`;
-
+  sendEmail(
+    emailTo: String,
+    email_subject: string,
+    email_tag: string,
+    email_type: string,
+    email_body: string,
+  ) {
     if (
       !process.env.EMAIL_TOKEN_URL ||
       !process.env.EMAIL_API_URL ||
@@ -339,7 +388,7 @@ export class FormService {
     return this.getToken()
       .then((access_token) => {
         if (access_token) {
-          if (process.env.NODE_ENV !== 'development') {
+          if (process.env.NODE_ENV === 'production') {
             return axios
               .post(
                 `${process.env.EMAIL_API_URL}/email`,
