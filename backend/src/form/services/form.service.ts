@@ -347,9 +347,6 @@ export class FormService {
           return [{ msg: 'New submission returns null, error logged in db' }];
         }
       })
-      /*
-      //Note: This is not an error. If the app reaches to this point, it is because there ar just no new submissions done.
-      
       .catch((e) => {
         const newEmailSubmissionLogEntity: EmailSubmissionLog = {
           code: 'FAILED',
@@ -364,7 +361,7 @@ export class FormService {
           formId + ': Failed to get new submission list from API, error logged in db'
         );
         return new HttpException(e, HttpStatus.INTERNAL_SERVER_ERROR);
-      })*/;
+      })
   }
 
   getToken() {
