@@ -56,6 +56,7 @@
 import { defineComponent } from "vue";
 import { store } from "../helpers/AppState";
 import FormFieldTemplate from "./FormFieldTemplate.vue";
+import * as coreConsts from "../core/CoreConstants";
 
 export default defineComponent({
   name: "FormUpload",
@@ -84,8 +85,8 @@ export default defineComponent({
   data() {
     return {
       rows: store.formUploadFiles,
-      totalSizeError: [],
-      singeSizeError: [],
+      totalSizeError: [] as Array<{ filename: string; filesize: number }>,
+      singeSizeError: [] as Array<{ filename: string; filesize: number }>,
       totalFileSize: 0,
     };
   },
@@ -97,11 +98,11 @@ export default defineComponent({
       if (e.target.files && e.target.files) {
         e.target.files.forEach((f: File) => {
           // file size returns in bytes, convert to mb, each file size needs to be less than 20 mb
-          if (f.size <= 1000000 * 20) {
+          if (f.size <= coreConsts.maxFileSizePerFile) {
             // total file size needs to be less than 100mb
-            if (this.totalFileSize + f.size < 1000000 * 20 * 5) {
+            if (this.totalFileSize + f.size < coreConsts.maxTotalFileSize) {
               this.totalFileSize = this.totalFileSize + f.size;
-              this.getBase64(f).then((data) => {
+              this.getBase64(f).then((data: any) => {
                 const formattedFile = this.formatFileData(data);
                 if (formattedFile) {
                   this.rows.push({
@@ -122,7 +123,7 @@ export default defineComponent({
       store.updateFormUploadFiles(this.rows);
     },
     deleteFile(index: number) {
-      const newRows = this.rows.filter((m, i) => i !== index);
+      const newRows = this.rows.filter((m: any, i: number) => i !== index);
       this.rows = newRows;
       store.updateFormUploadFiles(this.rows);
     },

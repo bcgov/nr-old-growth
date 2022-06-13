@@ -37,8 +37,8 @@ import ContactSection from "./ContactSection.vue";
 import FieldObsSection from "./FieldObsSection.vue";
 import AttachSection from "./AttachSection.vue";
 import { sendEmail } from "../../api/OldGrowthRequest";
-import { backendUrl } from "../../coretypes/AppType";
-import { CodeDescr } from "../../coretypes/CodeDescrType";
+import { backendUrl } from "../../core/AppType";
+import { CodeDescr } from "../../core/CodeDescrType";
 import { store } from "../../helpers/AppState";
 import { primary } from "../../utils/color";
 
