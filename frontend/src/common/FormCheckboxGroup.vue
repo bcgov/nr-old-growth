@@ -17,7 +17,7 @@
         :checked="modelValue?.includes(option.value)"
         :name="name"
       />
-      {{ option.text }}
+      {{ option.label }}
     </label>
   </FormFieldTemplate>
 </template>
