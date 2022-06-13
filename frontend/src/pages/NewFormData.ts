@@ -33,7 +33,6 @@ export const contactData = [
 export const fieldObsSelectData = {
   id: "natural_resource_distrct",
   modelValue: "",
-  // note: "Select the district",
   options: [
     //i.e.: { code: "a", text: "First option", emailAddress: "m@m.com", value: {myObj} },
   ],
@@ -54,6 +53,16 @@ export const fieldObsInputData = [
     label: "Cutting permit",
   },
 ];
+
+export const fieldObsBlockDefaultNew = {
+  cut_block_id: "",
+  total_block_ha: "",
+  ha_org_mapped_def_area: "",
+  deferral_category_code: [],
+  ha_kept_org_mapping: "",
+  ha_added_org_mapping: "",
+  ha_deleted_org_mapping: "",
+};
 
 export const fieldObsBlockData = [
   {
@@ -122,13 +131,3 @@ export const fieldObsBlockColumns = [
     tooltip: "Maintaining deferral or non-deferral status as mapped.",
   },
 ];
-
-export const fieldObsBlockDefaultNew = {
-  cut_block_id: "",
-  total_block_ha: "",
-  ha_org_mapped_def_area: "",
-  deferral_category_code: [],
-  ha_kept_org_mapping: "",
-  ha_added_org_mapping: "",
-  ha_deleted_org_mapping: "",
-};

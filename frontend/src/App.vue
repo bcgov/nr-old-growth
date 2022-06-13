@@ -2,7 +2,7 @@
   <div>
     <MainHeader />
     <b-container>
-      <FieldVerificationForm />
+      <NewFormSubmission />
     </b-container>
   </div>
 </template>
@@ -10,13 +10,13 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import MainHeader from "./common/MainHeader.vue";
-import FieldVerificationForm from "./containers/fieldverificationsubmission/FieldVerificationSubmission.vue";
+import NewFormSubmission from "./pages/NewFormSubmission.vue";
 
 export default defineComponent({
   name: "App",
   components: {
     MainHeader,
-    FieldVerificationForm,
+    NewFormSubmission,
   },
   data() {
     return {};
