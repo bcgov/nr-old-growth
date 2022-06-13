@@ -21,7 +21,7 @@
 import { defineComponent, PropType } from "vue";
 import CollapseCard from "../../common/CollapseCard.vue";
 import FormInput from "../../common/FormInput.vue";
-import type { FormInputType } from "../../coretypes/AppType";
+import type { FormInputType } from "../../core/AppType";
 
 export default defineComponent({
   components: {
