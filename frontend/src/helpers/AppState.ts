@@ -1,5 +1,5 @@
 import { reactive } from "vue";
-import type { FormUploadFileType } from "../coretypes/AppType";
+import type { FormUploadFileType } from "../core/AppType";
 
 // global app state
 export const store = reactive({

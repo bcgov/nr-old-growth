@@ -28,8 +28,8 @@ import html2pdf from "html2pdf.js";
 import axios from "axios";
 import FieldVerificationSubmission from "../containers/fieldverificationform/FieldVerificationForm.vue";
 import { sendEmail } from "../api/OldGrowthRequest";
-import { backendUrl } from "../coretypes/AppType";
-import { CodeDescr } from "../coretypes/CodeDescrType";
+import { backendUrl } from "../core/AppType";
+import { CodeDescr } from "../core/CodeDescrType";
 import { store } from "../helpers/AppState";
 import { primary } from "../utils/color";
 

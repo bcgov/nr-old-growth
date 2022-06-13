@@ -15,7 +15,7 @@
 
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
-import { CodeDescr } from "../coretypes/CodeDescrType";
+import { CodeDescr } from "../core/CodeDescrType";
 import FormFieldTemplate from "./FormFieldTemplate.vue";
 
 export default defineComponent({

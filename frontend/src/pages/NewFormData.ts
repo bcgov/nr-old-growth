@@ -105,9 +105,9 @@ export const fieldObsBlockColumns = [
     type: "checkbox",
     //TODO: Make it dynamic, not hard-coded
     options: [
-      { text: "Big Tree", value: "big_tree" },
-      { text: "Ancient", value: "ancient" },
-      { text: "Remnant", value: "remnant" },
+      { label: "Big Tree", value: "big_tree" },
+      { label: "Ancient", value: "ancient" },
+      { label: "Remnant", value: "remnant" },
     ],
     label: "Check all that apply",
     required: true,
