@@ -43,7 +43,7 @@ import CollapseCard from "../../common/CollapseCard.vue";
 import FormInput from "../../common/FormInput.vue";
 import FormSelect from "../../common/FormSelect.vue";
 import CutBlockInfo from "./CutBlockInfo.vue";
-import type { FormInputType } from "../../coretypes/AppType";
+import type { FormInputType } from "../../core/AppType";
 import {
   fieldObsBlockColumns,
   fieldObsBlockDefaultNew,
