@@ -84,8 +84,8 @@ export default defineComponent({
   data() {
     return {
       rows: store.formUploadFiles,
-      totalSizeError: [],
-      singeSizeError: [],
+      totalSizeError: [] as Array<{ filename: string; filesize: number }>,
+      singeSizeError: [] as Array<{ filename: string; filesize: number }>,
       totalFileSize: 0,
     };
   },
