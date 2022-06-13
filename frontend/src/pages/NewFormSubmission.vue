@@ -1,6 +1,6 @@
 <template>
   <div id="form-container" style="margin: 40px">
-    <h4 style="margin-bottom: 24px">Field verification submission form</h4>
+    <h4 style="margin-bottom: 24px">Priority deferral field verification</h4>
     <FieldVerificationSubmission
       :contactData="contactData"
       :fieldObsInputData="fieldObsInputData"
@@ -103,10 +103,6 @@ export default defineComponent({
           });
       } else {
         console.log("no email adderess provided");
-        console.log("contactData", contactData);
-        console.log("fieldObsInputData", fieldObsInputData);
-        console.log("fieldObsSelectData", fieldObsSelectData);
-        console.log("fieldObsBlockData", fieldObsBlockData);
       }
     },
 

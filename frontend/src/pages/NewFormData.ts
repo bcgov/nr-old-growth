@@ -9,6 +9,7 @@ export const contactData = [
     id: "submitter_firstname",
     modelValue: "",
     label: "Submitter first name",
+    note: "Optional",
   },
   {
     id: "submitter_lastname",
@@ -46,11 +47,13 @@ export const fieldObsInputData = [
     modelValue: "",
     label: "Forest file ID or timber sale licence",
     tooltip: "Enter the forest file ID (tenure) or timber sale licence (BCTS).",
+    note: "Optional for BCTS",
   },
   {
     id: "cutting_permit",
     modelValue: "",
     label: "Cutting permit",
+    note: "Optional for BCTS",
   },
 ];
 
@@ -115,6 +118,7 @@ export const fieldObsBlockColumns = [
     label:
       "Hectares <text style='font-weight: bold'>added</text> to deferral area mapping",
     tooltip: "Adding areas to deferrals.",
+    note: "Optional",
   },
   {
     id: "ha_deleted_org_mapping",
@@ -122,6 +126,7 @@ export const fieldObsBlockColumns = [
     label:
       "Hectares <text style='font-weight: bold'>deleted</text> from deferral area mapping",
     tooltip: "Areas that were mapped as deferrals but do not meet criteria.",
+    note: "Optional",
   },
   {
     id: "ha_kept_org_mapping",
@@ -129,5 +134,6 @@ export const fieldObsBlockColumns = [
     label:
       "Hectares <text style='font-weight: bold'>unchanged</text> from deferral area mapping",
     tooltip: "Maintaining deferral or non-deferral status as mapped.",
+    note: "Optional",
   },
 ];
