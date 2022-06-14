@@ -8,7 +8,7 @@
     <label
       v-for="(option, index) in options"
       :key="index"
-      style="display: block; text-align: left"
+      style="display: block; text-align: left; margin-bottom: 4px"
     >
       <input
         type="checkbox"
@@ -17,7 +17,7 @@
         :checked="modelValue?.includes(option.value)"
         :name="name"
       />
-      {{ option.text }}
+      {{ option.label }}
     </label>
   </FormFieldTemplate>
 </template>

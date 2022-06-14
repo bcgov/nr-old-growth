@@ -2,7 +2,7 @@
   <div>
     <MainHeader />
     <b-container>
-      <FieldVerificationForm />
+      <NewFormSubmission />
     </b-container>
   </div>
 </template>
@@ -10,13 +10,13 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import MainHeader from "./common/MainHeader.vue";
-import FieldVerificationForm from "./containers/fieldverificationsubmission/FieldVerificationSubmission.vue";
+import NewFormSubmission from "./pages/NewFormSubmission.vue";
 
 export default defineComponent({
   name: "App",
   components: {
     MainHeader,
-    FieldVerificationForm,
+    NewFormSubmission,
   },
   data() {
     return {};
@@ -27,11 +27,15 @@ export default defineComponent({
 
 <style>
 #app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
+  /* font-family: Avenir, Helvetica, Arial, sans-serif; */
+  font-family: -apple-system, BlinkMacSystemFont, BCSans, Roboto, Verdana, Arial,
+    sans-serif;
+  font-size: 0.875rem;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
-  color: #2c3e50;
+  /* color: #2c3e50; */
+  color: rgba(0, 0, 0, 0.87);
 }
 
 .row > * {
@@ -48,7 +52,7 @@ export default defineComponent({
 .container-sm {
   padding: 0px 0px 0px 0px !important;
   margin: 0px 0px 0px 0px !important;
-  max-width: 98% !important;
+  max-width: 100% !important;
 }
 
 .col {

@@ -11,10 +11,10 @@
         margin-left: 4px;
       "
     />
-    <b-icon-question-circle
+    <b-icon-question-circle-fill
       v-if="props.tooltip"
       v-b-popover.hover.top="props.tooltip"
-      style="margin-left: 4px; font-size: 10px; margin-top: 4px"
+      style="margin-left: 4px; font-size: 12px; margin-top: 4px; color: #6c757d"
     />
   </div>
 </template>

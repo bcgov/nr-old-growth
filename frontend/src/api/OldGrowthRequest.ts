@@ -4,12 +4,14 @@ const backendUrl = config.VITE_BACKEND_URL || import.meta.env.VITE_BACKEND_URL;
 
 export const sendEmail = (
   emailBody: string,
-  emailAttachments: Array<{
-    content: string;
-    contentType: string;
-    encoding: string;
-    filename: string;
-  }>,
+  emailAttachments:
+    | Array<{
+        content: string;
+        contentType: string;
+        encoding: string;
+        filename: string;
+      }>
+    | [],
   emailTo: Array<string>
 ) => {
   axios

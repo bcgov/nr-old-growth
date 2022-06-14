@@ -64,10 +64,6 @@ export default defineComponent({
       type: Object as PropType<{ [key: string]: any }>,
       required: true,
     },
-    defaultNewData: {
-      type: Object as PropType<{ [key: string]: any }>,
-      required: true,
-    },
     id: {
       type: String,
       default: "form-fieldobs-cutblock",

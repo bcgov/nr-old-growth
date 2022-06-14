@@ -7,14 +7,16 @@
       <p class="instruction-body">
         &#8226; Use the naming style:
         <text style="font-weight: bold"
-          >Professional_Rationale_ForestFileID_CP</text
+          >Professional_Rationale_ForestFileID_CuttingPermitID</text
         >
       </p>
 
       <p class="instruction-header">2. PDF map file</p>
       <p class="instruction-body">
         &#8226; Use the naming style:
-        <text style="font-weight: bold">PDF_Map_file_ForestFileID_CP</text>
+        <text style="font-weight: bold"
+          >PDF_Map_file_ForestFileID_CuttingPermitID</text
+        >
       </p>
 
       <p class="instruction-header">3. Spatial file</p>
@@ -23,11 +25,19 @@
       </p>
       <p class="instruction-body">
         &#8226; Use the naming style:
-        <text style="font-weight: bold">Spatialfile_ForestFileID_CP</text>
+        <text style="font-weight: bold"
+          >Spatialfile_ForestFileID_CuttingPermitID</text
+        >
+      </p>
+
+      <p style="margin-top: 32px">
+        A single file can't be more than
+        <text style="font-weight: bold">25MB</text>. You can attach as many
+        files as needed.
       </p>
     </div>
 
-    <FormUpload label="Upload your files" />
+    <FormUpload label="Upload your files" required />
   </CollapseCard>
 </template>
 

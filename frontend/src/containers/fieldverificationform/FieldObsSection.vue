@@ -27,7 +27,6 @@
       :key="index"
       :columns="columns"
       v-model="modelValue[index]"
-      :defaultNewData="defaultNewData"
       :id="'form-fieldobs-cutblock-' + index"
       :enableAdd="index === modelValue.length - 1 ? true : false"
       :enableDelete="modelValue.length > 1"
@@ -43,11 +42,11 @@ import CollapseCard from "../../common/CollapseCard.vue";
 import FormInput from "../../common/FormInput.vue";
 import FormSelect from "../../common/FormSelect.vue";
 import CutBlockInfo from "./CutBlockInfo.vue";
-import type { FormInputType } from "../../coretypes/AppType";
+import type { FormInputType } from "../../core/AppType";
 import {
   fieldObsBlockColumns,
   fieldObsBlockDefaultNew,
-} from "./FieldVerificationSubmissionData";
+} from "../../pages/NewFormData";
 
 export default defineComponent({
   components: {
@@ -106,18 +105,11 @@ export default defineComponent({
   },
   methods: {
     addCutBlock() {
-      const defaultNew = JSON.parse(JSON.stringify(this.defaultNewData));
-      const newModelValue = this.modelValue;
-      newModelValue.push(defaultNew);
-      this.$emit("update:modelValue", newModelValue);
+      this.$emit("addCutBlock");
     },
     deleteCutBlock(index: number) {
-      const newModelValue = this.modelValue.filter((m, i) => i !== index);
-      this.$emit("update:modelValue", newModelValue);
+      this.$emit("deleteCutBlock", index);
     },
-  },
-  mounted() {
-    console.log(fieldObsBlockColumns);
   },
 });
 </script>

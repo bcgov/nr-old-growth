@@ -42,7 +42,7 @@ export default {};
 <style scoped>
 .form-field-note {
   color: gray;
-  font-size: 14px;
+  font-size: 12px;
   margin-top: 2px;
 }
 </style>

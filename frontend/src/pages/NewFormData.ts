@@ -9,6 +9,7 @@ export const contactData = [
     id: "submitter_firstname",
     modelValue: "",
     label: "Submitter first name",
+    note: "Optional",
   },
   {
     id: "submitter_lastname",
@@ -33,7 +34,6 @@ export const contactData = [
 export const fieldObsSelectData = {
   id: "natural_resource_distrct",
   modelValue: "",
-  // note: "Select the district",
   options: [
     //i.e.: { code: "a", text: "First option", emailAddress: "m@m.com", value: {myObj} },
   ],
@@ -47,13 +47,25 @@ export const fieldObsInputData = [
     modelValue: "",
     label: "Forest file ID or timber sale licence",
     tooltip: "Enter the forest file ID (tenure) or timber sale licence (BCTS).",
+    note: "Optional for BCTS",
   },
   {
     id: "cutting_permit",
     modelValue: "",
     label: "Cutting permit",
+    note: "Optional for BCTS",
   },
 ];
+
+export const fieldObsBlockDefaultNew = {
+  cut_block_id: "",
+  total_block_ha: "",
+  ha_org_mapped_def_area: "",
+  deferral_category_code: [],
+  ha_kept_org_mapping: "",
+  ha_added_org_mapping: "",
+  ha_deleted_org_mapping: "",
+};
 
 export const fieldObsBlockData = [
   {
@@ -93,9 +105,9 @@ export const fieldObsBlockColumns = [
     type: "checkbox",
     //TODO: Make it dynamic, not hard-coded
     options: [
-      { text: "Big Tree", value: "big_tree" },
-      { text: "Ancient", value: "ancient" },
-      { text: "Remnant", value: "remnant" },
+      { label: "Big Tree", value: "big_tree" },
+      { label: "Ancient", value: "ancient" },
+      { label: "Remnant", value: "remnant" },
     ],
     label: "Check all that apply",
     required: true,
@@ -106,6 +118,7 @@ export const fieldObsBlockColumns = [
     label:
       "Hectares <text style='font-weight: bold'>added</text> to deferral area mapping",
     tooltip: "Adding areas to deferrals.",
+    note: "Optional",
   },
   {
     id: "ha_deleted_org_mapping",
@@ -113,6 +126,7 @@ export const fieldObsBlockColumns = [
     label:
       "Hectares <text style='font-weight: bold'>deleted</text> from deferral area mapping",
     tooltip: "Areas that were mapped as deferrals but do not meet criteria.",
+    note: "Optional",
   },
   {
     id: "ha_kept_org_mapping",
@@ -120,15 +134,6 @@ export const fieldObsBlockColumns = [
     label:
       "Hectares <text style='font-weight: bold'>unchanged</text> from deferral area mapping",
     tooltip: "Maintaining deferral or non-deferral status as mapped.",
+    note: "Optional",
   },
 ];
-
-export const fieldObsBlockDefaultNew = {
-  cut_block_id: "",
-  total_block_ha: "",
-  ha_org_mapped_def_area: "",
-  deferral_category_code: [],
-  ha_kept_org_mapping: "",
-  ha_added_org_mapping: "",
-  ha_deleted_org_mapping: "",
-};

@@ -33,7 +33,7 @@
       </div>
     </b-card-header>
     <b-collapse :id="id" role="tabpanel" v-model="visible">
-      <b-card-body style="margin-top: 16px; margin-bottom: 16px">
+      <b-card-body style="margin: 16px 10px 16px 10px">
         <slot />
         <b-button
           v-if="nextId"
