@@ -1,18 +1,12 @@
 <template>
   <div id="form-container" style="margin: 40px">
-    <h4 style="margin-bottom: 24px">Field verification submission form</h4>
-    <div class="accordion" role="tablist">
-      <InstructionSection />
-      <div id="pdf-form-div">
-        <ContactSection :data="contactData" />
-        <FieldObsSection
-          :inputData="fieldObsInputData"
-          :selectData="fieldObsSelectData"
-          v-model="fieldObsBlockData"
-        />
-      </div>
-      <AttachSection />
-    </div>
+    <h4 style="margin-bottom: 24px">Priority deferral field verification</h4>
+    <FieldVerificationSubmission
+      :contactData="contactData"
+      :fieldObsInputData="fieldObsInputData"
+      :fieldObsSelectData="fieldObsSelectData"
+      v-model="fieldObsBlockData"
+    />
 
     <b-button
       variant="primary"
@@ -32,29 +26,23 @@
 import { defineComponent } from "vue";
 import html2pdf from "html2pdf.js";
 import axios from "axios";
-import InstructionSection from "./InstructionSection.vue";
-import ContactSection from "./ContactSection.vue";
-import FieldObsSection from "./FieldObsSection.vue";
-import AttachSection from "./AttachSection.vue";
-import { sendEmail } from "../../api/OldGrowthRequest";
-import { backendUrl } from "../../core/AppType";
-import { CodeDescr } from "../../core/CodeDescrType";
-import { store } from "../../helpers/AppState";
-import { primary } from "../../utils/color";
+import FieldVerificationSubmission from "../containers/fieldverificationform/FieldVerificationForm.vue";
+import { sendEmail } from "../api/OldGrowthRequest";
+import { backendUrl } from "../core/AppType";
+import { CodeDescr } from "../core/CodeDescrType";
+import { store } from "../helpers/AppState";
+import { primary } from "../utils/color";
 
 import {
   contactData,
   fieldObsInputData,
   fieldObsSelectData,
   fieldObsBlockData,
-} from "./FieldVerificationSubmissionData";
+} from "./NewFormData";
 
 export default defineComponent({
   components: {
-    InstructionSection,
-    ContactSection,
-    FieldObsSection,
-    AttachSection,
+    FieldVerificationSubmission,
   },
   data() {
     return {
