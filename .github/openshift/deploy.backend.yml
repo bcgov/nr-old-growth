@@ -24,12 +24,8 @@ parameters:
     value: latest
   - name: DOMAIN
     value: apps.silver.devops.gov.bc.ca
-  - name: CPU_LIMIT
-     value: 200m
-  - name: MEMORY_LIMIT
-     value: 1Gi
   - name: CPU_REQUEST
-    value: 80m
+    value: 100m
   - name: MEMORY_REQUEST
     value: 0.5Gi
   - name: REGISTRY
@@ -182,9 +178,6 @@ objects:
                 - containerPort: 3000
                   protocol: TCP
               resources:
-                limits:
-                  cpu: ${CPU_LIMIT}
-                  memory: ${MEMORY_LIMIT}
                 requests:
                   cpu: ${CPU_REQUEST}
                   memory: ${MEMORY_REQUEST}
