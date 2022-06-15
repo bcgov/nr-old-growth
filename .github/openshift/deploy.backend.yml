@@ -24,8 +24,12 @@ parameters:
     value: latest
   - name: DOMAIN
     value: apps.silver.devops.gov.bc.ca
+  - name: CPU_LIMIT
+     value: 200m
+  - name: MEMORY_LIMIT
+     value: 1Gi
   - name: CPU_REQUEST
-    value: 100m
+    value: 80m
   - name: MEMORY_REQUEST
     value: 0.5Gi
   - name: REGISTRY
@@ -158,7 +162,7 @@ objects:
                 - name: IDIR_FORM_ID
                   value: "b15b1975-3caa-4984-a183-471c5610c8a5"
                 - name: IDIR_FORM_VERSION_ID
-                  value: "6901b0bc-1cf1-4378-b8e0-803b3b5f819b"
+                  value: "9a059f05-c281-426d-97d0-eceebdb0e20e"
                 - name: IDIR_FORM_PASSWORD
                   valueFrom:
                     secretKeyRef:
@@ -167,7 +171,7 @@ objects:
                 - name: BCEID_FORM_ID
                   value: "e4591d9b-9005-4bd6-8145-2c92ce890d91"
                 - name: BCEID_FORM_VERSION_ID
-                  value: "e6d353a1-7dd5-41a5-875d-e6f13012e598"
+                  value: "4a59f258-7623-41b9-9bdf-2eb432b5c54d"
                 - name: BCEID_FORM_PASSWORD
                   valueFrom:
                     secretKeyRef:
@@ -178,6 +182,9 @@ objects:
                 - containerPort: 3000
                   protocol: TCP
               resources:
+                limits:
+                  cpu: ${CPU_LIMIT}
+                  memory: ${MEMORY_LIMIT}
                 requests:
                   cpu: ${CPU_REQUEST}
                   memory: ${MEMORY_REQUEST}

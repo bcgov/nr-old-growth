@@ -18,6 +18,7 @@ export class FormService {
     private emailSubmissionLogRepository: Repository<EmailSubmissionLogEntity>,
   ) {}
 
+  // @Cron('*/10 * * * *') //Runs every 10 minutes
   @Cron('*/1 * * * *') //Runs every 1 minutes
   // @Cron('45 * * * * *') // Run every 45 seconds
   // @Cron('*/5 * * * * *') //Runs every 5 seconds
@@ -65,9 +66,11 @@ export class FormService {
     const newEmailSubmissionLogEntity = new EmailSubmissionLogEntity();
     newEmailSubmissionLogEntity.code = emailSubmissionLog.code;
     newEmailSubmissionLogEntity.exceptionLog = emailSubmissionLog.exceptionLog;
-    newEmailSubmissionLogEntity.confirmationId = emailSubmissionLog.confirmationId;
+    newEmailSubmissionLogEntity.confirmationId =
+      emailSubmissionLog.confirmationId;
     newEmailSubmissionLogEntity.formId = emailSubmissionLog.formId;
-    newEmailSubmissionLogEntity.formVersionId = emailSubmissionLog.formVersionId;
+    newEmailSubmissionLogEntity.formVersionId =
+      emailSubmissionLog.formVersionId;
 
     try {
       if (emailSubmissionLog.confirmationId) {
@@ -151,7 +154,8 @@ export class FormService {
           createdAtValue <= currTimeValue &&
           newSubmission.submission.state == 'submitted' &&
           (!storedSubmission ||
-            (storedSubmission && !storedSubmission[newSubmission.confirmationId]))
+            (storedSubmission &&
+              !storedSubmission[newSubmission.confirmationId]))
         ) {
           newSubmissions.push(newSubmission);
         } else if (
@@ -358,10 +362,11 @@ export class FormService {
         this.postEmailSubmissionLog(newEmailSubmissionLogEntity);
 
         this.logger.error(
-          formId + ': Failed to get new submission list from API, error logged in db'
+          formId +
+            ': Failed to get new submission list from API, error logged in db',
         );
         return new HttpException(e, HttpStatus.INTERNAL_SERVER_ERROR);
-      })
+      });
   }
 
   getToken() {
