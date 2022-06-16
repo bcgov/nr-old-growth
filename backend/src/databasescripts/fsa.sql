@@ -7,6 +7,17 @@
 -- Target DBMS : PostgreSQL 9.x
 --
 
+drop table if exists deferral_category;
+drop table if exists natural_resource_dist;
+
+drop table if exists subm_data_grid_dfr_cat_xref;
+drop table if exists cutblock_submission_details;
+drop table if exists attachment;
+drop table if exists submission;
+drop table if exists submission_log;
+drop table if exists deferral_category_code;
+drop table if exists natural_resource_dist_code;
+
 -- 
 -- TABLE: attachment
 --
