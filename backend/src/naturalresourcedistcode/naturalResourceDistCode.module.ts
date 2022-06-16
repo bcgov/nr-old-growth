@@ -9,4 +9,4 @@ import { NaturalResourceDistCodeService } from './services/naturalResourceDistCo
   controllers: [NaturalResourceDistController],
   providers: [NaturalResourceDistCodeService]
 })
-export class NaturalResourceDistModule {}
+export class NaturalResourceDistCodeModule {}
