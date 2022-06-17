@@ -5,6 +5,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { NaturalResourceDistModule } from './naturalresourcedist/naturalResourceDist.module';
 import { EmailModule } from './email/email.module';
+import { SptialFileModule } from './spatialfile/spatialFile.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { EmailModule } from './email/email.module';
     }),
     NaturalResourceDistModule,
     EmailModule,
+    SptialFileModule,
   ],
   controllers: [AppController],
   providers: [AppService],

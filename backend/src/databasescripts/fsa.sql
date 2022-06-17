@@ -342,3 +342,75 @@ INSERT INTO NATURAL_RESOURCE_DIST (NATURAL_RESOURCE_DIST_CODE, DESCRIPTION, EMAI
 INSERT INTO NATURAL_RESOURCE_DIST (NATURAL_RESOURCE_DIST_CODE, DESCRIPTION, EMAIL_ADDRESS, EFFECTIVE_DATE, CREATE_USER) VALUES ('DVA', 'Stuart Nechako Natural Resource District', 'dsn.submissions@gov.bc.ca', CURRENT_TIMESTAMP, 'mariamar');
 INSERT INTO NATURAL_RESOURCE_DIST (NATURAL_RESOURCE_DIST_CODE, DESCRIPTION, EMAIL_ADDRESS, EFFECTIVE_DATE, CREATE_USER) VALUES ('DSC', 'Sunshine Coast Natural Resource District', 'FTA.DSC@gov.bc.ca', CURRENT_TIMESTAMP, 'mariamar');
 INSERT INTO NATURAL_RESOURCE_DIST (NATURAL_RESOURCE_DIST_CODE, DESCRIPTION, EMAIL_ADDRESS, EFFECTIVE_DATE, CREATE_USER) VALUES ('DKA', 'Thompson Rivers Natural Resource District', 'DTR.Tenures@gov.bc.ca', CURRENT_TIMESTAMP, 'mariamar');
+
+
+-- 
+-- TABLE: spatial_file
+--
+drop table if exists spatial_file;
+
+CREATE TABLE spatial_file (
+    spatial_file_id   serial          not null,
+    -- submission_id     int4           not null,
+    -- create_timestamp  timestamp      default current_timestamp not null,
+    -- update_timestamp  timestamp      default current_timestamp,
+    -- create_user       varchar(60)    not null,
+    -- update_user       varchar(60),
+    file_name         varchar(60)    not null,
+    file_format       varchar(20)    not null,
+    geometry_type     varchar(20)    not null,
+    geom              geometry
+)
+;
+
+
+comment on column spatial_file.spatial_file_id is 'A sequential id assigned to an spatial geometry file.'
+;
+-- comment on column spatial_file.submission_id is 'Incremental id generated from a submission of the Old Growth Field Verification form.'
+-- ;
+-- comment on column spatial_file.create_timestamp is 'The date and time the record was created.'
+-- ;
+-- comment on column spatial_file.update_timestamp is 'The date and time the record was created or last updated.'
+-- ;
+-- comment on column spatial_file.create_user is 'The user or proxy account that created the record.'
+-- ;
+-- comment on column spatial_file.update_user is 'The user or proxy account that created or last updated the record.'
+;
+comment on column spatial_file.file_name is 'The name of the geometry file.'
+;
+comment on column spatial_file.file_format is 'The format of the geometry file.'
+;
+comment on column spatial_file.geometry_type is 'The geometry type.'
+;
+comment on column spatial_file.geom is 'The geometry file data.'
+;
+comment on table spatial_file is 'Spatial file (accepted formats: SHAPE, KML, KMZ, GDB, ZIP) (Use the naming convention: Spatialfile_ForestFileID_CP)'
+;
+
+
+alter table spatial_file add 
+    constraint spatial_file_id primary key (spatial_file_id)
+;
+
+
+-- INSERT INTO spatial_file (file_name, geometry_type, geom)
+-- VALUES (
+--     'polygon_file',
+-- 	'Polygon',
+--     ST_GeomFromGeoJSON(
+--         '{
+--             "type": "Polygon",
+--             "coordinates": [ [ 
+-- 			  [1474614.5923999995, 555392.24159999937],
+-- 			  [1474537.8630999997, 555275.82469999976],
+-- 			  [1474588.1340999994, 555146.17860000022],
+-- 			  [1474723.0717999991, 555080.0326000005],
+-- 			  [1474818.3220000006, 555138.24110000022],
+-- 			  [1474902.9889000002, 555220.26209999993],
+-- 			  [1474818.3220000006, 555334.03309999965],
+-- 			  [1474701.9050999992, 555437.22079999931],
+-- 			  [1474614.5923999995, 555392.24159999937]
+-- 			] ]
+--         }'
+--     )
+-- )
