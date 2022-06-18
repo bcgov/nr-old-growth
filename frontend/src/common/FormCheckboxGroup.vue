@@ -1,10 +1,5 @@
 <template>
-  <FormFieldTemplate
-    :label="label"
-    :required="required"
-    :note="note"
-    :tooltip="tooltip"
-  >
+  <FormFieldTemplate :fieldProps="fieldProps">
     <label
       v-for="(option, index) in options"
       :key="index"
@@ -14,7 +9,7 @@
         type="checkbox"
         :value="option.value"
         @input="updateValue"
-        :checked="modelValue?.includes(option.value)"
+        :checked="checked?.includes(option.value)"
         :name="name"
       />
       {{ option.label }}
@@ -25,6 +20,7 @@
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
 import FormFieldTemplate from "./FormFieldTemplate.vue";
+import type { FormFieldTemplateType } from "../core/AppType";
 
 export default defineComponent({
   name: "FormRadio",
@@ -32,25 +28,14 @@ export default defineComponent({
     FormFieldTemplate,
   },
   props: {
-    // form field template props (optional): label, required, tooltip, note
-    label: {
-      type: String,
-      default: null,
+    // form field template props (optional): label, required, tooltip, note, id
+    fieldProps: {
+      type: Object as PropType<FormFieldTemplateType>,
+      default: {
+        label: "Hello",
+      },
     },
-    required: {
-      type: Boolean,
-      default: false,
-    },
-    tooltip: {
-      type: String,
-      default: null,
-    },
-    note: {
-      type: String,
-      default: "",
-    },
-    // selected options got from parent component through v-model
-    modelValue: Array as PropType<Array<String>>,
+    checked: Array as PropType<Array<String>>,
     options: {
       type: Array as
         | PropType<Array<{ value: string; label: string }>>
@@ -66,13 +51,13 @@ export default defineComponent({
   },
   methods: {
     updateValue(event: any) {
-      let newModelValue = this.modelValue;
+      let newModelValue = this.checked;
       if (newModelValue?.includes(event.target.value)) {
         newModelValue = newModelValue.filter((m) => m != event.target.value);
       } else {
         newModelValue?.push(event.target.value);
       }
-      this.$emit("update:modelValue", newModelValue);
+      this.$emit("updateFormData", this.fieldProps.id, newModelValue);
     },
   },
 });

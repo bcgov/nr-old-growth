@@ -1,17 +1,13 @@
 <template>
-  <FormFieldTemplate
-    :label="label"
-    :required="required"
-    :note="note"
-    :tooltip="tooltip"
-  >
-    <b-form-input :value="modelValue" @input="updateInput"></b-form-input>
+  <FormFieldTemplate :fieldProps="fieldProps">
+    <b-form-input :value="inputValue" @input="updateInput"></b-form-input>
   </FormFieldTemplate>
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent, PropType } from "vue";
 import FormFieldTemplate from "./FormFieldTemplate.vue";
+import type { FormFieldTemplateType } from "../core/AppType";
 
 export default defineComponent({
   name: "FormInput",
@@ -19,29 +15,18 @@ export default defineComponent({
     FormFieldTemplate,
   },
   props: {
-    // form field template props (optional): label, required, tooltip, note
-    label: {
-      type: String,
-      default: null,
+    // form field template props (optional): label, required, tooltip, note, id
+    fieldProps: {
+      type: Object as PropType<FormFieldTemplateType>,
+      default: {
+        label: "Hello",
+      },
     },
-    required: {
-      type: Boolean,
-      default: false,
-    },
-    tooltip: {
-      type: String,
-      default: null,
-    },
-    note: {
-      type: String,
-      default: "",
-    },
-    // input value got from parent component through v-model
-    modelValue: String,
+    inputValue: String,
   },
   methods: {
     updateInput(newValue: String) {
-      this.$emit("update:modelValue", newValue);
+      this.$emit("updateFormData", this.fieldProps.id, newValue);
     },
   },
 });

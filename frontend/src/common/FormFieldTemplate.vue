@@ -1,37 +1,29 @@
 <template>
   <div style="margin-bottom: 24px">
     <FormFieldTitle
-      v-if="props.label"
-      :label="props.label"
-      :required="props.required"
-      :tooltip="props.tooltip"
+      v-if="props.fieldProps.label"
+      :label="props.fieldProps.label"
+      :required="props.fieldProps.required"
+      :tooltip="props.fieldProps.tooltip"
     />
     <slot />
-    <p v-if="props.note" class="form-field-note">
-      <span v-html="note"></span>
+    <p v-if="props.fieldProps.note" class="form-field-note">
+      <span v-html="fieldProps.note"></span>
     </p>
   </div>
 </template>
 
 <script setup lang="ts">
+import { PropType } from "vue";
 import FormFieldTitle from "./FormFieldTitle.vue";
+import type { FormFieldTemplateType } from "../core/AppType";
 
 const props = defineProps({
-  label: {
-    type: String,
-    default: null,
-  },
-  required: {
-    type: Boolean,
-    default: false,
-  },
-  tooltip: {
-    type: String,
-    default: null,
-  },
-  note: {
-    type: String,
-    default: null,
+  fieldProps: {
+    type: Object as PropType<FormFieldTemplateType>,
+    default: {
+      label: "Hello",
+    },
   },
 });
 </script>
