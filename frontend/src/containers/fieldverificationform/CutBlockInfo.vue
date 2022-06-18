@@ -1,9 +1,6 @@
 <template>
   <CollapseCard title="Cut block information" :id="id" defaultOpen alwaysOpen>
-    <div
-      v-for="(dataKey, dataIndex) in blockDataKey"
-      :key="dataIndex + dataKey"
-    >
+    <div v-for="(dataKey, dataIndex) in Object.keys(data)" :key="dataIndex">
       <FormInput
         v-if="columns[dataIndex].type == 'input'"
         :fieldProps="columns[dataIndex]"
@@ -78,7 +75,6 @@ export default defineComponent({
   data() {
     return {
       primary,
-      blockDataKey: Object.keys(this.data),
     };
   },
   methods: {
