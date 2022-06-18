@@ -1,24 +1,19 @@
 <template>
   <CollapseCard title="Cut block information" :id="id" defaultOpen alwaysOpen>
-    <div
-      v-for="(datakKey, dataIndex) in Object.keys(modelValue)"
-      :key="dataIndex"
-    >
+    <div v-for="(dataKey, dataIndex) in Object.keys(data)" :key="dataIndex">
       <FormInput
         v-if="columns[dataIndex].type == 'input'"
-        v-model="modelValue[datakKey]"
-        :label="columns[dataIndex].label"
-        :required="columns[dataIndex].required"
-        :note="columns[dataIndex].note"
-        :tooltip="columns[dataIndex].tooltip"
+        :fieldProps="columns[dataIndex]"
+        :inputValue="data[dataKey]"
+        @updateFormData="updateBlockData"
       ></FormInput>
       <FormCheckboxGroup
         v-if="columns[dataIndex].type == 'checkbox'"
-        v-model="modelValue[datakKey]"
+        :fieldProps="columns[dataIndex]"
+        :name="columns[dataIndex].id + dataIndex + 'radio'"
         :options="columns[dataIndex].options"
-        :name="dataIndex + 'radio'"
-        :label="columns[dataIndex].label"
-        :required="columns[dataIndex].required"
+        :checked="data[dataKey]"
+        @updateFormData="updateBlockData"
       ></FormCheckboxGroup>
     </div>
     <b-button
@@ -41,11 +36,12 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType } from "vue";
+import { defineComponent } from "vue";
+import type { PropType } from "vue";
 import CollapseCard from "../../common/CollapseCard.vue";
 import FormInput from "../../common/FormInput.vue";
 import FormCheckboxGroup from "../../common/FormCheckboxGroup.vue";
-import type { FromGridColumnType } from "../../helpers/AppType";
+import type { FormGridColumnType } from "../../core/AppType";
 import { primary } from "../../utils/color";
 
 export default defineComponent({
@@ -56,11 +52,10 @@ export default defineComponent({
   },
   props: {
     columns: {
-      type: Array as PropType<Array<FromGridColumnType>>,
+      type: Array as PropType<Array<FormGridColumnType>>,
       required: true,
     },
-    // grid data got from parent component through v-model
-    modelValue: {
+    data: {
       type: Object as PropType<{ [key: string]: any }>,
       required: true,
     },
@@ -88,6 +83,9 @@ export default defineComponent({
     },
     deleteCutBlock() {
       this.$emit("deleteCutBlock");
+    },
+    updateBlockData(id: string, newValue: string | Array<string>) {
+      this.$emit("updateBlockData", id, newValue);
     },
   },
 });
