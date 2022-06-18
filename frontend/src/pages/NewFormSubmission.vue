@@ -96,7 +96,7 @@ export default defineComponent({
     },
 
     getNaturalResourceDistricts() {
-      axios.get(backendUrl + "/naturalResourceDist").then((response) => {
+      axios.get(backendUrl + "/naturalResourceDistCode/findAllActive").then((response) => {
         let naturalResourceDistCodes: CodeDescr[] = [];
         Object.keys(response.data).forEach((key) => {
           let nrd = new CodeDescr();

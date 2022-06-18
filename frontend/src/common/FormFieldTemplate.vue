@@ -14,7 +14,7 @@
 </template>
 
 <script setup lang="ts">
-import { PropType } from "vue";
+import type { PropType } from "vue";
 import FormFieldTitle from "./FormFieldTitle.vue";
 import type { FormFieldTemplateType } from "../core/AppType";
 

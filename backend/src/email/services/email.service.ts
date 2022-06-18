@@ -3,6 +3,7 @@ import { HttpService } from '@nestjs/axios';
 import axios from 'axios';
 import { map, catchError } from 'rxjs/operators';
 import { EmailEntity } from '../model/email.entity';
+import * as coreConsts from "../../core/CoreConstants";
 
 const oauth = require('axios-oauth-client');
 
@@ -13,7 +14,7 @@ export class EmailService {
   getToken() {
     const getClientCredentials = oauth.client(axios.create(), {
       url: process.env.EMAIL_TOKEN_URL,
-      grant_type: 'client_credentials',
+      grant_type: coreConsts.oauthClientGrantType,
       client_id: process.env.EMAIL_USERNAME,
       client_secret: process.env.EMAIL_PASSWORD,
       scope: '',
@@ -63,7 +64,7 @@ export class EmailService {
                 body: email.emailBody || 'Hello World',
                 cc: [],
                 delayTS: 0,
-                encoding: 'utf-8',
+                encoding: coreConsts.encoding,
                 from: process.env.EMAIL_FROM,
                 priority: 'normal',
                 subject: email_subject,

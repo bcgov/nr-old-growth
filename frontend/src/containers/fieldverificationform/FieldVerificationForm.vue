@@ -17,7 +17,8 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType } from "vue";
+import { defineComponent } from "vue";
+import type { PropType } from "vue";
 import InstructionSection from "./InstructionSection.vue";
 import ContactSection from "./ContactSection.vue";
 import FieldObsSection from "./FieldObsSection.vue";
