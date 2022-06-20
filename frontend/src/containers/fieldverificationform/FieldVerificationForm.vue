@@ -49,20 +49,20 @@ export default defineComponent({
   methods: {
     addCutBlock() {
       const defaultNew = JSON.parse(JSON.stringify(fieldObsBlockDefaultNew));
-      const newCutBlock = this.modelValue.cut_block;
+      const newCutBlock = this.modelValue.cutBlock;
       newCutBlock.push(defaultNew);
       this.$emit("update:modelValue", {
         ...this.modelValue,
-        cut_block: newCutBlock,
+        cutBlock: newCutBlock,
       });
     },
 
     deleteCutBlock(index: number) {
-      const newCutBlock = this.modelValue.cut_block;
+      const newCutBlock = this.modelValue.cutBlock;
       newCutBlock.splice(index, 1);
       this.$emit("update:modelValue", {
         ...this.modelValue,
-        cut_block: newCutBlock,
+        cutBlock: newCutBlock,
       });
     },
 
@@ -71,11 +71,11 @@ export default defineComponent({
       id: string,
       newValue: string | Array<string>
     ) {
-      const newCutBlock = this.modelValue.cut_block;
+      const newCutBlock = this.modelValue.cutBlock;
       newCutBlock[index][id] = newValue;
       this.$emit("update:modelValue", {
         ...this.modelValue,
-        cut_block: newCutBlock,
+        cutBlock: newCutBlock,
       });
     },
 
