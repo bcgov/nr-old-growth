@@ -6,30 +6,27 @@
     nextText="Attach Files"
   >
     <FormSelect
-      :label="selectData.label"
-      v-model="selectData.modelValue"
-      :required="selectData.required"
-      :note="selectData.note"
-      :options="selectData.options"
-      :tooltip="selectData.tooltip"
+      :fieldProps="formSelectProps"
+      :selected="selected"
+      :options="nrdList"
+      @updateFormData="updateFormData"
     />
     <FormInput
-      v-for="row in inputData"
+      v-for="row in formInputProps"
       :key="row.id"
-      :label="row.label"
-      v-model="row.modelValue"
-      :required="row.required"
-      :note="row.note"
-      :tooltip="row.tooltip"
+      :fieldProps="row"
+      :inputValue="data[row.id]"
+      @updateFormData="updateFormData"
     />
     <CutBlockInfo
-      v-for="(block, index) in modelValue"
+      v-for="(block, index) in cutBlocks"
       :key="index"
-      :columns="columns"
-      v-model="modelValue[index]"
+      :columns="formBlockProps"
+      :data="cutBlocks[index]"
       :id="'form-fieldobs-cutblock-' + index"
-      :enableAdd="index === modelValue.length - 1 ? true : false"
-      :enableDelete="modelValue.length > 1"
+      :enableAdd="index === cutBlocks.length - 1 ? true : false"
+      :enableDelete="cutBlocks.length > 1"
+      @updateBlockData="(id, newValue) => updateBlockData(index, id, newValue)"
       @addCutBlock="addCutBlock"
       @deleteCutBlock="deleteCutBlock(index)"
     />
@@ -37,16 +34,19 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType } from "vue";
+import { defineComponent } from "vue";
+import type { PropType } from "vue";
 import CollapseCard from "../../common/CollapseCard.vue";
 import FormInput from "../../common/FormInput.vue";
 import FormSelect from "../../common/FormSelect.vue";
 import CutBlockInfo from "./CutBlockInfo.vue";
-import type { FormInputType } from "../../core/AppType";
-import {
-  fieldObsBlockColumns,
-  fieldObsBlockDefaultNew,
-} from "../../pages/NewFormData";
+import { formProperty } from "../../pages/NewFormData";
+import type {
+  FormFieldTemplateType,
+  FromSelectOptionType,
+  FormGridColumnType,
+  CommonObjectType,
+} from "../../core/AppType";
 
 export default defineComponent({
   components: {
@@ -56,51 +56,28 @@ export default defineComponent({
     CutBlockInfo,
   },
   props: {
-    inputData: {
-      type: Array as PropType<Array<FormInputType>>,
-      default: [
-        {
-          id: "test",
-          modelValue: "",
-          label: "",
-        },
-      ],
-    },
-    selectData: {
-      type: Object as PropType<{
-        label: string;
-        id: string;
-        note?: string;
-        required?: boolean;
-        tooltip?: string;
-        modelValue: {};
-        options: Array<{ value: {}; text: string }>;
-      }>,
+    data: {
+      type: Object as PropType<CommonObjectType>,
       default: {
-        label: "Select from below",
-        id: "form-select-example",
-        modelValue: "",
-        options: [{ value: "1", text: "Option 1" }],
+        natural_resource_distrct: {},
+        forest_file_id: "",
+        cut_block: [],
       },
     },
-    modelValue: {
-      type: Array as PropType<Array<{ [key: string]: any }>>,
-      default: [
-        {
-          cut_block_id: "",
-          ha_org_mapped_def_area: "",
-          deferral_category_code: [],
-          ha_kept_org_mapping: "",
-          ha_added_org_mapping: "",
-          ha_deleted_org_mapping: "",
-        },
-      ],
+    nrdList: {
+      type: Array as PropType<Array<FromSelectOptionType>>,
+      default: [],
     },
   },
   data() {
     return {
-      columns: fieldObsBlockColumns,
-      defaultNewData: fieldObsBlockDefaultNew,
+      formSelectProps: formProperty.fieldObsSelect as FormFieldTemplateType,
+      formInputProps:
+        formProperty.fieldObsInput as Array<FormFieldTemplateType>,
+      formBlockProps: formProperty.fieldObsBlock as Array<FormGridColumnType>,
+      // need these line to trigger the rerender to catch changes
+      selected: this.data.natural_resource_distrct,
+      cutBlocks: this.data.cut_block,
     };
   },
   methods: {
@@ -109,6 +86,18 @@ export default defineComponent({
     },
     deleteCutBlock(index: number) {
       this.$emit("deleteCutBlock", index);
+    },
+
+    updateBlockData(
+      index: number,
+      id: string,
+      newValue: string | Array<string>
+    ) {
+      this.$emit("updateBlockData", index, id, newValue);
+    },
+
+    updateFormData(id: string, newValue: string | CommonObjectType) {
+      this.$emit("updateFormData", { [id]: newValue });
     },
   },
 });

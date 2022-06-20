@@ -6,22 +6,25 @@
     nextText="Enter Field Obeservation Data"
   >
     <FormInput
-      v-for="row in data"
+      v-for="row in contactProps"
       :key="row.id"
-      v-model="row.modelValue"
-      :label="row.label"
-      :required="row.required"
-      :note="row.note"
-      :tooltip="row.tooltip"
+      :fieldProps="row"
+      :inputValue="data[row.id]"
+      @updateFormData="updateFormData"
     />
   </CollapseCard>
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType } from "vue";
+import { defineComponent } from "vue";
+import type { PropType } from "vue";
 import CollapseCard from "../../common/CollapseCard.vue";
 import FormInput from "../../common/FormInput.vue";
-import type { FormInputType } from "../../core/AppType";
+import { formProperty } from "../../pages/NewFormData";
+import type {
+  FormFieldTemplateType,
+  CommonObjectType,
+} from "../../core/AppType";
 
 export default defineComponent({
   components: {
@@ -30,14 +33,21 @@ export default defineComponent({
   },
   props: {
     data: {
-      type: Array as PropType<Array<FormInputType>>,
-      default: [
-        {
-          id: "test",
-          modelValue: "",
-          label: "",
-        },
-      ],
+      type: Object as PropType<CommonObjectType>,
+      default: {
+        submitter_lastname: "",
+        submitter_email: "",
+      },
+    },
+  },
+  data() {
+    return {
+      contactProps: formProperty.contact as Array<FormFieldTemplateType>,
+    };
+  },
+  methods: {
+    updateFormData(id: string, newValue: string) {
+      this.$emit("updateFormData", { [id]: newValue });
     },
   },
 });

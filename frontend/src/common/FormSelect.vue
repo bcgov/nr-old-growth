@@ -1,14 +1,9 @@
 <template>
-  <FormFieldTemplate
-    :label="label"
-    :required="required"
-    :note="note"
-    :tooltip="tooltip"
-  >
+  <FormFieldTemplate :fieldProps="fieldProps">
     <b-form-select
-      :value="modelValue"
+      :value="selected"
       :options="options"
-      @change="updateValue"
+      @change="updateSelectedValue"
     ></b-form-select>
   </FormFieldTemplate>
 </template>
@@ -16,8 +11,12 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import type { PropType } from "vue";
-import type { CodeDescr } from "../core/CodeDescrType";
 import FormFieldTemplate from "./FormFieldTemplate.vue";
+import type {
+  CommonObjectType,
+  FormFieldTemplateType,
+  FromSelectOptionType,
+} from "../core/AppType";
 
 export default defineComponent({
   name: "FormSelect",
@@ -25,34 +24,22 @@ export default defineComponent({
     FormFieldTemplate,
   },
   props: {
-    // form field template props (optional): label, required, tooltip, note
-    label: {
-      type: String,
-      default: null,
+    // form field template props (optional): label, required, tooltip, note, id
+    fieldProps: {
+      type: Object as PropType<FormFieldTemplateType>,
+      default: {
+        label: "Hello",
+      },
     },
-    required: {
-      type: Boolean,
-      default: false,
-    },
-    tooltip: {
-      type: String,
-      default: null,
-    },
-    note: {
-      type: String,
-      default: null,
-    },
-    // selected option got from parent component through v-model
-    modelValue: {},
+    selected: Object as PropType<CommonObjectType>,
     options: {
-      type: Array as PropType<Array<{ value: string; text: string }>>,
+      type: Array as PropType<Array<FromSelectOptionType>>,
       required: true,
     },
   },
   methods: {
-    updateValue(newValue: CodeDescr) {
-      console.log("Selected value: " + JSON.stringify(newValue));
-      this.$emit("update:modelValue", newValue);
+    updateSelectedValue(newValue: CommonObjectType) {
+      this.$emit("updateFormData", this.fieldProps.id, newValue);
     },
   },
 });
