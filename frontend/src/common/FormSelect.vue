@@ -1,7 +1,7 @@
 <template>
   <FormFieldTemplate :fieldProps="fieldProps">
     <b-form-select
-      :value="selected"
+      :value="selectedValue"
       :options="options"
       @change="updateSelectedValue"
     ></b-form-select>
@@ -31,7 +31,7 @@ export default defineComponent({
         label: "Hello",
       },
     },
-    selected: Object as PropType<CommonObjectType>,
+    selectedValue: Object as PropType<CommonObjectType>,
     options: {
       type: Array as PropType<Array<FromSelectOptionType>>,
       required: true,

@@ -35,8 +35,8 @@ export default defineComponent({
     data: {
       type: Object as PropType<CommonObjectType>,
       default: {
-        submitter_lastname: "",
-        submitter_email: "",
+        submitterLastName: "",
+        submitterEmail: "",
       },
     },
   },
