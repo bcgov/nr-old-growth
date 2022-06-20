@@ -1,12 +1,7 @@
 <template>
   <div id="form-container" style="margin: 40px">
     <h4 style="margin-bottom: 24px">Priority deferral field verification</h4>
-    <FieldVerificationSubmission
-      :contactData="contactData"
-      :fieldObsInputData="fieldObsInputData"
-      :fieldObsSelectData="fieldObsSelectData"
-      v-model="fieldObsBlockData"
-    />
+    <FieldVerificationSubmission v-model="formData" :nrdList="nrdList" />
 
     <b-button
       variant="primary"
@@ -33,12 +28,7 @@ import { CodeDescr } from "../core/CodeDescrType";
 import { store } from "../helpers/AppState";
 import { primary } from "../utils/color";
 
-import {
-  contactData,
-  fieldObsInputData,
-  fieldObsSelectData,
-  fieldObsBlockData,
-} from "./NewFormData";
+import { formData, nrdList } from "./NewFormData";
 
 export default defineComponent({
   components: {
@@ -46,10 +36,8 @@ export default defineComponent({
   },
   data() {
     return {
-      contactData,
-      fieldObsInputData,
-      fieldObsSelectData,
-      fieldObsBlockData,
+      formData,
+      nrdList,
       primary,
       testEmail: store.testEmail, // this is just use for demo, will remove later
     };
@@ -103,11 +91,12 @@ export default defineComponent({
           });
       } else {
         console.log("no email adderess provided");
+        console.log("formData", this.formData);
       }
     },
 
     getNaturalResourceDistricts() {
-      axios.get(backendUrl + "/naturalResourceDist").then((response) => {
+      axios.get(backendUrl + "/naturalResourceDistCode/findAllActive").then((response) => {
         let naturalResourceDistCodes: CodeDescr[] = [];
         Object.keys(response.data).forEach((key) => {
           let nrd = new CodeDescr();
@@ -118,7 +107,7 @@ export default defineComponent({
           naturalResourceDistCodes.push(nrd);
         });
 
-        this.fieldObsSelectData.options = naturalResourceDistCodes;
+        this.nrdList = naturalResourceDistCodes;
       });
     },
 

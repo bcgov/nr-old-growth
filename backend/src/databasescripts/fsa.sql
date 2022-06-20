@@ -7,6 +7,17 @@
 -- Target DBMS : PostgreSQL 9.x
 --
 
+drop table if exists deferral_category;
+drop table if exists natural_resource_dist;
+
+drop table if exists subm_data_grid_dfr_cat_xref;
+drop table if exists cutblock_submission_details;
+drop table if exists attachment;
+drop table if exists submission;
+drop table if exists submission_log;
+drop table if exists deferral_category_code;
+drop table if exists natural_resource_dist_code;
+
 -- 
 -- TABLE: attachment
 --
@@ -84,10 +95,10 @@ comment on column cutblock_submission_details.update_user is 'The user or proxy 
 ;
 
 -- 
--- TABLE: deferral_category
+-- TABLE: deferral_category_code
 --
 
-create table deferral_category(
+create table deferral_category_code (
     deferral_category_code  varchar(5)      not null,
     description             varchar(100)    not null,
     effective_date          date            not null,
@@ -100,30 +111,30 @@ create table deferral_category(
 ;
 
 
-comment on column deferral_category.deferral_category_code is 'Deferral category selects by the submitter. Multiple deferral categories are possible.'
+comment on column deferral_category_code.deferral_category_code is 'Deferral category selects by the submitter. Multiple deferral categories are possible.'
 ;
-comment on column deferral_category.description is 'The display quality description of the code value.'
+comment on column deferral_category_code.description is 'The display quality description of the code value.'
 ;
-comment on column deferral_category.effective_date is 'The date that the code value has become or is expected to become effective. Default is the data that the code value is created.'
+comment on column deferral_category_code.effective_date is 'The date that the code value has become or is expected to become effective. Default is the data that the code value is created.'
 ;
-comment on column deferral_category.expiry_date is 'The date on which the code value has expired or is expected to expire. Default 9999-12-31'
+comment on column deferral_category_code.expiry_date is 'The date on which the code value has expired or is expected to expire. Default 9999-12-31'
 ;
-comment on column deferral_category.create_timestamp is 'The date and time the record was created.'
+comment on column deferral_category_code.create_timestamp is 'The date and time the record was created.'
 ;
-comment on column deferral_category.update_timestamp is 'The date and time the record was created or last updated.'
+comment on column deferral_category_code.update_timestamp is 'The date and time the record was created or last updated.'
 ;
-comment on column deferral_category.create_user is 'The user or proxy account that created the record.'
+comment on column deferral_category_code.create_user is 'The user or proxy account that created the record.'
 ;
-comment on column deferral_category.update_user is 'The user or proxy account that created or last updated the record.'
+comment on column deferral_category_code.update_user is 'The user or proxy account that created or last updated the record.'
 ;
-comment on table deferral_category is 'Deferral category selects by the submitter. Multiple deferral categories are possible.'
+comment on table deferral_category_code is 'Deferral category selects by the submitter. Multiple deferral categories are possible.'
 ;
 
 -- 
--- TABLE: natural_resource_dist
+-- TABLE: natural_resource_dist_code
 --
 
-create table natural_resource_dist(
+create table natural_resource_dist_code (
     natural_resource_dist_code  varchar(5)      not null,
     description                 varchar(100)    not null,
     email_address               varchar(100)    not null,
@@ -137,25 +148,25 @@ create table natural_resource_dist(
 ;
 
 
-comment on column natural_resource_dist.natural_resource_dist_code is 'A code representing an administrative area established by the ministry, within natural resource regions.'
+comment on column natural_resource_dist_code.natural_resource_dist_code is 'A code representing an administrative area established by the ministry, within natural resource regions.'
 ;
-comment on column natural_resource_dist.description is 'The display quality description of the code value.'
+comment on column natural_resource_dist_code.description is 'The display quality description of the code value.'
 ;
-comment on column natural_resource_dist.email_address is 'The email address provided as a generic email contact for a natural resource district.'
+comment on column natural_resource_dist_code.email_address is 'The email address provided as a generic email contact for a natural resource district.'
 ;
-comment on column natural_resource_dist.effective_date is 'The date that the code value has become or is expected to become effective. Default is the data that the code value is created.'
+comment on column natural_resource_dist_code.effective_date is 'The date that the code value has become or is expected to become effective. Default is the data that the code value is created.'
 ;
-comment on column natural_resource_dist.expiry_date is 'The date on which the code value has expired or is expected to expire. Default 9999-12-31'
+comment on column natural_resource_dist_code.expiry_date is 'The date on which the code value has expired or is expected to expire. Default 9999-12-31'
 ;
-comment on column natural_resource_dist.create_timestamp is 'The date and time the record was created.'
+comment on column natural_resource_dist_code.create_timestamp is 'The date and time the record was created.'
 ;
-comment on column natural_resource_dist.update_timestamp is 'The date and time the record was created or last updated.'
+comment on column natural_resource_dist_code.update_timestamp is 'The date and time the record was created or last updated.'
 ;
-comment on column natural_resource_dist.create_user is 'The user or proxy account that created the record.'
+comment on column natural_resource_dist_code.create_user is 'The user or proxy account that created the record.'
 ;
-comment on column natural_resource_dist.update_user is 'The user or proxy account that created or last updated the record.'
+comment on column natural_resource_dist_code.update_user is 'The user or proxy account that created or last updated the record.'
 ;
-comment on table natural_resource_dist is 'An administrative area established by the ministry, within natural resource regions'
+comment on table natural_resource_dist_code is 'An administrative area established by the ministry, within natural resource regions'
 ;
 
 -- 
@@ -243,18 +254,18 @@ alter table cutblock_submission_details add
 ;
 
 -- 
--- TABLE: deferral_category
+-- TABLE: deferral_category_code
 --
 
-alter table deferral_category add 
+alter table deferral_category_code add 
     constraint deferral_category_pk primary key (deferral_category_code)
 ;
 
 -- 
--- TABLE: natural_resource_dist
+-- TABLE: natural_resource_dist_code
 --
 
-alter table natural_resource_dist add 
+alter table natural_resource_dist_code add 
     constraint natural_resource_dist_pk primary key (natural_resource_dist_code)
 ;
 
@@ -293,12 +304,12 @@ alter table cutblock_submission_details add constraint submission_cut_block_xref
 ;
 
 -- 
--- TABLE: subm_data_grid_dfr_cat_xref" 
+-- TABLE: subm_data_grid_dfr_cat_xref
 --
 
 alter table subm_data_grid_dfr_cat_xref add constraint submission_cut_block_def_cat_xref_deferral_category 
     foreign key (deferral_category_code)
-    references deferral_category(deferral_category_code)
+    references deferral_category_code(deferral_category_code)
 ;
 
 alter table subm_data_grid_dfr_cat_xref add constraint submission_cut_block_def_cat_xref_submission_cut_block_xref 
@@ -312,36 +323,55 @@ alter table subm_data_grid_dfr_cat_xref add constraint submission_cut_block_def_
 
 alter table submission add constraint submission_natural_resource_dist 
     foreign key (natural_resource_dist_code)
-    references natural_resource_dist(natural_resource_dist_code)
+    references natural_resource_dist_code(natural_resource_dist_code)
+;
+
+-- 
+-- TABLE: submission_log
+--
+
+create table submission_log (
+    submission_log_id     serial          not null,
+    code                        varchar(10)     not null,
+    exception_log               varchar(500)    null,
+    confirmation_id             varchar(10)     null,
+    form_id                     varchar(50)     null,
+    form_version_id             varchar(50)     null,
+    create_timestamp            timestamp       default current_timestamp not null
+)
+;
+
+alter table submission_log add 
+    constraint submission_log_id primary key (submission_log_id)
 ;
 
 --
 -- Insert statements to code tables
 ---
 
-INSERT INTO NATURAL_RESOURCE_DIST (NATURAL_RESOURCE_DIST_CODE, DESCRIPTION, EMAIL_ADDRESS, EFFECTIVE_DATE, CREATE_USER) VALUES ('DMH', '100 Mile House Natural Resource District', 'FLNR.100MileHouseDistrict@gov.bc.ca', CURRENT_TIMESTAMP, 'mariamar');
-INSERT INTO NATURAL_RESOURCE_DIST (NATURAL_RESOURCE_DIST_CODE, DESCRIPTION, EMAIL_ADDRESS, EFFECTIVE_DATE, CREATE_USER) VALUES ('DCR', 'Campbell River Natural Resource District', 'FTA.DCR@gov.bc.ca', CURRENT_TIMESTAMP, 'mariamar');
-INSERT INTO NATURAL_RESOURCE_DIST (NATURAL_RESOURCE_DIST_CODE, DESCRIPTION, EMAIL_ADDRESS, EFFECTIVE_DATE, CREATE_USER) VALUES ('DCC', 'Cariboo-Chilcotin Natural Resource District', 'DCC.Tenures@gov.bc.ca', CURRENT_TIMESTAMP, 'mariamar');
-INSERT INTO NATURAL_RESOURCE_DIST (NATURAL_RESOURCE_DIST_CODE, DESCRIPTION, EMAIL_ADDRESS, EFFECTIVE_DATE, CREATE_USER) VALUES ('DCS', 'Cascades Natural Resource District', 'Forests.CascadesDistrictOffice@gov.bc.ca', CURRENT_TIMESTAMP, 'mariamar');
-INSERT INTO NATURAL_RESOURCE_DIST (NATURAL_RESOURCE_DIST_CODE, DESCRIPTION, EMAIL_ADDRESS, EFFECTIVE_DATE, CREATE_USER) VALUES ('DCK', 'Chilliwack Natural Resource District', 'FTA.DCKDSQ@gov.bc.ca', CURRENT_TIMESTAMP, 'mariamar');
-INSERT INTO NATURAL_RESOURCE_DIST (NATURAL_RESOURCE_DIST_CODE, DESCRIPTION, EMAIL_ADDRESS, EFFECTIVE_DATE, CREATE_USER) VALUES ('DKM', 'Coast Mountains Natural Resource District', 'DCM.Tenures@gov.bc.ca', CURRENT_TIMESTAMP, 'mariamar');
-INSERT INTO NATURAL_RESOURCE_DIST (NATURAL_RESOURCE_DIST_CODE, DESCRIPTION, EMAIL_ADDRESS, EFFECTIVE_DATE, CREATE_USER) VALUES ('DFN', 'Fort Nelson Natural Resource District', 'Forests.FortNelsonDistrictOffice@gov.bc.ca', CURRENT_TIMESTAMP, 'mariamar');
-INSERT INTO NATURAL_RESOURCE_DIST (NATURAL_RESOURCE_DIST_CODE, DESCRIPTION, EMAIL_ADDRESS, EFFECTIVE_DATE, CREATE_USER) VALUES ('DQC', 'Haida Gwaii Natural Resource District', 'FrontCounterHaidaGwaii@gov.bc.ca', CURRENT_TIMESTAMP, 'mariamar');
-INSERT INTO NATURAL_RESOURCE_DIST (NATURAL_RESOURCE_DIST_CODE, DESCRIPTION, EMAIL_ADDRESS, EFFECTIVE_DATE, CREATE_USER) VALUES ('DMK', 'Mackenzie Natural Resource District', 'Forests.MackenzieDistrictOffice@gov.bc.ca', CURRENT_TIMESTAMP, 'mariamar');
-INSERT INTO NATURAL_RESOURCE_DIST (NATURAL_RESOURCE_DIST_CODE, DESCRIPTION, EMAIL_ADDRESS, EFFECTIVE_DATE, CREATE_USER) VALUES ('DND', 'Nadina Natural Resource District', 'Forests.NadinaDistrictOffice@gov.bc.ca', CURRENT_TIMESTAMP, 'mariamar');
-INSERT INTO NATURAL_RESOURCE_DIST (NATURAL_RESOURCE_DIST_CODE, DESCRIPTION, EMAIL_ADDRESS, EFFECTIVE_DATE, CREATE_USER) VALUES ('DNI', 'North Island - Central Coast Natural Resource District', 'FTA.DIC@gov.bc.ca', CURRENT_TIMESTAMP, 'mariamar');
-INSERT INTO NATURAL_RESOURCE_DIST (NATURAL_RESOURCE_DIST_CODE, DESCRIPTION, EMAIL_ADDRESS, EFFECTIVE_DATE, CREATE_USER) VALUES ('DOS', 'Okanagan Shuswap Natural Resource District', 'DOS.CPRP@gov.bc.ca', CURRENT_TIMESTAMP, 'mariamar');
-INSERT INTO NATURAL_RESOURCE_DIST (NATURAL_RESOURCE_DIST_CODE, DESCRIPTION, EMAIL_ADDRESS, EFFECTIVE_DATE, CREATE_USER) VALUES ('DPC', 'Peace Natural Resource District', 'PeaceDistrict.Tenures@gov.bc.ca', CURRENT_TIMESTAMP, 'mariamar');
-INSERT INTO NATURAL_RESOURCE_DIST (NATURAL_RESOURCE_DIST_CODE, DESCRIPTION, EMAIL_ADDRESS, EFFECTIVE_DATE, CREATE_USER) VALUES ('DPG', 'Prince George Natural Resource District', 'Forests.PrinceGeorgeDistrictOffice@gov.bc.ca', CURRENT_TIMESTAMP, 'mariamar');
-INSERT INTO NATURAL_RESOURCE_DIST (NATURAL_RESOURCE_DIST_CODE, DESCRIPTION, EMAIL_ADDRESS, EFFECTIVE_DATE, CREATE_USER) VALUES ('DQU', 'Quesnel Natural Resource District', 'Forests.QuesnelDistrictOffice@gov.bc.ca', CURRENT_TIMESTAMP, 'mariamar');
-INSERT INTO NATURAL_RESOURCE_DIST (NATURAL_RESOURCE_DIST_CODE, DESCRIPTION, EMAIL_ADDRESS, EFFECTIVE_DATE, CREATE_USER) VALUES ('DRM', 'Rocky Mountain Natural Resource District', 'FORESTS.rockymountaindistrictoffice@gov.bc.ca', CURRENT_TIMESTAMP, 'mariamar');
-INSERT INTO NATURAL_RESOURCE_DIST (NATURAL_RESOURCE_DIST_CODE, DESCRIPTION, EMAIL_ADDRESS, EFFECTIVE_DATE, CREATE_USER) VALUES ('DSQ', 'Sea to Sky Natural Resource District', 'FTA.DCKDSQ@gov.bc.ca', CURRENT_TIMESTAMP, 'mariamar');
-INSERT INTO NATURAL_RESOURCE_DIST (NATURAL_RESOURCE_DIST_CODE, DESCRIPTION, EMAIL_ADDRESS, EFFECTIVE_DATE, CREATE_USER) VALUES ('DSE', 'Selkirk Natural Resource District', 'Resources.Nelson@gov.bc.ca', CURRENT_TIMESTAMP, 'mariamar');
-INSERT INTO NATURAL_RESOURCE_DIST (NATURAL_RESOURCE_DIST_CODE, DESCRIPTION, EMAIL_ADDRESS, EFFECTIVE_DATE, CREATE_USER) VALUES ('DSS', 'Skeena Stikine Natural Resource District', 'Forests.SkeenaStikineDistrictOffice@gov.bc.ca', CURRENT_TIMESTAMP, 'mariamar');
-INSERT INTO NATURAL_RESOURCE_DIST (NATURAL_RESOURCE_DIST_CODE, DESCRIPTION, EMAIL_ADDRESS, EFFECTIVE_DATE, CREATE_USER) VALUES ('DSI', 'South Island Natural Resource District', 'FTA.DSI@gov.bc.ca', CURRENT_TIMESTAMP, 'mariamar');
-INSERT INTO NATURAL_RESOURCE_DIST (NATURAL_RESOURCE_DIST_CODE, DESCRIPTION, EMAIL_ADDRESS, EFFECTIVE_DATE, CREATE_USER) VALUES ('DVA', 'Stuart Nechako Natural Resource District', 'dsn.submissions@gov.bc.ca', CURRENT_TIMESTAMP, 'mariamar');
-INSERT INTO NATURAL_RESOURCE_DIST (NATURAL_RESOURCE_DIST_CODE, DESCRIPTION, EMAIL_ADDRESS, EFFECTIVE_DATE, CREATE_USER) VALUES ('DSC', 'Sunshine Coast Natural Resource District', 'FTA.DSC@gov.bc.ca', CURRENT_TIMESTAMP, 'mariamar');
-INSERT INTO NATURAL_RESOURCE_DIST (NATURAL_RESOURCE_DIST_CODE, DESCRIPTION, EMAIL_ADDRESS, EFFECTIVE_DATE, CREATE_USER) VALUES ('DKA', 'Thompson Rivers Natural Resource District', 'DTR.Tenures@gov.bc.ca', CURRENT_TIMESTAMP, 'mariamar');
+INSERT INTO NATURAL_RESOURCE_DIST_CODE (NATURAL_RESOURCE_DIST_CODE, DESCRIPTION, EMAIL_ADDRESS, EFFECTIVE_DATE, CREATE_USER) VALUES ('DMH', '100 Mile House Natural Resource District', 'FLNR.100MileHouseDistrict@gov.bc.ca', CURRENT_TIMESTAMP, 'mariamar');
+INSERT INTO NATURAL_RESOURCE_DIST_CODE (NATURAL_RESOURCE_DIST_CODE, DESCRIPTION, EMAIL_ADDRESS, EFFECTIVE_DATE, CREATE_USER) VALUES ('DCR', 'Campbell River Natural Resource District', 'FTA.DCR@gov.bc.ca', CURRENT_TIMESTAMP, 'mariamar');
+INSERT INTO NATURAL_RESOURCE_DIST_CODE (NATURAL_RESOURCE_DIST_CODE, DESCRIPTION, EMAIL_ADDRESS, EFFECTIVE_DATE, CREATE_USER) VALUES ('DCC', 'Cariboo-Chilcotin Natural Resource District', 'DCC.Tenures@gov.bc.ca', CURRENT_TIMESTAMP, 'mariamar');
+INSERT INTO NATURAL_RESOURCE_DIST_CODE (NATURAL_RESOURCE_DIST_CODE, DESCRIPTION, EMAIL_ADDRESS, EFFECTIVE_DATE, CREATE_USER) VALUES ('DCS', 'Cascades Natural Resource District', 'Forests.CascadesDistrictOffice@gov.bc.ca', CURRENT_TIMESTAMP, 'mariamar');
+INSERT INTO NATURAL_RESOURCE_DIST_CODE (NATURAL_RESOURCE_DIST_CODE, DESCRIPTION, EMAIL_ADDRESS, EFFECTIVE_DATE, CREATE_USER) VALUES ('DCK', 'Chilliwack Natural Resource District', 'FTA.DCKDSQ@gov.bc.ca', CURRENT_TIMESTAMP, 'mariamar');
+INSERT INTO NATURAL_RESOURCE_DIST_CODE (NATURAL_RESOURCE_DIST_CODE, DESCRIPTION, EMAIL_ADDRESS, EFFECTIVE_DATE, CREATE_USER) VALUES ('DKM', 'Coast Mountains Natural Resource District', 'DCM.Tenures@gov.bc.ca', CURRENT_TIMESTAMP, 'mariamar');
+INSERT INTO NATURAL_RESOURCE_DIST_CODE (NATURAL_RESOURCE_DIST_CODE, DESCRIPTION, EMAIL_ADDRESS, EFFECTIVE_DATE, CREATE_USER) VALUES ('DFN', 'Fort Nelson Natural Resource District', 'Forests.FortNelsonDistrictOffice@gov.bc.ca', CURRENT_TIMESTAMP, 'mariamar');
+INSERT INTO NATURAL_RESOURCE_DIST_CODE (NATURAL_RESOURCE_DIST_CODE, DESCRIPTION, EMAIL_ADDRESS, EFFECTIVE_DATE, CREATE_USER) VALUES ('DQC', 'Haida Gwaii Natural Resource District', 'FrontCounterHaidaGwaii@gov.bc.ca', CURRENT_TIMESTAMP, 'mariamar');
+INSERT INTO NATURAL_RESOURCE_DIST_CODE (NATURAL_RESOURCE_DIST_CODE, DESCRIPTION, EMAIL_ADDRESS, EFFECTIVE_DATE, CREATE_USER) VALUES ('DMK', 'Mackenzie Natural Resource District', 'Forests.MackenzieDistrictOffice@gov.bc.ca', CURRENT_TIMESTAMP, 'mariamar');
+INSERT INTO NATURAL_RESOURCE_DIST_CODE (NATURAL_RESOURCE_DIST_CODE, DESCRIPTION, EMAIL_ADDRESS, EFFECTIVE_DATE, CREATE_USER) VALUES ('DND', 'Nadina Natural Resource District', 'Forests.NadinaDistrictOffice@gov.bc.ca', CURRENT_TIMESTAMP, 'mariamar');
+INSERT INTO NATURAL_RESOURCE_DIST_CODE (NATURAL_RESOURCE_DIST_CODE, DESCRIPTION, EMAIL_ADDRESS, EFFECTIVE_DATE, CREATE_USER) VALUES ('DNI', 'North Island - Central Coast Natural Resource District', 'FTA.DIC@gov.bc.ca', CURRENT_TIMESTAMP, 'mariamar');
+INSERT INTO NATURAL_RESOURCE_DIST_CODE (NATURAL_RESOURCE_DIST_CODE, DESCRIPTION, EMAIL_ADDRESS, EFFECTIVE_DATE, CREATE_USER) VALUES ('DOS', 'Okanagan Shuswap Natural Resource District', 'DOS.CPRP@gov.bc.ca', CURRENT_TIMESTAMP, 'mariamar');
+INSERT INTO NATURAL_RESOURCE_DIST_CODE (NATURAL_RESOURCE_DIST_CODE, DESCRIPTION, EMAIL_ADDRESS, EFFECTIVE_DATE, CREATE_USER) VALUES ('DPC', 'Peace Natural Resource District', 'PeaceDistrict.Tenures@gov.bc.ca', CURRENT_TIMESTAMP, 'mariamar');
+INSERT INTO NATURAL_RESOURCE_DIST_CODE (NATURAL_RESOURCE_DIST_CODE, DESCRIPTION, EMAIL_ADDRESS, EFFECTIVE_DATE, CREATE_USER) VALUES ('DPG', 'Prince George Natural Resource District', 'Forests.PrinceGeorgeDistrictOffice@gov.bc.ca', CURRENT_TIMESTAMP, 'mariamar');
+INSERT INTO NATURAL_RESOURCE_DIST_CODE (NATURAL_RESOURCE_DIST_CODE, DESCRIPTION, EMAIL_ADDRESS, EFFECTIVE_DATE, CREATE_USER) VALUES ('DQU', 'Quesnel Natural Resource District', 'Forests.QuesnelDistrictOffice@gov.bc.ca', CURRENT_TIMESTAMP, 'mariamar');
+INSERT INTO NATURAL_RESOURCE_DIST_CODE (NATURAL_RESOURCE_DIST_CODE, DESCRIPTION, EMAIL_ADDRESS, EFFECTIVE_DATE, CREATE_USER) VALUES ('DRM', 'Rocky Mountain Natural Resource District', 'FORESTS.rockymountaindistrictoffice@gov.bc.ca', CURRENT_TIMESTAMP, 'mariamar');
+INSERT INTO NATURAL_RESOURCE_DIST_CODE (NATURAL_RESOURCE_DIST_CODE, DESCRIPTION, EMAIL_ADDRESS, EFFECTIVE_DATE, CREATE_USER) VALUES ('DSQ', 'Sea to Sky Natural Resource District', 'FTA.DCKDSQ@gov.bc.ca', CURRENT_TIMESTAMP, 'mariamar');
+INSERT INTO NATURAL_RESOURCE_DIST_CODE (NATURAL_RESOURCE_DIST_CODE, DESCRIPTION, EMAIL_ADDRESS, EFFECTIVE_DATE, CREATE_USER) VALUES ('DSE', 'Selkirk Natural Resource District', 'Resources.Nelson@gov.bc.ca', CURRENT_TIMESTAMP, 'mariamar');
+INSERT INTO NATURAL_RESOURCE_DIST_CODE (NATURAL_RESOURCE_DIST_CODE, DESCRIPTION, EMAIL_ADDRESS, EFFECTIVE_DATE, CREATE_USER) VALUES ('DSS', 'Skeena Stikine Natural Resource District', 'Forests.SkeenaStikineDistrictOffice@gov.bc.ca', CURRENT_TIMESTAMP, 'mariamar');
+INSERT INTO NATURAL_RESOURCE_DIST_CODE (NATURAL_RESOURCE_DIST_CODE, DESCRIPTION, EMAIL_ADDRESS, EFFECTIVE_DATE, CREATE_USER) VALUES ('DSI', 'South Island Natural Resource District', 'FTA.DSI@gov.bc.ca', CURRENT_TIMESTAMP, 'mariamar');
+INSERT INTO NATURAL_RESOURCE_DIST_CODE (NATURAL_RESOURCE_DIST_CODE, DESCRIPTION, EMAIL_ADDRESS, EFFECTIVE_DATE, CREATE_USER) VALUES ('DVA', 'Stuart Nechako Natural Resource District', 'dsn.submissions@gov.bc.ca', CURRENT_TIMESTAMP, 'mariamar');
+INSERT INTO NATURAL_RESOURCE_DIST_CODE (NATURAL_RESOURCE_DIST_CODE, DESCRIPTION, EMAIL_ADDRESS, EFFECTIVE_DATE, CREATE_USER) VALUES ('DSC', 'Sunshine Coast Natural Resource District', 'FTA.DSC@gov.bc.ca', CURRENT_TIMESTAMP, 'mariamar');
+INSERT INTO NATURAL_RESOURCE_DIST_CODE (NATURAL_RESOURCE_DIST_CODE, DESCRIPTION, EMAIL_ADDRESS, EFFECTIVE_DATE, CREATE_USER) VALUES ('DKA', 'Thompson Rivers Natural Resource District', 'DTR.Tenures@gov.bc.ca', CURRENT_TIMESTAMP, 'mariamar');
 
 
 -- 
