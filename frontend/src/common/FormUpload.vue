@@ -1,10 +1,5 @@
 <template>
-  <FormFieldTemplate
-    :label="label"
-    :required="required"
-    :note="note"
-    :tooltip="tooltip"
-  >
+  <FormFieldTemplate :fieldProps="fieldProps">
     <input
       ref="file"
       class="form-control"
@@ -54,9 +49,13 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import { store } from "../helpers/AppState";
+import type { PropType } from "vue";
 import FormFieldTemplate from "./FormFieldTemplate.vue";
 import * as coreConsts from "../core/CoreConstants";
+import type {
+  FormFieldTemplateType,
+  FormUploadFileType,
+} from "../core/AppType";
 
 export default defineComponent({
   name: "FormUpload",
@@ -64,27 +63,21 @@ export default defineComponent({
     FormFieldTemplate,
   },
   props: {
-    // form field template props (optional): label, required, tooltip, note
-    label: {
-      type: String,
-      default: null,
+    // form field template props (optional): label, required, tooltip, note, id
+    fieldProps: {
+      type: Object as PropType<FormFieldTemplateType>,
+      default: {
+        label: "Hello",
+      },
     },
-    required: {
-      type: Boolean,
-      default: false,
-    },
-    tooltip: {
-      type: String,
-      default: null,
-    },
-    note: {
-      type: String,
-      default: "",
+    files: {
+      type: Array as PropType<Array<FormUploadFileType>>,
+      default: [],
     },
   },
   data() {
     return {
-      rows: store.formUploadFiles,
+      rows: this.files,
       totalSizeError: [] as Array<{ filename: string; filesize: number }>,
       singeSizeError: [] as Array<{ filename: string; filesize: number }>,
       totalFileSize: 0,
@@ -120,12 +113,12 @@ export default defineComponent({
           }
         });
       }
-      store.updateFormUploadFiles(this.rows);
+      this.updateAttachments(this.rows);
     },
     deleteFile(index: number) {
       const newRows = this.rows.filter((m: any, i: number) => i !== index);
       this.rows = newRows;
-      store.updateFormUploadFiles(this.rows);
+      this.updateAttachments(this.rows);
     },
     getBase64(file: File) {
       return new Promise((resolve, reject) => {
@@ -149,6 +142,9 @@ export default defineComponent({
         };
       }
       return null;
+    },
+    updateAttachments(newValue: Array<FormUploadFileType>) {
+      this.$emit("updateFormData", this.fieldProps.id, newValue);
     },
   },
 });

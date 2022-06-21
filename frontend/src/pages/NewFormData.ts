@@ -103,6 +103,11 @@ export const formProperty = {
       note: "Optional",
     },
   ],
+  attach: {
+    id: "attachments",
+    label: "Upload your files",
+    required: true,
+  },
 };
 
 export const formData = {
@@ -125,6 +130,7 @@ export const formData = {
       haDeletedOrgMapping: "",
     },
   ],
+  attachments: [],
 };
 
 export const nrdList = []; //[i.e.: { code: "a", text: "First option", emailAddress: "m@m.com", value: {myObj} },]

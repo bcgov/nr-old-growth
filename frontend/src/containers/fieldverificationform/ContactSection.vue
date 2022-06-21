@@ -3,7 +3,7 @@
     title="Contact information"
     id="form-contact"
     nextId="header-form-field-obs"
-    nextText="Enter Field Obeservation Data"
+    nextText="Enter Field Observations Data"
   >
     <FormInput
       v-for="row in contactProps"
