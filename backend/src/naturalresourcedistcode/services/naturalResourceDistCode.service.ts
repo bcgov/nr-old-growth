@@ -10,11 +10,11 @@ export class NaturalResourceDistCodeService {
  
   constructor(
     @InjectRepository(NaturalResourceDistCodeEntity)
-    private naturalResourceRepository: Repository<NaturalResourceDistCodeEntity>,
+    private naturalResourceCodeRepository: Repository<NaturalResourceDistCodeEntity>,
 ) { }
 
   findAllActive(): Promise<NaturalResourceDistCode[]> {
-    return this.naturalResourceRepository
+    return this.naturalResourceCodeRepository
       .createQueryBuilder()
       .select("n")
       .from(NaturalResourceDistCodeEntity, "n")
