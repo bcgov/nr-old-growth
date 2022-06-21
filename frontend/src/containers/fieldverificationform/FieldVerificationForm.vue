@@ -12,7 +12,7 @@
         @deleteCutBlock="deleteCutBlock"
       />
     </div>
-    <AttachSection />
+    <AttachSection :data="modelValue" @updateFormData="updateFormData" />
   </div>
 </template>
 
@@ -71,7 +71,7 @@ export default defineComponent({
       id: string,
       newValue: string | Array<string>
     ) {
-      const newCutBlock = this.modelValue.cutBlock;
+      const newCutBlock = this.modelValue.cutBlocks;
       newCutBlock[index][id] = newValue;
       this.$emit("update:modelValue", {
         ...this.modelValue,
