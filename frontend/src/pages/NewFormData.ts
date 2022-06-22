@@ -1,3 +1,5 @@
+import type { CodeDescr } from "@/core/CodeDescrType";
+
 export const formProperty = {
   contact: [
     {
@@ -67,13 +69,13 @@ export const formProperty = {
         "'Mapped' refers to polygons identified as priority deferral areas in the operational (vector) mapping version of Map 1 Priority Deferral Areas. Map 1 can be downloaded at https://catalogue.data.gov.bc.ca/dataset/5e257660-02ae-4f22-b861-4b2f53aefb4e/resource/47333f4e-1c84-4bb5-b3fe-6031fa78de20",
     },
     {
-      id: "deferralCategoryCode",
+      id: "deferralCategoryCodes",
       type: "checkbox",
       //TODO: Make it dynamic, not hard-coded
       options: [
-        { label: "Big Tree", value: "big_tree" },
-        { label: "Ancient", value: "ancient" },
-        { label: "Remnant", value: "remnant" },
+        { text: "Big Tree", code: "big_tree" },
+        { text: "Ancient", code: "ancient" },
+        { text: "Remnant", code: "remnant" },
       ],
       label: "Check all that apply",
       required: true,
@@ -124,7 +126,7 @@ export const formData = {
       cutBlockId: "",
       totalBlockHa: "",
       haOrgMappedDefArea: "",
-      deferralCategoryCode: [],
+      deferralCategoryCodes: [],
       haKeptOrgMapping: "",
       haAddedOrgMapping: "",
       haDeletedOrgMapping: "",
@@ -133,13 +135,13 @@ export const formData = {
   attachments: [],
 };
 
-export const nrdList = []; //[i.e.: { code: "a", text: "First option", emailAddress: "m@m.com", value: {myObj} },]
+export const nrdList = [] as CodeDescr[]; //[i.e.: { code: "a", text: "First option", emailAddress: "m@m.com", value: {myObj} },]
 
 export const fieldObsBlockDefaultNew = {
   cutBlockId: "",
   totalBlockHa: "",
   haOrgMappedDefArea: "",
-  deferralCategoryCode: [],
+  deferralCategoryCodes: [],
   haKeptOrgMapping: "",
   haAddedOrgMapping: "",
   haDeletedOrgMapping: "",
