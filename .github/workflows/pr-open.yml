@@ -4,7 +4,6 @@ on:
   pull_request:
     branches:
       - main
-      - dev
 
 env:
   REGISTRY: ghcr.io
@@ -247,120 +246,8 @@ jobs:
   #       with:
   #         sarif_file: "trivy-results.sarif"
 
-  deploy-dev:
-    name: Deploy-Dev
-    needs:
-      - build-backend
-      - build-frontend
-    runs-on: ubuntu-latest
-    environment:
-      name: dev
-    steps:
-      - uses: actions/checkout@v2
-      - name: Deploy
-        run: |
-          # Login to OpenShift and select project
-          oc login --token=${{ secrets.OC_TOKEN }} --server=${{ secrets.OC_SERVER }}
-          oc project ${{ secrets.NAMESPACE }}
-
-          # Cancel any rollouts in progress
-          oc rollout cancel dc/${{ env.NAME }}-${{ github.event.number }}-database 2> /dev/null \
-            || true && echo "No rollout in progress"
-          oc rollout cancel dc/${{ env.NAME }}-${{ github.event.number }}-backend 2> /dev/null \
-            || true && echo "No rollout in progress"
-          oc rollout cancel dc/${{ env.NAME }}-${{ github.event.number }}-frontend 2> /dev/null \
-            || true && echo "No rollout in progress"
-
-          # Remove any stale imagestreams
-          oc delete is/${{ env.NAME }}-${{ github.event.number }}-database 2> /dev/null \
-            || true && echo "No stale imagestreams"
-          oc delete is/${{ env.NAME }}-${{ github.event.number }}-backend 2> /dev/null \
-            || true && echo "No stale imagestreams"
-          oc delete is/${{ env.NAME }}-${{ github.event.number }}-frontend 2> /dev/null \
-            || true && echo "No stale imagestreams"
-
-          # Create frontend config (Remove the old one if exists)
-          oc delete configmap ${{ env.NAME }}-${{ github.event.number }}-frontend 2> /dev/null \
-            || true && echo "No existing frontend config"
-          oc create configmap ${{ env.NAME }}-${{ github.event.number }}-frontend  \
-            --from-literal=config.js="const config = (() => { return { VITE_BACKEND_URL: 'https://${{ env.NAME }}-${{ github.event.number }}-backend.apps.silver.devops.gov.bc.ca'}; })();"
-
-          # Process and apply deployment templates
-          oc process -f .github/openshift/deploy.database.yml -p ZONE=${{ github.event.number }} | oc apply -f -
-          oc process -f .github/openshift/deploy.backend.yml -p ZONE=${{ github.event.number }} \
-            -p PROMOTE=${{ github.repository }}:${{ github.event.number }}-backend \
-            -p EMAIL_USERNAME=${{ secrets.CHES_SERVICE_CLIENT }} \
-            -p EMAIL_PASSWORD=${{ secrets.CHES_CLIENT_PASSWORD }} \
-            -p EMAIL_TOKEN_URL='https://dev.oidc.gov.bc.ca/auth/realms/jbd6rnxw/protocol/openid-connect/token' \
-            -p EMAIL_API_URL='https://ches-dev.apps.silver.devops.gov.bc.ca/api/v1' \
-            -p NODE_ENV='development' | oc apply -f -
-          oc process -f .github/openshift/deploy.frontend.yml -p ZONE=${{ github.event.number }} \
-            -p PROMOTE=${{ github.repository }}:${{ github.event.number }}-frontend | oc apply -f -
-
-          # Start rollout (if necessary) and follow it
-          oc rollout latest dc/${{ env.NAME }}-${{ github.event.number }}-database 2> /dev/null \
-            || true && echo "Rollout in progress"
-          oc logs -f dc/${{ env.NAME }}-${{ github.event.number }}-database
-          oc rollout latest dc/${{ env.NAME }}-${{ github.event.number }}-backend 2> /dev/null \
-            || true && echo "Rollout in progress"
-          oc logs -f dc/${{ env.NAME }}-${{ github.event.number }}-backend
-          oc rollout latest dc/${{ env.NAME }}-${{ github.event.number }}-frontend 2> /dev/null \
-            || true && echo "Rollout in progress"
-          oc logs -f dc/${{ env.NAME }}-${{ github.event.number }}-frontend
-
-          # Follow any active rollouts (see deploymentconfigs)
-          oc rollout status dc/${{ env.NAME }}-${{ github.event.number }}-database -w
-          oc rollout status dc/${{ env.NAME }}-${{ github.event.number }}-backend -w
-          oc rollout status dc/${{ env.NAME }}-${{ github.event.number }}-frontend -w
-
-      - name: Deployment update
-        uses: mshick/add-pr-comment@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          message: |
-            [Dev - Backend](https://${{ env.NAME }}-${{ github.event.number }}-backend.apps.silver.devops.gov.bc.ca/) available
-            [Dev - Frontend](https://${{ env.NAME }}-${{ github.event.number }}-frontend.apps.silver.devops.gov.bc.ca/) available
-          allow-repeats: false
-
-  zap-dev-backend:
-    name: Zap-Dev-Backend
-    needs:
-      - deploy-dev
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
-      - name: ZAP Scan
-        uses: zaproxy/action-full-scan@v0.3.0
-        with:
-          target: https://${{ env.NAME }}-${{ github.event.number }}-backend.apps.silver.devops.gov.bc.ca/
-          cmd_options: "-a"
-          allow_issue_writing: false
-          fail_action: false
-
-  zap-dev-frontend:
-    name: Zap-Dev-Frontend
-    needs:
-      - deploy-dev
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
-      - name: ZAP Scan
-        uses: zaproxy/action-full-scan@v0.3.0
-        with:
-          target: https://${{ env.NAME }}-${{ github.event.number }}-frontend.apps.silver.devops.gov.bc.ca/
-          cmd_options: "-a"
-          allow_issue_writing: false
-          fail_action: false
-
   # deploy-prod:
   #   name: Deploy-Prod
-  #   needs:
-  #     - deploy-dev
   #   runs-on: ubuntu-latest
   #   environment:
   #     name: prod
@@ -378,6 +265,8 @@ jobs:
   #         oc rollout cancel dc/${{ env.NAME }}-prod-backend 2> /dev/null \
   #           || true && echo "No rollout in progress"
   #         oc rollout cancel dc/${{ env.NAME }}-prod-frontend 2> /dev/null \
+  #           || true && echo "No rollout in progress"
+  #         oc rollout cancel dc/nrog-prod-dbbackup 2> /dev/null \
   #           || true && echo "No rollout in progress"
 
   #         # Remove any stale imagestreams
@@ -416,6 +305,9 @@ jobs:
   #         oc rollout latest dc/${{ env.NAME }}-prod-frontend 2> /dev/null \
   #           || true && echo "Rollout in progress"
   #         oc logs -f dc/${{ env.NAME }}-prod-frontend
+  #         oc rollout latest dc/nrog-prod-dbbackup 2> /dev/null \
+  #           || true && echo "Rollout in progress"
+  #         oc logs -f dc/nrog-prod-dbbackup
 
   #         # Follow any active rollouts (see deploymentconfigs)
   #         oc rollout status dc/${{ env.NAME }}-prod-database -w
