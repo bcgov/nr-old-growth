@@ -37,19 +37,48 @@
       </p>
     </div>
 
-    <FormUpload label="Upload your files" required />
+    <FormUpload
+      :fieldProps="attachProps"
+      :files="data.attachments"
+      @updateFormData="updateFormData"
+    />
   </CollapseCard>
 </template>
 
 <script lang="ts">
 import { defineComponent } from "vue";
+import type { PropType } from "vue";
 import CollapseCard from "../../common/CollapseCard.vue";
 import FormUpload from "../../common/FormUpload.vue";
+import { formProperty } from "../../pages/NewFormData";
+import type {
+  CommonObjectType,
+  FormFieldTemplateType,
+} from "../../core/AppType";
 
 export default defineComponent({
   components: {
     CollapseCard,
     FormUpload,
+  },
+  props: {
+    data: {
+      type: Object as PropType<CommonObjectType>,
+      default: {
+        submitterLastName: "",
+        submitterEmail: "",
+      },
+    },
+  },
+  data() {
+    return {
+      attachProps: formProperty.attach as FormFieldTemplateType,
+    };
+  },
+  methods: {
+    updateFormData(id: string, newValue: string) {
+      this.$emit("updateFormData", { [id]: newValue });
+    },
   },
 });
 </script>
