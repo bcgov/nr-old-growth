@@ -266,8 +266,10 @@ jobs:
   #           || true && echo "No rollout in progress"
   #         oc rollout cancel dc/${{ env.NAME }}-prod-frontend 2> /dev/null \
   #           || true && echo "No rollout in progress"
-  #         oc rollout cancel dc/nrog-prod-dbbackup 2> /dev/null \
-  #           || true && echo "No rollout in progress"
+
+  #         # Enable these lines only when the backup container exists
+  #         # oc rollout cancel dc/${{ env.NAME }}-prod-dbbackup 2> /dev/null \
+  #         #   || true && echo "No rollout in progress"
 
   #         # Remove any stale imagestreams
   #         oc delete is/${{ env.NAME }}-prod-database 2> /dev/null \
@@ -305,9 +307,11 @@ jobs:
   #         oc rollout latest dc/${{ env.NAME }}-prod-frontend 2> /dev/null \
   #           || true && echo "Rollout in progress"
   #         oc logs -f dc/${{ env.NAME }}-prod-frontend
-  #         oc rollout latest dc/nrog-prod-dbbackup 2> /dev/null \
-  #           || true && echo "Rollout in progress"
-  #         oc logs -f dc/nrog-prod-dbbackup
+
+  #         # Enable these lines only when the backup container exists
+  #         # oc rollout latest dc/${{ env.NAME }}-prod-dbbackup 2> /dev/null \
+  #         #   || true && echo "Rollout in progress"
+  #         # oc logs -f dc/${{ env.NAME }}-prod-dbbackup
 
   #         # Follow any active rollouts (see deploymentconfigs)
   #         oc rollout status dc/${{ env.NAME }}-prod-database -w

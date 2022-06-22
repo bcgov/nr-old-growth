@@ -378,8 +378,6 @@ jobs:
             || true && echo "No rollout in progress"
           oc rollout cancel dc/${{ env.NAME }}-test-frontend 2> /dev/null \
             || true && echo "No rollout in progress"
-          oc rollout cancel dc/nrog-prod-dbbackup 2> /dev/null \
-            || true && echo "No rollout in progress"
 
           # Remove any stale imagestreams
           oc delete is/${{ env.NAME }}-test-database 2> /dev/null \
@@ -417,9 +415,6 @@ jobs:
           oc rollout latest dc/${{ env.NAME }}-test-frontend 2> /dev/null \
             || true && echo "Rollout in progress"
           oc logs -f dc/${{ env.NAME }}-test-frontend
-          oc rollout latest dc/nrog-prod-dbbackup 2> /dev/null \
-            || true && echo "Rollout in progress"
-          oc logs -f dc/nrog-prod-dbbackup
 
           # Follow any active rollouts (see deploymentconfigs)
           oc rollout status dc/${{ env.NAME }}-test-database -w
