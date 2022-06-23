@@ -1,6 +1,8 @@
 <template>
   <div id="form-container" style="margin: 40px">
-    <h4 style="margin-bottom: 24px">Priority deferral field verification</h4>
+    <h4 style="margin-bottom: 24px">
+      Priority deferral field verification test form
+    </h4>
     <FieldVerificationSubmission v-model="formData" :nrdList="nrdList" />
 
     <b-button
@@ -96,19 +98,21 @@ export default defineComponent({
     },
 
     getNaturalResourceDistricts() {
-      axios.get(backendUrl + "/naturalResourceDistCode/findAllActive").then((response) => {
-        let naturalResourceDistCodes: CodeDescr[] = [];
-        Object.keys(response.data).forEach((key) => {
-          let nrd = new CodeDescr();
-          nrd.code = response.data[key].code;
-          nrd.text = response.data[key].description;
-          nrd.emailAddress = response.data[key].emailAddress;
-          nrd.value = JSON.parse(JSON.stringify(nrd));
-          naturalResourceDistCodes.push(nrd);
-        });
+      axios
+        .get(backendUrl + "/naturalResourceDistCode/findAllActive")
+        .then((response) => {
+          let naturalResourceDistCodes: CodeDescr[] = [];
+          Object.keys(response.data).forEach((key) => {
+            let nrd = new CodeDescr();
+            nrd.code = response.data[key].code;
+            nrd.text = response.data[key].description;
+            nrd.emailAddress = response.data[key].emailAddress;
+            nrd.value = JSON.parse(JSON.stringify(nrd));
+            naturalResourceDistCodes.push(nrd);
+          });
 
-        this.nrdList = naturalResourceDistCodes;
-      });
+          this.nrdList = naturalResourceDistCodes;
+        });
     },
 
     showHiddenContent(childId: string) {
