@@ -1,8 +1,6 @@
 <template>
   <div id="form-container" style="margin: 40px">
-    <h4 style="margin-bottom: 24px">
-      Priority deferral field verification test form
-    </h4>
+    <h4 style="margin-bottom: 24px">Priority deferral field verification</h4>
     <FieldVerificationSubmission v-model="formData" :nrdList="nrdList" />
 
     <b-button
