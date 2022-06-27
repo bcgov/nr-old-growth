@@ -14,14 +14,23 @@ const app = createApp(App).use(VueKeycloakJs, {
   init: {
     // Use 'login-required' to always require authentication
     // If using 'login-required', there is no need for the router guards in router.js
-    // onLoad: "login-required",
-    onLoad: "check-sso",
-    silentCheckSsoRedirectUri: window.location.origin + "/index.html",
+    onLoad: "login-required",
+    // onLoad: "check-sso",
+    // silentCheckSsoRedirectUri: window.location.origin + "/index.html",
   },
   config: {
-    url: "https://dev.oidc.gov.bc.ca/auth/",
-    clientId: "nrog",
-    realm: "ichqx89w",
+    url:
+      config.VITE_KEYCLOAK_URL ||
+      import.meta.env.VITE_KEYCLOAK_URL ||
+      "https://dev.oidc.gov.bc.ca/auth/",
+    clientId:
+      config.VITE_KEYCLOAK_CLIENT_ID ||
+      import.meta.env.VITE_KEYCLOAK_CLIENT_ID ||
+      "nrog",
+    realm:
+      config.VITE_KEYCLOAK_REALM ||
+      import.meta.env.VITE_KEYCLOAK_REALM ||
+      "ichqx89w",
   },
   onReady(keycloak: KeycloakInstance) {
     console.log("Keycloak ready", keycloak);
