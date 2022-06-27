@@ -14,11 +14,9 @@ const app = createApp(App).use(VueKeycloakJs, {
   init: {
     // Use 'login-required' to always require authentication
     // If using 'login-required', there is no need for the router guards in router.js
-    onLoad: "login-required",
-    // checkLoginIframe: false,
-    // onLoad: "check-sso",
-    // silentCheckSsoRedirectUri:
-    //   window.location.origin + "/silent-check-sso.html",
+    // onLoad: "login-required",
+    onLoad: "check-sso",
+    silentCheckSsoRedirectUri: window.location.origin + "/index.html",
   },
   config: {
     url: "https://dev.oidc.gov.bc.ca/auth/",
