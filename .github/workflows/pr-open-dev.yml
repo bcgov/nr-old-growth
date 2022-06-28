@@ -287,6 +287,10 @@ jobs:
 
           # Follow any active rollouts (see deploymentconfigs)
           oc rollout status dc/${{ env.NAME }}-${{ github.event.number }}-database -w
+
+          # Run database migration
+          oc exec dc/${{ env.NAME }}-${{ github.event.number }}-database -- psql -d ${{ env.NAME }} -U ${{ env.NAME }} -c "$(cat backend/src/databasescripts/fsa.sql)"
+
           oc rollout status dc/${{ env.NAME }}-${{ github.event.number }}-backend -w
           oc rollout status dc/${{ env.NAME }}-${{ github.event.number }}-frontend -w
 
@@ -374,6 +378,10 @@ jobs:
 
           # Follow any active rollouts (see deploymentconfigs)
           oc rollout status dc/${{ env.NAME }}-test-database -w
+
+          # Run database migration  
+          oc exec dc/${{ env.NAME }}-test-database -- psql -d ${{ env.NAME }} -U ${{ env.NAME }} -c "$(cat backend/src/databasescripts/fsa.sql)"
+
           oc rollout status dc/${{ env.NAME }}-test-backend -w
           oc rollout status dc/${{ env.NAME }}-test-frontend -w
 
