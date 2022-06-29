@@ -3,5 +3,8 @@
 const config = (() => {
   return {
     // VITE_BACKEND_URL: '',
+    // VITE_KEYCLOAK_URL: '',
+    // VITE_KEYCLOAK_CLIENT_ID: '',
+    // VITE_KEYCLOAK_REALM: ''
   };
 })();
