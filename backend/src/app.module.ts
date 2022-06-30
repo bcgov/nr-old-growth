@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { EmailModule } from './email/email.module';
@@ -22,6 +23,7 @@ import { CutblocksubmissiondetailsModule } from './cutblocksubmissiondetails/cut
       autoLoadEntities: true, // Auto load all entities regiestered by typeorm forFeature method.
       synchronize: false, // This changes the DB schema to match changes to entities, which we might not want.
     }),
+    ScheduleModule.forRoot(),
     EmailModule,
     NaturalResourceDistCodeModule,
     DeferralCategoryCodeModule,
