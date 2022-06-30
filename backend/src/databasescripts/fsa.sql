@@ -381,46 +381,28 @@ INSERT INTO DEFERRAL_CATEGORY_CODE (DEFERRAL_CATEGORY_CODE, DESCRIPTION, EFFECTI
 -- 
 -- TABLE: spatial_file
 --
+CREATE EXTENSION postgis;
+
 drop table if exists spatial_file;
 
 CREATE TABLE spatial_file (
     spatial_file_id   serial          not null,
-    -- submission_id     int4           not null,
-    -- create_timestamp  timestamp      default current_timestamp not null,
-    -- update_timestamp  timestamp      default current_timestamp,
-    -- create_user       varchar(60)    not null,
-    -- update_user       varchar(60),
     file_name         varchar(60)    not null,
-    file_format       varchar(20)    not null,
     geometry_type     varchar(20)    not null,
     geom              geometry
 )
 ;
 
-
 comment on column spatial_file.spatial_file_id is 'A sequential id assigned to an spatial geometry file.'
 ;
--- comment on column spatial_file.submission_id is 'Incremental id generated from a submission of the Old Growth Field Verification form.'
--- ;
--- comment on column spatial_file.create_timestamp is 'The date and time the record was created.'
--- ;
--- comment on column spatial_file.update_timestamp is 'The date and time the record was created or last updated.'
--- ;
--- comment on column spatial_file.create_user is 'The user or proxy account that created the record.'
--- ;
--- comment on column spatial_file.update_user is 'The user or proxy account that created or last updated the record.'
-;
 comment on column spatial_file.file_name is 'The name of the geometry file.'
-;
-comment on column spatial_file.file_format is 'The format of the geometry file.'
 ;
 comment on column spatial_file.geometry_type is 'The geometry type.'
 ;
 comment on column spatial_file.geom is 'The geometry file data.'
 ;
-comment on table spatial_file is 'Spatial file (accepted formats: SHAPE, KML, KMZ, GDB, ZIP) (Use the naming convention: Spatialfile_ForestFileID_CP)'
+comment on table spatial_file is 'Spatial file (accepted formats: GEOJSON) (Use the naming convention: Spatialfile_ForestFileID_CP)'
 ;
-
 
 alter table spatial_file add 
     constraint spatial_file_id primary key (spatial_file_id)
