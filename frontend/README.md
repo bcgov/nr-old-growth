@@ -2,11 +2,22 @@
 
 The frontend is written in [vue3](https://vuejs.org) in typescript.
 
-## Installation and Run locally
+## Setup local development
 
 ```
-$ npm install
-$ npm start
+- Create a .env file inside this backend folder with the following options:
+
+```
+
+VITE_BACKEND_URL=http://localhost:3000
+VITE_KEYCLOAK_URL=[keycloak authentication url for dev server]
+VITE_KEYCLOAK_CLIENT_ID=[keycloak client name]
+VITE_KEYCLOAK_REALM=[keycloak realm name]
+
+```
+
+- Install all requirement packages: `npm install`
+- Start the application: `npm start`
 ```
 
 ## Technology options
