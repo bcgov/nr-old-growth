@@ -1,0 +1,47 @@
+name: Main Merge
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  cleanup-openshift:
+    name: Cleanup OpenShift
+    runs-on: ubuntu-latest
+    environment:
+      name: test
+    steps:
+      - uses: actions/checkout@v2
+      - name: Remove OpenShift artifacts
+        run: |
+          oc login --token=${{ secrets.OC_TOKEN }} --server=${{ secrets.OC_SERVER }}
+          oc project ${{ secrets.NAMESPACE }}
+          # Remove completed build runs, build pods and deployment pods
+          for p in $(oc get po | grep "Completed" | awk '{print $1}')
+          do
+            oc delete po ${p}
+          done
+  codeql:
+    name: CodeQL
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Initialize
+        uses: github/codeql-action/init@v2
+        with:
+          languages: javascript
+
+      # Autobuild attempts to build any compiled languages  (C/C++, C#, or Java).
+      # If this step fails, then you should remove it and run the build manually (see below)
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v2
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2

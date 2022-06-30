@@ -3,7 +3,7 @@
     title="Contact information"
     id="form-contact"
     nextId="header-form-field-obs"
-    nextText="Enter Field Obeservation Data"
+    nextText="Enter Field Observations Data"
   >
     <FormInput
       v-for="row in contactProps"
@@ -35,8 +35,8 @@ export default defineComponent({
     data: {
       type: Object as PropType<CommonObjectType>,
       default: {
-        submitter_lastname: "",
-        submitter_email: "",
+        submitterLastName: "",
+        submitterEmail: "",
       },
     },
   },

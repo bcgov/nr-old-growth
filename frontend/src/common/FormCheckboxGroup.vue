@@ -7,12 +7,12 @@
     >
       <input
         type="checkbox"
-        :value="option.value"
+        :value="option.code"
         @input="updateValue"
-        :checked="checked?.includes(option.value)"
+        :checked="checked?.includes(option.code)"
         :name="name"
       />
-      {{ option.label }}
+      {{ option.text }}
     </label>
   </FormFieldTemplate>
 </template>
@@ -39,10 +39,10 @@ export default defineComponent({
     checked: Array as PropType<Array<String>>,
     options: {
       type: Array as
-        | PropType<Array<{ value: string; label: string }>>
+        | PropType<Array<{ code: string; text: string }>>
         | undefined,
       required: true,
-      default: [{ value: 1, label: "Option 1" }],
+      default: [{ code: 1, text: "Option 1" }],
     },
     // radio group name, has to be unique when using multiple radio groups
     name: {

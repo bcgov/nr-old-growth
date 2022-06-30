@@ -3,9 +3,10 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { NaturalResourceDistCodeModule } from './naturalresourcedistcode/naturalResourceDistCode.module';
 import { EmailModule } from './email/email.module';
 import { SptialFileModule } from './spatialfile/spatialFile.module';
+import { NaturalResourceDistCodeModule } from './naturalresourcedistcode/naturalResourceDistCode.module';
+import { DeferralCategoryCodeModule } from './deferralcategorycode/deferralCategoryCode.module';
 
 @Module({
   imports: [
@@ -20,8 +21,9 @@ import { SptialFileModule } from './spatialfile/spatialFile.module';
       autoLoadEntities: true, // Auto load all entities regiestered by typeorm forFeature method.
       synchronize: false, // This changes the DB schema to match changes to entities, which we might not want.
     }),
-    NaturalResourceDistCodeModule,
     EmailModule,
+    NaturalResourceDistCodeModule,
+    DeferralCategoryCodeModule,
     SptialFileModule,
   ],
   controllers: [AppController],

@@ -59,9 +59,9 @@ export default defineComponent({
     data: {
       type: Object as PropType<CommonObjectType>,
       default: {
-        natural_resource_distrct: {},
-        forest_file_id: "",
-        cut_block: [],
+        naturalResourceDistrictCode: {},
+        forestFileId: "",
+        cutBlocks: [],
       },
     },
     nrdList: {
@@ -76,8 +76,8 @@ export default defineComponent({
         formProperty.fieldObsInput as Array<FormFieldTemplateType>,
       formBlockProps: formProperty.fieldObsBlock as Array<FormGridColumnType>,
       // need these line to trigger the rerender to catch changes
-      selected: this.data.natural_resource_distrct,
-      cutBlocks: this.data.cut_block,
+      selected: this.data.naturalResourceDistrictCode,
+      cutBlocks: this.data.cutBlocks,
     };
   },
   methods: {
