@@ -6,6 +6,8 @@ import { AppService } from './app.service';
 import { EmailModule } from './email/email.module';
 import { NaturalResourceDistCodeModule } from './naturalresourcedistcode/naturalResourceDistCode.module';
 import { DeferralCategoryCodeModule } from './deferralcategorycode/deferralCategoryCode.module';
+import { SubmissionModule } from './submission/submission.module';
+import { CutblocksubmissiondetailsModule } from './cutblocksubmissiondetails/cutblocksubmissiondetails.module';
 
 @Module({
   imports: [
@@ -23,6 +25,8 @@ import { DeferralCategoryCodeModule } from './deferralcategorycode/deferralCateg
     EmailModule,
     NaturalResourceDistCodeModule,
     DeferralCategoryCodeModule,
+    SubmissionModule,
+    CutblocksubmissiondetailsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

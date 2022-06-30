@@ -1,9 +1,9 @@
-import { BaseEntity, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { BaseEntity, Column, Entity, PrimaryColumn } from 'typeorm';
 
 @Entity({ name: 'deferral_category_code' })
 export class DeferralCategoryCodeEntity extends BaseEntity {
 
-  @PrimaryGeneratedColumn({ name: 'deferral_category_code' })
+  @PrimaryColumn({ name: 'deferral_category_code' })
   code: string;
 
   @Column({ name: 'description' })
