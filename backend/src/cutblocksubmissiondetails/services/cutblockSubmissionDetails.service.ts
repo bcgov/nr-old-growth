@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { Cron } from '@nestjs/schedule';
 
 @Injectable()
 export class CutblockSubmissionDetailsService {
@@ -15,10 +14,5 @@ export class CutblockSubmissionDetailsService {
   remove(id: number) {
     return `This action removes a #${id} cutblocksubmissiondetail`;
   }
-
-  @Cron('*/5 * * * * *') //Runs every 5 seconds
-  myApiTest() {
-    console.log("Mayis");
-  }
-
+  
 }

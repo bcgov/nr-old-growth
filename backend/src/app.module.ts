@@ -8,7 +8,7 @@ import { EmailModule } from './email/email.module';
 import { NaturalResourceDistCodeModule } from './naturalresourcedistcode/naturalResourceDistCode.module';
 import { DeferralCategoryCodeModule } from './deferralcategorycode/deferralCategoryCode.module';
 import { SubmissionModule } from './submission/submission.module';
-import { CutblocksubmissiondetailsModule } from './cutblocksubmissiondetails/cutblocksubmissiondetails.module';
+import { CutblockSubmissiondetailsModule } from './cutblocksubmissiondetails/cutblocksubmissiondetails.module';
 
 @Module({
   imports: [
@@ -28,7 +28,7 @@ import { CutblocksubmissiondetailsModule } from './cutblocksubmissiondetails/cut
     NaturalResourceDistCodeModule,
     DeferralCategoryCodeModule,
     SubmissionModule,
-    CutblocksubmissiondetailsModule,
+    CutblockSubmissiondetailsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
