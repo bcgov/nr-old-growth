@@ -23,7 +23,7 @@ drop table if exists natural_resource_dist_code;
 --
 
 create table attachment(
-    attachment_id     int4           not null,
+    attachment_id     serial         not null,
     submission_id     int4           not null,
     create_timestamp  timestamp      default current_timestamp not null,
     update_timestamp  timestamp      default current_timestamp,
@@ -53,7 +53,7 @@ comment on table attachment is 'Professional rationale (Use the naming conventio
 --
 
 create table cutblock_submission_details(
-    cutblock_submission_details_id  int4             not null,
+    cutblock_submission_details_id  serial           not null,
     submission_id                   int4             not null,
     cut_block_id                    varchar(10)      not null,
     total_block_ha                  decimal(5, 2)    not null,
@@ -190,7 +190,7 @@ comment on column subm_data_grid_dfr_cat_xref.deferral_category_code is 'Deferra
 --
 
 create table submission(
-    submission_id               int4            not null,
+    submission_id               serial          not null,
     submitter_id                int4            not null,
     licensee_name               varchar(100)    not null,
     first_name                  varchar(40)     not null,
@@ -331,7 +331,7 @@ alter table submission add constraint submission_natural_resource_dist
 --
 
 create table submission_log (
-    submission_log_id     serial          not null,
+    submission_log_id           serial          not null,
     code                        varchar(10)     not null,
     exception_log               varchar(500)    null,
     confirmation_id             varchar(10)     null,
