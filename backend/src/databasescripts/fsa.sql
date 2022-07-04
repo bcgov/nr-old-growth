@@ -378,35 +378,35 @@ INSERT INTO DEFERRAL_CATEGORY_CODE (DEFERRAL_CATEGORY_CODE, DESCRIPTION, EFFECTI
 INSERT INTO DEFERRAL_CATEGORY_CODE (DEFERRAL_CATEGORY_CODE, DESCRIPTION, EFFECTIVE_DATE, CREATE_USER) VALUES ('RT', 'Remnant', CURRENT_TIMESTAMP, 'mariamar');
 
 
--- 
--- TABLE: spatial_file
---
-CREATE EXTENSION postgis;
+-- -- 
+-- -- TABLE: spatial_file
+-- --
+-- CREATE EXTENSION postgis;
 
-drop table if exists spatial_file;
+-- drop table if exists spatial_file;
 
-CREATE TABLE spatial_file (
-    spatial_file_id   serial          not null,
-    file_name         varchar(60)    not null,
-    geometry_type     varchar(20)    not null,
-    geom              geometry
-)
-;
+-- CREATE TABLE spatial_file (
+--     spatial_file_id   serial          not null,
+--     file_name         varchar(60)    not null,
+--     geometry_type     varchar(20)    not null,
+--     geom              geometry
+-- )
+-- ;
 
-comment on column spatial_file.spatial_file_id is 'A sequential id assigned to an spatial geometry file.'
-;
-comment on column spatial_file.file_name is 'The name of the geometry file.'
-;
-comment on column spatial_file.geometry_type is 'The geometry type.'
-;
-comment on column spatial_file.geom is 'The geometry file data.'
-;
-comment on table spatial_file is 'Spatial file (accepted formats: GEOJSON) (Use the naming convention: Spatialfile_ForestFileID_CP)'
-;
+-- comment on column spatial_file.spatial_file_id is 'A sequential id assigned to an spatial geometry file.'
+-- ;
+-- comment on column spatial_file.file_name is 'The name of the geometry file.'
+-- ;
+-- comment on column spatial_file.geometry_type is 'The geometry type.'
+-- ;
+-- comment on column spatial_file.geom is 'The geometry file data.'
+-- ;
+-- comment on table spatial_file is 'Spatial file (accepted formats: GEOJSON) (Use the naming convention: Spatialfile_ForestFileID_CP)'
+-- ;
 
-alter table spatial_file add 
-    constraint spatial_file_id primary key (spatial_file_id)
-;
+-- alter table spatial_file add 
+--     constraint spatial_file_id primary key (spatial_file_id)
+-- ;
 
 
 -- INSERT INTO spatial_file (file_name, geometry_type, geom)
