@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { EmailModule } from './email/email.module';
+// import { SptialFileModule } from './spatialfile/spatialFile.module';
 import { NaturalResourceDistCodeModule } from './naturalresourcedistcode/naturalResourceDistCode.module';
 import { DeferralCategoryCodeModule } from './deferralcategorycode/deferralCategoryCode.module';
 
@@ -23,6 +24,7 @@ import { DeferralCategoryCodeModule } from './deferralcategorycode/deferralCateg
     EmailModule,
     NaturalResourceDistCodeModule,
     DeferralCategoryCodeModule,
+    // SptialFileModule,
   ],
   controllers: [AppController],
   providers: [AppService],
