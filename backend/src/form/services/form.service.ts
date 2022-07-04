@@ -18,21 +18,22 @@ export class FormService {
     private emailSubmissionLogRepository: Repository<EmailSubmissionLogEntity>,
   ) {}
 
-  // @Cron('*/10 * * * *') //Runs every 10 minutes
-  @Cron('*/1 * * * *') //Runs every 1 minutes
+  // note: everytime change the cronjob interval, need to adjust the interval below that checks new submissions
+  @Cron('*/10 * * * *') //Runs every 10 minutes
+  // @Cron('*/1 * * * *') //Runs every 1 minutes
   // @Cron('45 * * * * *') // Run every 45 seconds
   // @Cron('*/5 * * * * *') //Runs every 5 seconds
   handleIDIRForm(emailTo: string) {
-    this.logger.debug('called every 1 min for idir form');
+    this.logger.debug('called every 10 mins for idir form');
     const formId = process.env.IDIR_FORM_ID;
     const formVersionId = process.env.IDIR_FORM_VERSION_ID;
     const formPassword = process.env.IDIR_FORM_PASSWORD;
     return this.handleSubmission(emailTo, formId, formVersionId, formPassword);
   }
 
-  @Cron('*/1 * * * *')
+  @Cron('*/10 * * * *')
   handleBCEIDForm(emailTo: string) {
-    this.logger.debug('called every 1 min for bceid form');
+    this.logger.debug('called every 10 mins for bceid form');
     const formId = process.env.BCEID_FORM_ID;
     const formVersionId = process.env.BCEID_FORM_VERSION_ID;
     const formPassword = process.env.BCEID_FORM_PASSWORD;
@@ -88,7 +89,6 @@ export class FormService {
         this.emailSubmissionLogRepository.save(newEmailSubmissionLogEntity),
       );
     } catch (e) {
-      // todo: handle db write error
       this.logger.error('Failed to write into db: ');
       this.logger.error(e);
       try {
@@ -116,7 +116,6 @@ export class FormService {
         emailSubmissionLog,
       );
     } catch (e) {
-      // todo: handle db update error
       this.logger.error('Failed to update the db: ');
       this.logger.error(e);
       try {
@@ -200,7 +199,7 @@ export class FormService {
         if (subListRes && subListRes.data) {
           const currTime = new Date();
           //TODO: put time in variable so we only change it in 1 place
-          const lastTime = new Date(currTime.getTime() - 1000 * 60 * 1); // 1000 * 60 * 60
+          const lastTime = new Date(currTime.getTime() - 1000 * 60 * 10);
           const currTimeValue = currTime.valueOf();
           const lastTimeValue = lastTime.valueOf();
 
