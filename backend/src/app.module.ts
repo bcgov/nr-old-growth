@@ -4,8 +4,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { NaturalResourceDistModule } from './naturalresourcedist/naturalResourceDist.module';
-import { EmailModule } from './email/email.module';
 import { FormModule } from './form/form.module';
 
 @Module({
@@ -22,8 +20,6 @@ import { FormModule } from './form/form.module';
       synchronize: false, // This changes the DB schema to match changes to entities, which we might not want.
     }),
     ScheduleModule.forRoot(),
-    NaturalResourceDistModule,
-    EmailModule,
     FormModule,
   ],
   controllers: [AppController],
