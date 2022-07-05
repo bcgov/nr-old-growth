@@ -1,4 +1,4 @@
-name: Main Merge
+name: Dev Merge
 
 on:
   push:
@@ -34,30 +34,9 @@ jobs:
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
 
-  # # https://github.com/snyk/snyk
-  # snyk:
-  #   name: Dependency Scan
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #   - name: Checkout repository
-  #     uses: actions/checkout@v2
-
-  #   - name: Run Snyk to check for vulnerabilities
-  #     uses: snyk/actions/node@master
-  #     continue-on-error: true # To make sure that SARIF upload gets called
-  #     env:
-  #       SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-  #     with:
-  #       args: --all-projects --severity-threshold=high --sarif-file-output=snyk.sarif
-
-  #   - name: Upload result to GitHub Code Scanning
-  #     uses: github/codeql-action/upload-sarif@v2
-  #     with:
-  #       sarif_file: snyk.sarif
-
   # https://github.com/marketplace/actions/aqua-security-trivy
   trivy-repo:
-    name: Repository Scan
+    name: Repository Report
     runs-on: ubuntu-18.04
     steps:
       - name: Checkout code
@@ -79,7 +58,7 @@ jobs:
 
   # https://github.com/marketplace/actions/aqua-security-trivy
   trivy-rhel-ubi:
-    name: Base Image Scan
+    name: Base Image Report
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -112,62 +91,3 @@ jobs:
           package: ${{ github.event.repository.name }}
           owner: orgs/bcgov
           skip_tags: prod-frontend,prod-backend
-
-  deploy-test:
-    name: TEST Deployment
-    needs:
-      - cleanup-ghcr
-      - codeql
-      # - snyk
-      - trivy-repo
-      - trivy-rhel-ubi
-    runs-on: ubuntu-latest
-    environment:
-      name: test
-    env:
-      ZONE: test
-    steps:
-      - uses: actions/checkout@v2
-      - name: Deploy
-        run: |
-          # Login to OpenShift and select project
-          oc login --token=${{ secrets.OC_TOKEN }} --server=${{ secrets.OC_SERVER }}
-          oc project ${{ secrets.OC_NAMESPACE }}
-
-          # Clear stale images for import/replacement
-          if [ $(oc get is -l app=${{ env.NAME }}-${{ env.ZONE }} -o name | grep -v database | wc -l) -gt 0 ]; then
-            oc delete is -l app=${{ env.NAME }}-${{ env.ZONE }}
-          fi
-
-          # Create frontend config (Remove the old one if exists)
-          oc delete configmap ${{ env.NAME }}-${{ env.ZONE }}-frontend 2> /dev/null \
-            || true && echo "No existing frontend config"
-          oc create configmap ${{ env.NAME }}-${{ env.ZONE }}-frontend  \
-            --from-literal=config.js="const config = (() => { return { VITE_BACKEND_URL: 'https://${{ env.NAME }}-${{ env.ZONE }}-backend.apps.silver.devops.gov.bc.ca'}; })();"
-
-          # Process and apply deployment templates
-          oc process -f .github/openshift/deploy.database.yml -p ZONE=${{ env.ZONE }} | oc apply -f -
-          oc process -f .github/openshift/deploy.backend.yml -p ZONE=${{ env.ZONE }} \
-            -p PROMOTE=${{ github.repository }}:${{ github.event.number }}-backend \
-            -p EMAIL_USERNAME=${{ secrets.CHES_SERVICE_CLIENT }} \
-            -p EMAIL_PASSWORD=${{ secrets.CHES_CLIENT_PASSWORD }} \
-            -p EMAIL_TOKEN_URL='https://oidc.gov.bc.ca/auth/realms/jbd6rnxw/protocol/openid-connect/token' \
-            -p EMAIL_API_URL='https://ches-dev.apps.silver.devops.gov.bc.ca/api/v1' \
-            -p NODE_ENV='development' | oc apply -f -
-          oc process -f .github/openshift/deploy.frontend.yml -p ZONE=${{ env.ZONE }} \
-            -p PROMOTE=${{ github.repository }}:${{ github.event.number }}-frontend | oc apply -f -
-
-          # Follow any active rollouts (see deploymentconfigs)
-          oc rollout status dc/${{ env.NAME }}-${{ env.ZONE }}-database -w
-
-          # Run database migration  
-          oc exec dc/${{ env.NAME }}-${{ env.ZONE }}-database -- psql -d ${{ env.NAME }} -U ${{ env.NAME }} -c "$(cat backend/src/databasescripts/fsa.sql)"
-
-          oc rollout status dc/${{ env.NAME }}-${{ env.ZONE }}-backend -w
-          oc rollout status dc/${{ env.NAME }}-${{ env.ZONE }}-frontend -w
-
-          # Remove completed build runs, build pods and deployment pods
-          for p in $(oc get po | grep "Completed" | awk '{print $1}')
-          do
-            oc delete po ${p}
-          done
