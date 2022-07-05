@@ -37,7 +37,7 @@ parameters:
     value: ghcr.io
   - name: PROMOTE
     description: Image (namespace/name:tag) to promote/import
-    required: true
+    value: bcgov/nr-old-growth:prod-backend
   - name: EMAIL_USERNAME
     description: CHES service client
     required: true
@@ -167,9 +167,9 @@ objects:
                   path: /
                   port: 3000
                   scheme: HTTP
-                initialDelaySeconds: 15
+                initialDelaySeconds: 60
                 periodSeconds: 15
-                timeoutSeconds: 1
+                timeoutSeconds: 5
               livenessProbe:
                 successThreshold: 1
                 failureThreshold: 3
@@ -177,7 +177,7 @@ objects:
                   path: /
                   port: 3000
                   scheme: HTTP
-                initialDelaySeconds: 15
+                initialDelaySeconds: 60
                 periodSeconds: 30
                 timeoutSeconds: 5
   - apiVersion: v1

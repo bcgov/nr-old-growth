@@ -37,7 +37,7 @@ parameters:
     value: ghcr.io
   - name: PROMOTE
     description: Image (namespace/name:tag) to promote/import
-    required: true
+    value: bcgov/nr-old-growth:prod-frontend
 objects:
   - apiVersion: v1
     kind: ImageStream
