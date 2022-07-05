@@ -298,6 +298,8 @@ jobs:
       - build-frontend
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    environment:
+      name: dev
     env:
       ZONE: ${{ github.event.number }}
     steps:
