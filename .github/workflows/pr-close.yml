@@ -10,7 +10,6 @@ on:
 
 env:
   NAME: nrog
-  REPONAME: nr-old-growth
 
 jobs:
   cleanup-openshift:
@@ -23,19 +22,44 @@ jobs:
       - name: Remove OpenShift artifacts
         run: |
           oc login --token=${{ secrets.OC_TOKEN }} --server=${{ secrets.OC_SERVER }}
-          oc project ${{ secrets.NAMESPACE }}
+          oc project ${{ secrets.OC_NAMESPACE }}
           # Remove old build runs, build pods and deployment pods
           oc delete all,pvc,secret -l app=${{ env.NAME }}-${{ github.event.number }}
           oc delete configmap ${{ env.NAME }}-${{ github.event.number }}-frontend
-  cleanup-ghcr:
-    name: Cleanup ghcr.io
+
+  # promote-images:
+  #   name: Promote DEV images to TEST
+  #   runs-on: ubuntu-latest
+  #   if: github.event.pull_request.merged == true
+  #   steps:
+  #     - name: Promote Backend Image to TEST
+  #       uses: shrink/actions-docker-registry-tag@v2
+  #       with:
+  #         registry: ghcr.io
+  #         repository: ${{ github.repository }}
+  #         target: ${{ github.event.number }}-backend
+  #         tags: |
+  #           test-backend
+  #     - name: Promote Frontend Image to TEST
+  #       uses: shrink/actions-docker-registry-tag@v2
+  #       with:
+  #         registry: ghcr.io
+  #         repository: ${{ github.repository }}
+  #         target: ${{ github.event.number }}-frontend
+  #         tags: |
+  #           test-frontend
+
+  merge-notification:
+    name: Merge Notification
     runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true
     steps:
-      # https://github.com/marketplace/actions/ghcr-io-container-cleanup
-      - name: Delete old packages
-        uses: davahome/ghcr-cleanup@v1
+      - name: Pre-merge update
+        uses: mshick/add-pr-comment@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GHCR_TOKEN }}
         with:
-          token: ${{ secrets.GHCR_TOKEN }}
-          package: ${{ env.REPONAME }}
-          owner: orgs/bcgov
-          skip_tags: prod,test
+          allow-repeats: false
+          message: |
+            Your Pull Request code is being promoted!  Please follow the link below.
+            [Main Merge Workflow](https://github.com/${{ github.repository }}/actions/workflows/merge-main.yml)
