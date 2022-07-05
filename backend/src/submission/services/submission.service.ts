@@ -1,17 +1,20 @@
-import { Injectable } from '@nestjs/common';
-import { Cron } from '@nestjs/schedule';
-import { InjectRepository } from '@nestjs/typeorm';
-import { from, Observable } from 'rxjs';
-import { SubmissionEntity } from 'src/submission/entities/submission.entity';
-import { Submission } from 'src/submission/entities/submission.interface';
-import { Repository } from 'typeorm';
+import { Injectable, Logger } from "@nestjs/common";
+import { Cron } from "@nestjs/schedule";
+import { InjectRepository } from "@nestjs/typeorm";
+import { CutblockSubmissionDetailsEntity } from "src/cutblocksubmissiondetails/entities/cutblockSubmissionDetails.entity";
+import { SubmissionEntity } from "src/submission/entities/submission.entity";
+import { Repository } from "typeorm";
 
 @Injectable()
 export class SubmissionService {
+  private readonly logger = new Logger(SubmissionService.name);
 
   constructor(
     @InjectRepository(SubmissionEntity)
     private submissionRepository: Repository<SubmissionEntity>,
+
+    @InjectRepository(CutblockSubmissionDetailsEntity)
+    private cutblockSubmissionDetailsRepository: Repository<CutblockSubmissionDetailsEntity>,
   ) {}
 
   findAll() {
@@ -26,35 +29,49 @@ export class SubmissionService {
     return `This action removes a #${id} submission`;
   }
 
-  @Cron('*/5 * * * * *') //Runs every 5 seconds
+  @Cron("*/5 * * * * *") //Runs every 5 seconds
   myApiTest() {
-    console.log('.....');
-    const mySubmission = this.postData();
-    console.log(mySubmission);
+    console.log(".....");
+    this.postData();
   }
 
-  postData(): Observable<Submission> {
+  async postData(): Promise<any> {
+    //TODO: Add rollback if any save fails
     const newSubmissionEntity = new SubmissionEntity();
+    newSubmissionEntity.submitterId = 7;
+    newSubmissionEntity.licenseeName = "Test";
+    newSubmissionEntity.firstName = "Test 2";
+    newSubmissionEntity.lastName = "Test 3";
+    newSubmissionEntity.phoneNumber = "(604)";
+    newSubmissionEntity.emailAddress = "m@m.com";
+    newSubmissionEntity.nrdc = "DCC";
+    newSubmissionEntity.submissionDate = new Date();
+    newSubmissionEntity.createUser = "Test 4";
 
-    return from(this.submissionRepository.save(newSubmissionEntity));
-    
-    // const newEmailSubmissionLogEntity = new EmailSubmissionLogEntity();
-    // newEmailSubmissionLogEntity.code = emailSubmissionLog.code;
-    // newEmailSubmissionLogEntity.exceptionLog = emailSubmissionLog.exceptionLog;
-    // newEmailSubmissionLogEntity.confirmationId = emailSubmissionLog.confirmationId;
-    // newEmailSubmissionLogEntity.formId = emailSubmissionLog.formId;
-    // newEmailSubmissionLogEntity.formVersionId = emailSubmissionLog.formVersionId;
+    try {
+      const submission = 
+        await this.submissionRepository.save(
+          newSubmissionEntity,
+        );
+      console.log(JSON.stringify(submission));
 
-    // try {
-    //   return from(
-    //     this.emailSubmissionLogRepository.save(newEmailSubmissionLogEntity),
-    //   );
-    // } catch (e) {
-    //   // todo: handle db write error
-    //   this.logger.error('Failed to write into db: ');
-    //   this.logger.error(e);
-    //   return null;
-    // }
-    //return null;
+      const newCutblockSubmissionDetailsEntity = new CutblockSubmissionDetailsEntity();
+      newCutblockSubmissionDetailsEntity.submissionEntity = submission;
+      newCutblockSubmissionDetailsEntity.cutBlockId = "Test 11";
+      newCutblockSubmissionDetailsEntity.totalBlockHa = 4.33;
+      newCutblockSubmissionDetailsEntity.haOrgMappedDefArea = 33.44;
+      newCutblockSubmissionDetailsEntity.createUser = "Test 4";
+      newCutblockSubmissionDetailsEntity.createTimestamp = new Date();
+
+      const cutblockSubmissionDetails =
+        await this.cutblockSubmissionDetailsRepository.save(
+          newCutblockSubmissionDetailsEntity,
+        );
+      console.log(JSON.stringify(cutblockSubmissionDetails));
+    } 
+    catch (error) {
+      this.logger.error("Failed to write into db: \n" + error);
+      return null;
+    }
   }
 }
