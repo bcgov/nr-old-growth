@@ -3,7 +3,8 @@ name: Pull Request
 on:
   pull_request:
     branches:
-      - main, dev
+      - main
+      - dev
 
 env:
   REGISTRY: ghcr.io
