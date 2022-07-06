@@ -7,33 +7,71 @@
 [![MIT License](https://img.shields.io/github/license/bcgov/nr-old-growth-integration.svg)](/LICENSE.md)
 [![Lifecycle](https://img.shields.io/badge/Lifecycle-Experimental-339999)](https://github.com/bcgov/repomountie/blob/master/doc/lifecycle-badges.md)
 
-The Old Growth Technical Advisory Panel identified old growth areas that are at imminent risk of harvest. The current deferral process could require that licensees do a field verification to confirm, add or delete areas meeting the definition of old growth trees. The Old Growth project amis to help automate that process and enable the tracking and managing of the potential deferral areas and any decisions that come out of that process that may impact licensees.
+The vue-nest-template is a node.js application built with [Vue.js](https://vuejs.org) in typescript as frontend, [nestJS](https://docs.nestjs.com) as backend, postgres for database, integrated with the [greenfield-template](https://github.com/bcgov/greenfield-template) to automate the process for testing, security scanning, code quality checking, image building and deploying.
 
-# Overview
+# Setup
 
-The nr-old-growth is a node.js application built with [Vue.js](https://vuejs.org) in typescript as frontend, [nestJS](https://docs.nestjs.com) as backend, integrated with the [greenfield-template](https://github.com/bcgov/greenfield-template) to automate the process for testing, security scanning, code quality checking, image building and deploying.
+## Frontend Local Development
 
-This project is in active development. Please visit our [issues](https://github.com/bcgov/nr-old-growth-integration/issues) page to view or request features.
+- Create a .env file inside this frontend folder with the following options:
 
-Currently, we uses the [GitHub Actions](https://github.com/bcgov/greenfield-template/actions) [pipeline](https://github.com/bcgov/greenfield-template/blob/main/.github/workflows/pr-open.yml), which includes:
+```
+VITE_BACKEND_URL=http://localhost:3000
+```
+- (Optional) If want to enable the login authentication, add the following to the .env file as well, and uncomment the login setting in the `frontend/src/main.ts` file
+```
+VITE_KEYCLOAK_URL=[keycloak authentication url for dev server]
+VITE_KEYCLOAK_CLIENT_ID=[keycloak client name]
+VITE_KEYCLOAK_REALM=[keycloak realm name]
+```
+- Install all requirement packages: `npm install`
+- Start the application: `npm start`
 
-- [Pull Request](https://github.com/bcgov/greenfield-template/pulls)-based ephemeral, sandboxed environments.
-- [Docker](https://github.com/marketplace/actions/build-and-push-docker-images)(/Podman) container building.
-- [Build caching](https://github.com/marketplace/actions/cache) to save time and bandwidth.
-- [GitHub Container Registry](https://github.com/bcgov/greenfield-template/pkgs/container/greenfield-template) image publishing.
-- [RedHat OpenShift](https://www.redhat.com/en/technologies/cloud-computing/openshift) deployment, with other options under consideration.
-- [OpenShift artifact](https://github.com/bcgov/greenfield-template/blob/main/.github/workflows/pr-close.yml) pruning on PR completion.
-- [SonarCloud](https://sonarcloud.io/) continuous code quality and security scanning.
-- [GitHub CodeQL](https://codeql.github.com/) semantic code analysis and vulerability scanning.
-- [Snyk](https://snyk.io/) development, vulnerability and security scanning.
-- [OWASP ZAP](https://owasp.org/www-project-zap/) Zed Attack Proxy security scanning.
-- [Jest](https://jestjs.io/) JavaScript testing enforced in-pipeline.
-- [ESLint](https://eslint.org/) linting enforced in-pipeline and on code staging.
-- [TypeScript](https://www.typescriptlang.org/) strong-typing for JavaScript.
+## Backend Local Development
 
-# Get start
+- Create a .env file inside this backend folder with the following options (suppose there is a local postgres db to connect with):
+```
+  NODE_ENV=development
+  POSTGRESQL_USER=[local postgres username]
+  POSTGRESQL_PASSWORD=[local postgres password]
+  POSTGRESQL_DATABASE=[local postgres database]
+  FRONTEND_URL=[enable cors for this frontend url]
+  BACKEND_URL=[enable cors for this backend url to enable try in swagger]
+```
+- (Optional) If want to use the email service by CHES, add the following to the .env file as well, and uncomment import in the `backend/src/app.module.ts` file
+```
+  EMAIL_USERNAME=[CHES service dev username]
+  EMAIL_PASSWORD=[CHES service dev password]
+  // CHES dev authentication url
+  EMAIL_TOKEN_URL=https://dev.oidc.gov.bc.ca/auth/realms/jbd6rnxw/protocol/openid-connect/token
+  // CHES dev email url
+  EMAIL_POST_URL=https://ches-dev.apps.silver.devops.gov.bc.ca/api/v1/email
+  EMAIL_FROM=[send from email address]
+```
+- Install dependencies `npm install`
+- Start the server `npm start`
 
-We manage the frontend and backend in the same repository but in different folders. To start the frontend/backend project locally, check the Readme inside each frontend/backend folder.
+## Database
+
+- There is a sample sql script file at `backend/src/databasescripts/fsa.sql`, to run the script, open pgadmin, login to the db, right click on “Tables” -> “Query Tool” -> copy the query over and run it; right click on the schemas, and refresh to get the update
+
+## Pipeline
+
+- Update all the places using "**nrog**" in the yaml files under `.github/openshift` and `.github/workflows` folder, and update it to the new project name
+- Add required secrets to github repo setting:
+  - General secrets: 
+    - OC_SERVER: openshift cluster url
+    - GHCR_TOKEN: personal access token generated through user setting -> developer settings -> personal access token with the right to repo and write/delete package
+  - Environment secrets:
+    - Dev: OC_NAMESPACE (dev namespace), OC_TOKEN (get from openshift namespace -> administer view -> user management -> service account -> pipeline token)
+    - Prod: OC_NAMESPACE (prod namespace), OC_TOKEN
+    - Test: OC_NAMESPACE (test namespace), OC_TOKEN
+- (Optional) If use the email service by CHES, add the CHES_SERVICE_CLIENT and CHES_CLIENT_PASSWORD to the github repo secrets as well
+
+## Namespace
+
+- For new namespace, add the network policy `oc process -f .github/openshift/networkPolicies.yml | oc apply -f -`
+- If require more resources, apply at the [platform registry](https://registry.developer.gov.bc.ca/)
 
 ## Set up visual studio code
 

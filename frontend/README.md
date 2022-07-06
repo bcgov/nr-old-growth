@@ -5,7 +5,7 @@ The frontend is written in [vue3](https://vuejs.org) in typescript.
 ## Setup local development
 
 ```
-- Create a .env file inside this backend folder with the following options:
+- Create a .env file inside this frontend folder with the following options:
 
 ```
 

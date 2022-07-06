@@ -20,11 +20,8 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import html2pdf from "html2pdf.js";
-import axios from "axios";
 import FieldVerificationSubmission from "../containers/fieldverificationform/FieldVerificationForm.vue";
 import { sendEmail } from "../api/OldGrowthRequest";
-import { backendUrl } from "../core/AppType";
-import { CodeDescr } from "../core/CodeDescrType";
 import { store } from "../helpers/AppState";
 import { primary } from "../utils/color";
 
@@ -81,7 +78,6 @@ export default defineComponent({
                     encoding: "base64",
                     filename: "field_verification_form.pdf",
                   },
-                  ...store.formUploadFiles,
                 ],
                 [store.testEmail] //[this.fieldObsSelectData.modelValue]
               );
@@ -95,24 +91,6 @@ export default defineComponent({
       }
     },
 
-    getNaturalResourceDistricts() {
-      axios
-        .get(backendUrl + "/naturalResourceDistCode/findAllActive")
-        .then((response) => {
-          let naturalResourceDistCodes: CodeDescr[] = [];
-          Object.keys(response.data).forEach((key) => {
-            let nrd = new CodeDescr();
-            nrd.code = response.data[key].code;
-            nrd.text = response.data[key].description;
-            nrd.emailAddress = response.data[key].emailAddress;
-            nrd.value = JSON.parse(JSON.stringify(nrd));
-            naturalResourceDistCodes.push(nrd);
-          });
-
-          this.nrdList = naturalResourceDistCodes;
-        });
-    },
-
     showHiddenContent(childId: string) {
       if (!document.getElementById(childId).classList.contains("show")) {
         document.getElementById(`header-${childId}`)!.click();
@@ -123,9 +101,6 @@ export default defineComponent({
       this.testEmail = e.target.value;
       store.updateTestEmail(e.target.value);
     },
-  },
-  beforeMount() {
-    this.getNaturalResourceDistricts();
   },
 });
 </script>
