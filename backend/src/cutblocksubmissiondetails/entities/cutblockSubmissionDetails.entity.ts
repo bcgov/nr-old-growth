@@ -1,4 +1,3 @@
-import { Timestamp } from 'rxjs';
 import { SubmissionEntity } from 'src/submission/entities/submission.entity';
 import {
   BaseEntity,
