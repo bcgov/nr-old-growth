@@ -11,6 +11,13 @@ The vue-nest-template is a node.js application built with [Vue.js](https://vuejs
 
 # Setup
 
+## Create a New Repo Using this Branch
+- `git clone https://github.com/bcgov/nr-old-growth.git [new_repo_name]` and switch to branch "vue-nest-template"
+- Create a new reposiroty in github
+- `cd [new_repo_name]`, Remove the '.git' directory
+- Re-initialize the git, `git init`
+- Add the remote, `git remote add origin [new_repo_url]`
+
 ## Frontend Local Development
 
 - Create a .env file inside this frontend folder with the following options:
