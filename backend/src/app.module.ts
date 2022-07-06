@@ -6,7 +6,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { EmailModule } from './email/email.module';
 // import { SptialFileModule } from './spatialfile/spatialFile.module';
-import { CutblockSubmissiondetailsModule } from './cutblocksubmissiondetails/cutblocksubmissiondetails.module';
+import { CutblockSubmissiondetailsModule } from './cutblockSubmissionDetails/cutblockSubmissionDetails.module';
 import { DeferralCategoryCodeModule } from './deferralcategorycode/deferralCategoryCode.module';
 import { NaturalResourceDistCodeModule } from './naturalresourcedistcode/naturalResourceDistCode.module';
 import { SubmissionModule } from './submission/submission.module';

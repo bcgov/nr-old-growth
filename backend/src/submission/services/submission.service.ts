@@ -1,7 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { Cron } from "@nestjs/schedule";
 import { InjectRepository } from "@nestjs/typeorm";
-import { CutblockSubmissionDetailsEntity } from "src/cutblocksubmissiondetails/entities/cutblockSubmissionDetails.entity";
+import { CutblockSubmissionDetailsEntity } from "src/cutblockSubmissionDetails/entities/cutblockSubmissionDetails.entity";
 import { SubmissionEntity } from "src/submission/entities/submission.entity";
 import { Repository } from "typeorm";
 

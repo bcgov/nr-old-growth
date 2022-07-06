@@ -1,7 +1,7 @@
 import { Controller, Delete, Get, Param } from '@nestjs/common';
 import { CutblockSubmissionDetailsService } from '../services/cutblockSubmissionDetails.service';
 
-@Controller('cutblocksubmissiondetails')
+@Controller('cutblockSubmissionDetails')
 export class CutblockSubmissionDetailsController {
   constructor(private readonly cutblockSubmissionDetailsService: CutblockSubmissionDetailsService) {}
 

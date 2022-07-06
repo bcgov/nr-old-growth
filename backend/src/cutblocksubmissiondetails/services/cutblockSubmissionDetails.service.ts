@@ -4,7 +4,7 @@ import { Injectable } from '@nestjs/common';
 export class CutblockSubmissionDetailsService {
 
   findAll() {
-    return `This action returns all cutblocksubmissiondetails`;
+    return `This action returns all cutblockSubmissionDetails`;
   }
 
   findOne(id: number) {
