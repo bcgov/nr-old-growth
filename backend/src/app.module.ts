@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
-import { ScheduleModule } from '@nestjs/schedule';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { EmailModule } from './email/email.module';
 // import { SptialFileModule } from './spatialfile/spatialFile.module';
-import { CutblockSubmissiondetailsModule } from './cutblockSubmissionDetails/cutblockSubmissionDetails.module';
+import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { CutblockSubmissionDetailsModule } from './cutblocksubmissiondetails/cutblockSubmissionDetails.module';
 import { DeferralCategoryCodeModule } from './deferralcategorycode/deferralCategoryCode.module';
 import { NaturalResourceDistCodeModule } from './naturalresourcedistcode/naturalResourceDistCode.module';
 import { SubmissionModule } from './submission/submission.module';
@@ -29,7 +29,7 @@ import { SubmissionModule } from './submission/submission.module';
     NaturalResourceDistCodeModule,
     DeferralCategoryCodeModule,
     SubmissionModule,
-    CutblockSubmissiondetailsModule,
+    CutblockSubmissionDetailsModule,
     // SptialFileModule,
   ],
   controllers: [AppController],

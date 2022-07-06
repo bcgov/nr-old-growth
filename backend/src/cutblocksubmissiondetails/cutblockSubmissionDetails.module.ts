@@ -6,4 +6,4 @@ import { CutblockSubmissionDetailsService } from './services/cutblockSubmissionD
   controllers: [CutblockSubmissionDetailsController],
   providers: [CutblockSubmissionDetailsService]
 })
-export class CutblockSubmissiondetailsModule {}
+export class CutblockSubmissionDetailsModule {}
