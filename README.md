@@ -11,12 +11,31 @@ The vue-nest-template is a node.js application built with [Vue.js](https://vuejs
 
 # Setup
 
+First need to create a new reposiroty in github
+
 ## Create a New Repo Using this Branch
+
 - `git clone https://github.com/bcgov/nr-old-growth.git [new_repo_name]` and switch to branch "vue-nest-template"
-- Create a new reposiroty in github
 - `cd [new_repo_name]`, Remove the '.git' directory
 - Re-initialize the git, `git init`
 - Add the remote, `git remote add origin [new_repo_url]`
+
+## Pipeline
+
+- Update all the places using "**nrog**" in the yaml files under `.github/openshift` and `.github/workflows` folder, and update it to the new project name
+- Add required secrets to github repo setting:
+  - General secrets: 
+    - OC_SERVER: openshift cluster url
+    - GHCR_TOKEN: personal access token generated through user setting -> developer settings -> personal access token with the right to repo and write/delete package
+  - Environment secrets:
+    - Dev: OC_NAMESPACE (dev namespace), OC_TOKEN (get from openshift namespace -> administer view -> user management -> service account -> pipeline token)
+    - Prod: OC_NAMESPACE (prod namespace), OC_TOKEN
+    - Test: OC_NAMESPACE (test namespace), OC_TOKEN
+- (Optional) If use the email service by CHES, add the CHES_SERVICE_CLIENT and CHES_CLIENT_PASSWORD to the github repo secrets as well
+
+## Image Package
+
+- Go the BCGov GitHub organization, search the new repo name, link the package registry to the repo, manage the access to open to public
 
 ## Frontend Local Development
 
@@ -62,18 +81,6 @@ VITE_KEYCLOAK_REALM=[keycloak realm name]
 
 - There is a sample sql script file at `backend/src/databasescripts/fsa.sql`, to run the script, open pgadmin, login to the db, right click on “Tables” -> “Query Tool” -> copy the query over and run it; right click on the schemas, and refresh to get the update
 
-## Pipeline
-
-- Update all the places using "**nrog**" in the yaml files under `.github/openshift` and `.github/workflows` folder, and update it to the new project name
-- Add required secrets to github repo setting:
-  - General secrets: 
-    - OC_SERVER: openshift cluster url
-    - GHCR_TOKEN: personal access token generated through user setting -> developer settings -> personal access token with the right to repo and write/delete package
-  - Environment secrets:
-    - Dev: OC_NAMESPACE (dev namespace), OC_TOKEN (get from openshift namespace -> administer view -> user management -> service account -> pipeline token)
-    - Prod: OC_NAMESPACE (prod namespace), OC_TOKEN
-    - Test: OC_NAMESPACE (test namespace), OC_TOKEN
-- (Optional) If use the email service by CHES, add the CHES_SERVICE_CLIENT and CHES_CLIENT_PASSWORD to the github repo secrets as well
 
 ## Namespace
 
