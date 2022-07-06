@@ -1,4 +1,4 @@
-name: Main Merge
+name: Dev Merge
 
 on:
   push:
@@ -36,7 +36,7 @@ jobs:
 
   # # https://github.com/snyk/snyk
   # snyk:
-  #   name: Dependency Scan
+  #   name: Dependency Report
   #   runs-on: ubuntu-latest
   #   steps:
   #   - name: Checkout repository
@@ -56,8 +56,54 @@ jobs:
   #       sarif_file: snyk.sarif
 
   # https://github.com/marketplace/actions/aqua-security-trivy
+  trivy-backend:
+    name: Backend Image Report
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Backend container scan
+      - name: Trivy Image Scan
+        uses: aquasecurity/trivy-action@0.3.0
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ github.repository }}:test-backend
+          ignore-unfixed: true
+          severity: CRITICAL
+          format: "sarif"
+          output: "trivy-results-backend.sarif"
+
+      - name: Upload Trivy results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: "trivy-results-backend.sarif"
+
+  # https://github.com/marketplace/actions/aqua-security-trivy
+  trivy-frontend:
+    name: Frontend Image Report
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Frontend container scan
+      - name: Trivy Image Scan
+        uses: aquasecurity/trivy-action@0.3.0
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ github.repository }}:test-frontend
+          ignore-unfixed: true
+          severity: CRITICAL
+          format: "sarif"
+          output: "trivy-results-frontend.sarif"
+
+      - name: Upload Trivy results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: "trivy-results-frontend.sarif"
+
+  # https://github.com/marketplace/actions/aqua-security-trivy
   trivy-repo:
-    name: Repository Scan
+    name: Repository Report
     runs-on: ubuntu-18.04
     steps:
       - name: Checkout code
@@ -79,7 +125,7 @@ jobs:
 
   # https://github.com/marketplace/actions/aqua-security-trivy
   trivy-rhel-ubi:
-    name: Base Image Scan
+    name: Base Image Report
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -115,12 +161,6 @@ jobs:
 
   deploy-test:
     name: TEST Deployment
-    needs:
-      - cleanup-ghcr
-      - codeql
-      # - snyk
-      - trivy-repo
-      - trivy-rhel-ubi
     runs-on: ubuntu-latest
     environment:
       name: test
@@ -148,19 +188,19 @@ jobs:
           # Process and apply deployment templates
           oc process -f .github/openshift/deploy.database.yml -p ZONE=${{ env.ZONE }} | oc apply -f -
           oc process -f .github/openshift/deploy.backend.yml -p ZONE=${{ env.ZONE }} \
-            -p PROMOTE=${{ github.repository }}:${{ github.event.number }}-backend \
+            -p PROMOTE=${{ github.repository }}:${{ env.ZONE }}-backend \
             -p EMAIL_USERNAME=${{ secrets.CHES_SERVICE_CLIENT }} \
             -p EMAIL_PASSWORD=${{ secrets.CHES_CLIENT_PASSWORD }} \
             -p EMAIL_TOKEN_URL='https://oidc.gov.bc.ca/auth/realms/jbd6rnxw/protocol/openid-connect/token' \
             -p EMAIL_API_URL='https://ches-dev.apps.silver.devops.gov.bc.ca/api/v1' \
             -p NODE_ENV='development' | oc apply -f -
           oc process -f .github/openshift/deploy.frontend.yml -p ZONE=${{ env.ZONE }} \
-            -p PROMOTE=${{ github.repository }}:${{ github.event.number }}-frontend | oc apply -f -
+            -p PROMOTE=${{ github.repository }}:${{ env.ZONE }}-frontend | oc apply -f -
 
           # Follow any active rollouts (see deploymentconfigs)
           oc rollout status dc/${{ env.NAME }}-${{ env.ZONE }}-database -w
 
-          # Run database migration  
+          # Run database migration
           oc exec dc/${{ env.NAME }}-${{ env.ZONE }}-database -- psql -d ${{ env.NAME }} -U ${{ env.NAME }} -c "$(cat backend/src/databasescripts/fsa.sql)"
 
           oc rollout status dc/${{ env.NAME }}-${{ env.ZONE }}-backend -w
@@ -171,3 +211,37 @@ jobs:
           do
             oc delete po ${p}
           done
+
+  zap-backend:
+    name: Backend Pen Tests
+    needs:
+      - deploy-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: ZAP Scan
+        uses: zaproxy/action-full-scan@v0.3.0
+        with:
+          target: https://${{ env.NAME }}-test-backend.apps.silver.devops.gov.bc.ca/
+          cmd_options: "-a"
+          allow_issue_writing: true
+          fail_action: false
+
+  zap-frontend:
+    name: Frontend Pen Tests
+    needs:
+      - deploy-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: ZAP Scan
+        uses: zaproxy/action-full-scan@v0.4.0
+        with:
+          target: https://${{ env.NAME }}-test-frontend.apps.silver.devops.gov.bc.ca/
+          cmd_options: "-a"
+          allow_issue_writing: true
+          fail_action: false
