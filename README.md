@@ -33,6 +33,9 @@ First need to create a new reposiroty in github
     - Test: OC_NAMESPACE (test namespace), OC_TOKEN
 - (Optional) If use the email service by CHES, add the CHES_SERVICE_CLIENT and CHES_CLIENT_PASSWORD to the github repo secrets as well
 
+## Github Repo Setting
+- Add branch protection rules for master/main and dev branch
+
 ## Image Package
 
 - Go the BCGov GitHub organization, search the new repo name, link the package registry to the repo, manage the access to open to public
