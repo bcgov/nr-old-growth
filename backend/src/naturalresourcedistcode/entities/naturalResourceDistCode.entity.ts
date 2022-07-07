@@ -1,9 +1,9 @@
-import { BaseEntity, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { BaseEntity, Column, Entity, PrimaryColumn } from 'typeorm';
 
 @Entity({ name: 'natural_resource_dist_code' })
 export class NaturalResourceDistCodeEntity extends BaseEntity {
 
-  @PrimaryGeneratedColumn({ name: 'natural_resource_dist_code' })
+  @PrimaryColumn({ name: 'natural_resource_dist_code' })
   code: string;
 
   @Column({ name: 'description' })

@@ -1,0 +1,20 @@
+import { HttpModule } from '@nestjs/common';
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { CutblockSubmissionDetailsEntity } from 'src/cutblocksubmissiondetails/entities/cutblockSubmissionDetails.entity';
+import { SubmissionController } from './controllers/submission.controller';
+import { SubmissionEntity } from './entities/submission.entity';
+import { SubmissionService } from './services/submission.service';
+
+@Module({
+  imports: [
+    HttpModule,
+    TypeOrmModule.forFeature([
+      SubmissionEntity,
+      CutblockSubmissionDetailsEntity,
+    ]),
+  ],
+  controllers: [SubmissionController],
+  providers: [SubmissionService],
+})
+export class SubmissionModule {}
