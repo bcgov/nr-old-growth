@@ -37,35 +37,41 @@ First need to create a new reposiroty in github
 
 - Go the BCGov GitHub organization, search the new repo name, link the package registry to the repo, manage the access to open to public
 
+## Namespace
+
+- For new namespace, add the network policy `oc process -f .github/openshift/networkPolicies.yml | oc apply -f -`
+- If require more resources, apply at the [platform registry](https://registry.developer.gov.bc.ca/)
+- If want to store secrets, could use openshift vault, check the tutorial [here](https://github.com/BCDevOps/openshift-wiki/blob/master/docs/Vault/VaultGettingStarted.md)
+
 ## Frontend Local Development
 
 - Create a .env file inside this frontend folder with the following options:
 
-```
-VITE_BACKEND_URL=http://localhost:3000
-```
-- (Optional) If want to enable the login authentication, add the following to the .env file as well, and uncomment the login setting in the `frontend/src/main.ts` file
-```
-VITE_KEYCLOAK_URL=[keycloak authentication url for dev server]
-VITE_KEYCLOAK_CLIENT_ID=[keycloak client name]
-VITE_KEYCLOAK_REALM=[keycloak realm name]
-```
+  ```
+  VITE_BACKEND_URL=http://localhost:3000
+  ```
+  - (Optional) If want to enable the login authentication, add the following to the .env file as well, and uncomment the login setting in the `frontend/src/main.ts` file
+  ```
+  VITE_KEYCLOAK_URL=[keycloak authentication url for dev server]
+  VITE_KEYCLOAK_CLIENT_ID=[keycloak client name]
+  VITE_KEYCLOAK_REALM=[keycloak realm name]
+  ```
 - Install all requirement packages: `npm install`
 - Start the application: `npm start`
 
 ## Backend Local Development
 
 - Create a .env file inside this backend folder with the following options (suppose there is a local postgres db to connect with):
-```
+  ```
   NODE_ENV=development
   POSTGRESQL_USER=[local postgres username]
   POSTGRESQL_PASSWORD=[local postgres password]
   POSTGRESQL_DATABASE=[local postgres database]
   FRONTEND_URL=[enable cors for this frontend url]
   BACKEND_URL=[enable cors for this backend url to enable try in swagger]
-```
+  ```
 - (Optional) If want to use the email service by CHES, add the following to the .env file as well, and uncomment import in the `backend/src/app.module.ts` file
-```
+  ```
   EMAIL_USERNAME=[CHES service dev username]
   EMAIL_PASSWORD=[CHES service dev password]
   // CHES dev authentication url
@@ -73,19 +79,13 @@ VITE_KEYCLOAK_REALM=[keycloak realm name]
   // CHES dev email url
   EMAIL_POST_URL=https://ches-dev.apps.silver.devops.gov.bc.ca/api/v1/email
   EMAIL_FROM=[send from email address]
-```
+  ```
 - Install dependencies `npm install`
 - Start the server `npm start`
 
 ## Database
 
 - There is a sample sql script file at `backend/src/databasescripts/fsa.sql`, to run the script, open pgadmin, login to the db, right click on “Tables” -> “Query Tool” -> copy the query over and run it; right click on the schemas, and refresh to get the update
-
-
-## Namespace
-
-- For new namespace, add the network policy `oc process -f .github/openshift/networkPolicies.yml | oc apply -f -`
-- If require more resources, apply at the [platform registry](https://registry.developer.gov.bc.ca/)
 
 ## Set up visual studio code
 
