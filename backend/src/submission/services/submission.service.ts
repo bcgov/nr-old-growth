@@ -29,12 +29,7 @@ export class SubmissionService {
     return `This action removes a #${id} submission`;
   }
 
-  @Cron("*/5 * * * * *") //Runs every 5 seconds
-  myApiTest() {
-    console.log(".....");
-    this.postData();
-  }
-
+  //@Cron("*/5 * * * * *") //Runs every 5 seconds
   async postData(): Promise<any> {
     //TODO: Add rollback if any save fails
     const newSubmissionEntity = new SubmissionEntity();
