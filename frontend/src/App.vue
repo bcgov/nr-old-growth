@@ -1,8 +1,21 @@
 <template>
   <div>
     <MainHeader />
-    <b-container>
-      <FieldVerificationForm />
+    <b-container style="margin-top: 40px !important">
+      <p>
+        Field Verification Form for IDIR User:
+        <a
+          href="https://chefs.nrs.gov.bc.ca/app/form/submit?f=b15b1975-3caa-4984-a183-471c5610c8a5"
+          >https://chefs.nrs.gov.bc.ca/app/form/submit?f=b15b1975-3caa-4984-a183-471c5610c8a5</a
+        >
+      </p>
+      <p>
+        Field Verification Form for BCEID User:
+        <a
+          href="https://chefs.nrs.gov.bc.ca/app/form/submit?f=e4591d9b-9005-4bd6-8145-2c92ce890d91"
+          >https://chefs.nrs.gov.bc.ca/app/form/submit?f=e4591d9b-9005-4bd6-8145-2c92ce890d91</a
+        >
+      </p>
     </b-container>
   </div>
 </template>
@@ -10,13 +23,11 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import MainHeader from "./common/MainHeader.vue";
-import FieldVerificationForm from "./containers/fieldverificationsubmission/FieldVerificationSubmission.vue";
 
 export default defineComponent({
   name: "App",
   components: {
     MainHeader,
-    FieldVerificationForm,
   },
   data() {
     return {};
