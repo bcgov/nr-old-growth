@@ -13,9 +13,10 @@ async function bootstrap() {
     origin: (origin, callback) => {
       if (!origin || whitelist.indexOf(origin) !== -1) {
         callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
       }
+      // else {
+      //   callback(new Error('Not allowed by CORS'));
+      // }
     },
   });
 
@@ -29,7 +30,7 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, config);
 
-  if (process.env.NODE_ENV && process.env.NODE_ENV === 'development') {
+  if (process.env.NODE_ENV !== 'production') {
     SwaggerModule.setup('api', app, document);
   } else {
     SwaggerModule.setup('api', app, document, {

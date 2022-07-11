@@ -6,10 +6,10 @@ import { EmailEntity } from '../model/email.entity';
 @ApiTags('email')
 @Controller('email')
 export class EmailController {
-  constructor(private EmailService: EmailService) {}
+  constructor(private emailService: EmailService) {}
 
   @Post()
   create(@Body() createEmailDto: EmailEntity) {
-    return this.EmailService.create(createEmailDto);
+    return this.emailService.create(createEmailDto);
   }
 }

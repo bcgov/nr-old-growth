@@ -24,8 +24,12 @@ parameters:
     value: latest
   - name: DOMAIN
     value: apps.silver.devops.gov.bc.ca
+  - name: CPU_LIMIT
+    value: 200m
+  - name: MEMORY_LIMIT
+    value: 1Gi
   - name: CPU_REQUEST
-    value: 100m
+    value: 80m
   - name: MEMORY_REQUEST
     value: 0.5Gi
   - name: REGISTRY
@@ -49,6 +53,12 @@ parameters:
   - name: NODE_ENV
     description: environment mode
     required: true
+  - name: IDIR_FORM_PASSWORD
+    description: CHEFS idir form password
+    required: true
+  - name: BCEID_FORM_PASSWORD
+    description: CHEFS bceid form password
+    required: true
 objects:
   - apiVersion: v1
     kind: Secret
@@ -59,6 +69,8 @@ objects:
     stringData:
       email-username: "${EMAIL_USERNAME}"
       email-password: "${EMAIL_PASSWORD}"
+      idir-form-password: "${IDIR_FORM_PASSWORD}"
+      bceid-form-password: "${BCEID_FORM_PASSWORD}"
   - apiVersion: v1
     kind: ImageStream
     metadata:
@@ -147,11 +159,32 @@ objects:
                   value: "FSA_donotreply@gov.bc.ca"
                 - name: NODE_ENV
                   value: ${NODE_ENV}
+                - name: IDIR_FORM_ID
+                  value: "b15b1975-3caa-4984-a183-471c5610c8a5"
+                - name: IDIR_FORM_VERSION_ID
+                  value: "1ee7d25e-5e8d-447b-b5b2-9f104be8375b"
+                - name: IDIR_FORM_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: ${NAME}-${ZONE}-${COMPONENT}
+                      key: idir-form-password
+                - name: BCEID_FORM_ID
+                  value: "e4591d9b-9005-4bd6-8145-2c92ce890d91"
+                - name: BCEID_FORM_VERSION_ID
+                  value: "cdef18ef-3e08-445d-b5e3-155b7e085fac"
+                - name: BCEID_FORM_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: ${NAME}-${ZONE}-${COMPONENT}
+                      key: bceid-form-password
 
               ports:
                 - containerPort: 3000
                   protocol: TCP
               resources:
+                limits:
+                  cpu: ${CPU_LIMIT}
+                  memory: ${MEMORY_LIMIT}
                 requests:
                   cpu: ${CPU_REQUEST}
                   memory: ${MEMORY_REQUEST}

@@ -1,0 +1,13 @@
+apiVersion: ops.gov.bc.ca/v1alpha1
+kind: SysdigTeam
+metadata:
+  name: d736c3-sysdigteam
+  namespace: d736c3-tools
+spec:
+  team:
+    description: The Sysdig Team for the FSA Namespaces
+    users:
+      - name: mamartinezmejia@gmail.com
+        role: ROLE_TEAM_EDIT
+      - name: mcatherine1994@gmail.com
+        role: ROLE_TEAM_MANAGER
