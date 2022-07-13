@@ -5,7 +5,7 @@ import axios from 'axios';
 import { Cron } from '@nestjs/schedule';
 import { EmailSubmissionLogEntity } from '../entities/emailSubmissionLog.entity';
 import { EmailSubmissionLog } from '../entities/emailSubmissionLog.interface';
-import { from, Observable } from 'rxjs';
+import { from } from 'rxjs';
 
 const oauth = require('axios-oauth-client');
 
