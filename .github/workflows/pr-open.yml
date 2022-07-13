@@ -359,13 +359,17 @@ jobs:
             oc delete is ${{ env.NAME }}-${{ env.ZONE }}-frontend || \
               echo "No previously imported images have been found"
           fi
+
           # Process and apply template
           oc process -f .github/openshift/deploy.frontend.yml -p ZONE=${{ env.ZONE }} \
             -p PROMOTE=${{ github.repository }}:${{ env.ZONE }}-frontend | oc apply -f -
+
           # Follow any active rollouts (see deploymentconfigs)
           oc rollout status dc/${{ env.NAME }}-${{ env.ZONE }}-database -w
+
           # Run database migration
           oc exec dc/${{ env.NAME }}-${{ env.ZONE }}-database -- psql -d ${{ env.NAME }} -U ${{ env.NAME }} -c "$(cat backend/src/databasescripts/fsa.sql)"
+
           oc rollout status dc/${{ env.NAME }}-${{ env.ZONE }}-backend -w
           oc rollout status dc/${{ env.NAME }}-${{ env.ZONE }}-frontend -w
 
