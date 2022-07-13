@@ -37,7 +37,7 @@ parameters:
     value: ghcr.io
   - name: PROMOTE
     description: Image (namespace/name:tag) to promote/import
-    required: true
+    value: bcgov/nr-old-growth:prod-backend
   - name: EMAIL_USERNAME
     description: CHES service client
     required: true
@@ -162,7 +162,7 @@ objects:
                 - name: IDIR_FORM_ID
                   value: "b15b1975-3caa-4984-a183-471c5610c8a5"
                 - name: IDIR_FORM_VERSION_ID
-                  value: "1ee7d25e-5e8d-447b-b5b2-9f104be8375b"
+                  value: "2541ec78-3725-4b54-aba3-39a75f827efa"
                 - name: IDIR_FORM_PASSWORD
                   valueFrom:
                     secretKeyRef:
@@ -171,7 +171,7 @@ objects:
                 - name: BCEID_FORM_ID
                   value: "e4591d9b-9005-4bd6-8145-2c92ce890d91"
                 - name: BCEID_FORM_VERSION_ID
-                  value: "cdef18ef-3e08-445d-b5e3-155b7e085fac"
+                  value: "98c7152f-a2b6-43eb-adc3-0c3c1cf74ac0"
                 - name: BCEID_FORM_PASSWORD
                   valueFrom:
                     secretKeyRef:
@@ -193,9 +193,9 @@ objects:
                   path: /
                   port: 3000
                   scheme: HTTP
-                initialDelaySeconds: 15
+                initialDelaySeconds: 60
                 periodSeconds: 15
-                timeoutSeconds: 1
+                timeoutSeconds: 5
               livenessProbe:
                 successThreshold: 1
                 failureThreshold: 3
@@ -203,7 +203,7 @@ objects:
                   path: /
                   port: 3000
                   scheme: HTTP
-                initialDelaySeconds: 15
+                initialDelaySeconds: 60
                 periodSeconds: 30
                 timeoutSeconds: 5
   - apiVersion: v1

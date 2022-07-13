@@ -3,7 +3,7 @@ kind: Template
 metadata:
   name: ${NAME}
   annotations:
-    description: "Nr-Old-Growth"
+    description: "NR-Old-Growth"
     tags: "nrog"
     iconClass: icon-js
 objects:
