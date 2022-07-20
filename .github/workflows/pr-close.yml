@@ -7,7 +7,7 @@ on:
     branches:
       - main
       - dev
-      -chefs-api
+      - chefs-api
 
 env:
   NAME: nrog
