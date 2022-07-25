@@ -1,7 +1,6 @@
 -- 
 -- TABLE: email_submision_log
 --
-drop table if exists email_submision_log;
 
 drop table if exists email_submission_log;
 
