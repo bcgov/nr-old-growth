@@ -1,7 +1,8 @@
 -- 
 -- TABLE: email_submision_log
 --
-drop table if exists email_submision_log;
+
+drop table if exists email_submission_log;
 
 create table email_submission_log(
     email_submission_log_id     serial          not null,
