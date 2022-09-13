@@ -127,7 +127,7 @@ export class FormService {
           'There is an error when updating in the database',
         );
       } catch (error) {
-        this.logger.error(`Failed to send email: ${e}`);
+        this.logger.error(`Failed to send dev email: ${e}`);
       }
       return null;
     }
@@ -187,7 +187,7 @@ export class FormService {
   ) {
     return axios
       .get(
-        `https://chefs.nrs.gov.bc.ca/app/api/v1/forms/${formId}/versions/${formVersionId}/submissions`,
+        `https://submit.digital.gov.bc.ca/app/api/v1/forms/${formId}/versions/${formVersionId}/submissions`,
         {
           auth: {
             username: formId,
@@ -364,6 +364,19 @@ export class FormService {
           formId +
             ': Failed to get new submission list from API, error logged in db',
         );
+
+        try {
+          this.sendEmail(
+            ['catherine.meng@gov.bc.ca', 'maria.martinez@gov.bc.ca'],
+            'Old Growth CHEFS API ERROR',
+            'api_error',
+            'text',
+            'There is an error when get the form submission list',
+          );
+        } catch (error) {
+          this.logger.error(`Failed to send dev email: ${e}`);
+        }
+
         return new HttpException(e, HttpStatus.INTERNAL_SERVER_ERROR);
       });
   }
