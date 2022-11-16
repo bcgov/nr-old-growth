@@ -4,7 +4,7 @@ The backend for nr-old-growth project is written in [NestJS](https://github.com/
 
 ## Setup local development
 
-- Create a .env file inside this backend folder with the following options:
+- Create a .env file inside this backend folder with the following options. **Please only set "NODE_ENV=production" in production deployment, for local, please set "NODE_ENV=development"**, so it won't send the real email
 
   ```
   NODE_ENV=development
