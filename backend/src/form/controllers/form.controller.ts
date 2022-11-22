@@ -31,6 +31,7 @@ export class FormController {
   ) {
     return this.formService.updateEmailSubmissionLog(
       emailSubmissionLog.confirmationId,
+      emailSubmissionLog.emailType,
       emailSubmissionLog,
     );
   }
