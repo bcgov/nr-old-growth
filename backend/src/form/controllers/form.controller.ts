@@ -10,15 +10,15 @@ import { FormService } from '../services/form.service';
 export class FormController {
   constructor(private formService: FormService) {}
 
-  @Get('/idir/:idirEmailTo')
-  sendIdirEmail(@Param('idirEmailTo') idirEmailTo: string) {
-    return this.formService.handleIDIRForm(idirEmailTo);
-  }
+  // @Get('/idir/:idirEmailTo')
+  // sendIdirEmail(@Param('idirEmailTo') idirEmailTo: string) {
+  //   return this.formService.handleIDIRForm(idirEmailTo);
+  // }
 
-  @Get('/bceid/:bceidEmailTo')
-  sendBceidEmail(@Param('bceidEmailTo') bceidEmailTo: string) {
-    return this.formService.handleBCEIDForm(bceidEmailTo);
-  }
+  // @Get('/bceid/:bceidEmailTo')
+  // sendBceidEmail(@Param('bceidEmailTo') bceidEmailTo: string) {
+  //   return this.formService.handleBCEIDForm(bceidEmailTo);
+  // }
 
   @Get('/findOne/:confirmationId')
   findEmailSubmissionLog(@Param('confirmationId') confirmationId: string) {

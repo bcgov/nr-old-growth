@@ -1,7 +1,6 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import axios from 'axios';
-import { map, catchError } from 'rxjs/operators';
 import { EmailEntity } from '../model/email.entity';
 
 const oauth = require('axios-oauth-client');
@@ -12,39 +11,46 @@ export class EmailService {
 
   getToken() {
     const getClientCredentials = oauth.client(axios.create(), {
-      url: process.env.EMAIL_TOKEN_URL,
+      url: process.env.CHES_TOKEN_URL,
       grant_type: 'client_credentials',
-      client_id: process.env.EMAIL_USERNAME,
-      client_secret: process.env.EMAIL_PASSWORD,
-      scope: '',
+      client_id: process.env.CHES_CLIENT_ID,
+      client_secret: process.env.CHES_CLIENT_SECRET,
     });
 
     return getClientCredentials()
       .then((res) => {
-        if (res) return res.access_token;
+        if (res && res.access_token) return res.access_token;
+        else return null;
       })
       .catch((e) => {
-        throw new HttpException(e, HttpStatus.INTERNAL_SERVER_ERROR);
+        throw new HttpException(
+          `Failed to get email auth token from API: ${e}`,
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
       });
   }
 
-  create(email: EmailEntity) {
-    const email_subject = 'Old Growth Field Observation form and package';
-    const email_tag = 'field_verification_email'; // might link this tag to the submission id
-    const email_type = 'text';
+  sendEmail(email: EmailEntity) {
+    const emailTo = email.emailTo;
+    const emailFrom = email.emailFrom || process.env.CHES_EMAIL_FROM;
+    const emailSubject = email.emailSubject || 'test email';
+    const emailBody = email.emailBody || 'hello world';
+    const emailBodyType = email.emailBodyType || 'text';
+    const emailAttachments = email.emailAttachments || [];
 
     if (
-      !process.env.EMAIL_TOKEN_URL ||
-      !process.env.EMAIL_API_URL ||
-      !process.env.EMAIL_FROM
+      !process.env.CHES_TOKEN_URL ||
+      !process.env.CHES_API_URL ||
+      !process.env.CHES_EMAIL_FROM
     ) {
       throw new HttpException(
-        'Failed to send email, server side missing config of authentication url or CHES email server url or from email address or to email address',
+        'Failed to config email, server side missing config of authentication url' +
+          'or CHES email server url or from email address',
         HttpStatus.BAD_REQUEST,
       );
     }
 
-    if (!email.emailTo) {
+    if (!emailTo) {
       throw new HttpException(
         'Failed to send email, missing required emailTo parameter',
         HttpStatus.BAD_REQUEST,
@@ -54,40 +60,47 @@ export class EmailService {
     return this.getToken()
       .then((access_token) => {
         if (access_token) {
-          return this.httpService
-            .post(
-              `${process.env.EMAIL_API_URL}/email`,
-              {
-                bcc: [],
-                bodyType: email_type,
-                body: email.emailBody || 'Hello World',
-                cc: [],
-                delayTS: 0,
-                encoding: 'utf-8',
-                from: process.env.EMAIL_FROM,
-                priority: 'normal',
-                subject: email_subject,
-                to: email.emailTo,
-                tag: email_tag,
-                attachments: email.emailAttachments || [],
-              },
-              {
-                headers: { Authorization: `Bearer ${access_token}` },
-              },
-            )
-            .pipe(
-              map((r) => {
+          if (process.env.NODE_ENV !== 'production') {
+            return axios
+              .post(
+                `${process.env.CHES_API_URL}/email`,
+                {
+                  bcc: [],
+                  bodyType: emailBodyType,
+                  body: emailBody,
+                  cc: [],
+                  delayTS: 0,
+                  encoding: 'utf-8',
+                  from: emailFrom,
+                  priority: 'normal',
+                  subject: emailSubject,
+                  to: emailTo,
+                  attachments: emailAttachments,
+                },
+                {
+                  headers: {
+                    Authorization: `Bearer ${access_token}`,
+                  },
+                },
+              )
+              .then((r) => {
                 return { status: r.status, data: r.data };
-              }),
-            )
-            .pipe(
-              catchError((e) => {
-                throw new HttpException(e, HttpStatus.INTERNAL_SERVER_ERROR);
-              }),
-            );
+              })
+              .catch((e) => {
+                throw new HttpException(
+                  `Failed to post email to API: ${e}`,
+                  HttpStatus.INTERNAL_SERVER_ERROR,
+                );
+              });
+          } else {
+            return {
+              status: 200,
+              data: 'Not send email in dev deployment',
+            };
+          }
         }
         throw new HttpException(
-          'Failed to send email, failed to get the authentication token',
+          'Failed to get email auth token: response or response access token is null',
           HttpStatus.BAD_REQUEST,
         );
       })

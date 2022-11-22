@@ -7,5 +7,6 @@ import { EmailController } from './controllers/email.controller';
   imports: [HttpModule],
   controllers: [EmailController],
   providers: [EmailService],
+  exports: [EmailService],
 })
 export class EmailModule {}
