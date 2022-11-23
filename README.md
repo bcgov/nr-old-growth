@@ -21,7 +21,7 @@ For the fist version of the Old Growth project, we use [CHEFS](https://bcgov.git
   - our record for this confirmation id indicates a failure code
 - Check if this is an update submission
   - updatedAt time within the last cron job interval, and updatedBy=createdBy and has no record (type update, same submission update time) in our db, or
-  - has no record (type new) in our db and update time is after we enabling the update email service (2022-11-20), or
+  - updated but has no record (type new) in our db and update time is after we enabling the update email service (2022-11-20), or
   - our records (for update) for this confirmation id and this updatedAt time indicates a failure code
 - Send email notification for the new and update submissions
 

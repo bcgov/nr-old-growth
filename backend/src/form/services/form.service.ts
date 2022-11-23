@@ -206,7 +206,7 @@ export class FormService {
 
           /* get update submission list:
           - select the ones with updatedAt date within the last cron job interval, and updatedBy=createdBy, and has no record (type update, same submission update time) in our db
-          - or has no record (type new) in our db and update time after we enable the update email service
+          - or updated but has no record (type new) in our db and update time after we enable the update email service
           - or our records (for update) for this confirmation id indicates a failure code 
           */
           const foundRecordsForUpdate = await this.findUpdateEmailSubmissionLog(
@@ -219,7 +219,9 @@ export class FormService {
               submission.updatedBy &&
               submission.updatedBy == submission.createdBy &&
               foundRecordsForUpdate.length == 0) ||
-            (foundRecordsForUpdate.length == 0 &&
+            (submission.updatedBy &&
+              submission.updatedBy == submission.createdBy &&
+              foundRecordsForUpdate.length == 0 &&
               updatedAtValue > enableEmailUpdateNotificationDate) ||
             (foundRecordsForUpdate.length > 0 &&
               foundRecordsForUpdate[0].code == 'FAILED')
