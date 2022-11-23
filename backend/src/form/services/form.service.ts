@@ -330,7 +330,7 @@ export class FormService {
                 emailSubject: `Old Growth Field Observation form and package, ${eachSubmission.confirmationId}`,
                 emailBody:
                   `<div style="margin-bottom: 16px">An Old Growth Field Observation form and package has been ${text}. Confirmation Number: ${eachSubmission.confirmationId}</div>` +
-                  `<div><a href="https://chefs.nrs.gov.bc.ca/app/form/view?s=${eachSubmission.id}">View the submission</a></div>`,
+                  `<div><a href="https://submit.digital.gov.bc.ca/app/form/view?s=${eachSubmission.id}">View the submission</a></div>`,
                 emailBodyType: 'html',
               };
               response.push(
