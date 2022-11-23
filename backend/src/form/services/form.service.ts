@@ -21,15 +21,15 @@ export class FormService {
     private emailService: EmailService,
   ) {}
 
-  private interval = 1;
+  private interval = 5;
 
   // note: everytime change the cronjob interval, need to adjust the interval below that checks new submissions
   // @Cron('*/10 * * * *') //Runs every 10 minutes
-  @Cron('*/1 * * * *') //Runs every 1 minutes
+  @Cron('*/5 * * * *') //Runs every 5 minutes
   // @Cron('45 * * * * *') // Run every 45 seconds
   // @Cron('*/5 * * * * *') //Runs every 5 seconds
   handleIDIRForm(emailTo: string) {
-    this.logger.debug('called every 1 mins for idir form');
+    this.logger.debug('called every 5 mins for idir form');
     const formId = process.env.IDIR_FORM_ID;
     const formVersionId = process.env.IDIR_FORM_VERSION_ID;
     const formPassword = process.env.IDIR_FORM_PASSWORD;
@@ -263,7 +263,7 @@ export class FormService {
           if (submissionList.length > 0) {
             console.log(
               formId,
-              'new submissions need to send notification: ',
+              'submissions need to send notification: ',
               submissionList,
             );
             let response = [];

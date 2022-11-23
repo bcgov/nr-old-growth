@@ -159,10 +159,11 @@ objects:
                   value: "FSA_donotreply@gov.bc.ca"
                 - name: NODE_ENV
                   value: ${NODE_ENV}
+                # test form
                 - name: IDIR_FORM_ID
                   value: "b6803f31-269b-4406-8cc7-b2bdc80d94dc"
                 - name: IDIR_FORM_VERSION_ID
-                  value: "b2d3458d-79e7-4812-99dc-efcc55ecd130"
+                  value: "21bae274-5f36-4fd7-a14e-89787c468824"
                 - name: IDIR_FORM_PASSWORD
                   value: "4c2f9be4-c4d5-4852-b09e-a8c3d57106dd"
                 # - name: IDIR_FORM_ID
