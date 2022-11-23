@@ -12,7 +12,8 @@ create table email_submission_log(
     form_id                     varchar(50)     null,
     form_version_id             varchar(50)     null,
     create_timestamp            timestamp       default current_timestamp not null,
-    email_type                  varchar(10)     null
+    email_type                  varchar(10)     null,
+    submission_update_timestamp timestamp       null
 )
 ;
 

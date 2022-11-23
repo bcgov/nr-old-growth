@@ -37,10 +37,16 @@ export class EmailSubmissionLogEntity extends BaseEntity {
   createTimestamp: Date;
 
   @ApiPropertyOptional({
-    example: 'NEW',
+    example: 'NEW or UPDATE',
     description:
       'The code indicates if the email sent out for a new submission or for an update submission',
   })
   @Column({ name: 'email_type' })
   emailType: string;
+
+  @ApiPropertyOptional({
+    description: 'The updatedAt time for this submission',
+  })
+  @Column({ name: 'submission_update_timestamp' })
+  submissionUpdatedAt: Date;
 }
