@@ -20,12 +20,12 @@ export class FormController {
   //   return this.formService.handleBCEIDForm(bceidEmailTo);
   // }
 
-  @Get('/findOne/:confirmationId')
+  @Get('/findLog/:confirmationId')
   findEmailSubmissionLog(@Param('confirmationId') confirmationId: string) {
     return this.formService.findEmailSubmissionLog(confirmationId);
   }
 
-  @Post('/update')
+  @Post('/updateLog')
   updateEmailSubmissionLog(
     @Body() emailSubmissionLog: EmailSubmissionLogEntity,
   ) {
@@ -36,7 +36,7 @@ export class FormController {
     );
   }
 
-  @Post()
+  @Post('/postLog')
   create(@Body() emailSubmissionLog: EmailSubmissionLog) {
     return this.formService.postEmailSubmissionLog(emailSubmissionLog);
   }
