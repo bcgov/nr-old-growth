@@ -12,7 +12,7 @@ The Old Growth Technical Advisory Panel identified old growth areas that are at 
 # Overview
 
 The nr-old-growth is a node.js application built with [nestJS](https://docs.nestjs.com), integrated with the [greenfield-template](https://github.com/bcgov/greenfield-template) to automate the process for testing, security scanning, code quality checking, image building and deploying.  
-For the fist version of the Old Growth project, we use [CHEFS](https://bcgov.github.io/common-service-showcase/services/chefs.html) to manage the submission and review of the field verification form. The nr-old-growth applicatin is developed based on the [CHEFS API](https://chefs.nrs.gov.bc.ca/app/api/v1/docs#operation/listSubmissions), that provides an notification system to notify the selected natural resource district office whenever there is a new submission. Using a postgres database to track notification delivery status of submissions and any error log messages.
+For the currrent version of the Old Growth project, we use [CHEFS](https://bcgov.github.io/common-service-showcase/services/chefs.html) to manage the submission and review of the field verification form. The nr-old-growth applicatin is developed based on the [CHEFS API](https://chefs.nrs.gov.bc.ca/app/api/v1/docs#operation/listSubmissions), that provides an notification system to notify the selected natural resource district office whenever there is a new submission. Using a postgres database to track notification delivery status of submissions and any error log messages.
 
 - Use the [CHEFS API](https://submit.digital.gov.bc.ca/app/api/v1/docs#tag/Submission/operation/listSubmissions) to get a list of submissions for the current form version (only the api by form version can return the submission data)
 - Check if this is a new submission
@@ -27,7 +27,7 @@ For the fist version of the Old Growth project, we use [CHEFS](https://bcgov.git
 
 # Setup
 
-Please check the Readme in the backup folder. The main branch only uses the form service in the backend folder, the rest service code, frontend code are just placeholders in case we need further improvement. The self-host-solution code is a placehoder for self-host-solution, is not currently in use
+Please check the Readme in the backup folder.
 
 ## Set up visual studio code
 
@@ -43,3 +43,7 @@ Vetur
 
 **Enable prettier format**:  
 Press "option+shift+f" and select prettier as the formatter
+
+# Note
+
+The self-host-solution branch has the code for self hosted solutions, is not currently in use.

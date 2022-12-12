@@ -60,7 +60,7 @@ export class EmailService {
     return this.getToken()
       .then((access_token) => {
         if (access_token) {
-          if (process.env.NODE_ENV !== 'production') {
+          if (process.env.NODE_ENV == 'production') {
             return axios
               .post(
                 `${process.env.CHES_API_URL}/email`,

@@ -34,62 +34,6 @@ jobs:
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
 
-  # # https://github.com/snyk/snyk
-  # snyk:
-  #   name: Dependency Report
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #   - name: Checkout repository
-  #     uses: actions/checkout@v2
-
-  #   - name: Run Snyk to check for vulnerabilities
-  #     uses: snyk/actions/node@master
-  #     continue-on-error: true # To make sure that SARIF upload gets called
-  #     env:
-  #       SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-  #     with:
-  #       args: --all-projects --severity-threshold=high --sarif-file-output=snyk.sarif
-
-  #   - name: Upload result to GitHub Code Scanning
-  #     uses: github/codeql-action/upload-sarif@v2
-  #     with:
-  #       sarif_file: snyk.sarif
-
-  # sonarcloud:
-  #   name: Static Analysis
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #       # Disable shallow clone for SonarCloud analysis
-  #       with:
-  #         fetch-depth: 0
-
-  #     - name: Backend Tests
-  #       run: |
-  #         cd frontend
-  #         npm ci
-  #         npm run test:cov
-  #     - name: Frontend Tests
-  #       run: |
-  #         cd frontend
-  #         npm ci
-  #         npm run test:cov
-  #     - name: SonarCloud Scan
-  #       uses: SonarSource/sonarcloud-github-action@master
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed to get PR information, if any
-  #         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-  #       with:
-  #         args: >
-  #           -Dsonar.exclusions=**/test/**,.github/**/*
-  #           -Dsonar.organization=bcgov-sonarcloud
-  #           -Dsonar.javascript.lcov.reportPaths=backend/coverage/lcov.info,frontend/coverage/lcov.info
-  #           -Dsonar.cobertura.reportPaths=backend/coverage/cobertura-coverage.xml,frontend/coverage/cobertura-coverage.xml
-  #           -Dsonar.project.monorepo.enabled=true
-  #           -Dsonar.projectKey=greenfield-template
-  #           -Dsonar.sources=backend,frontend
-  #           -Dsonar.tests=backend/test,frontend/test
-
   # https://github.com/marketplace/actions/aqua-security-trivy
   trivy-backend:
     name: Backend Image Report
@@ -112,29 +56,6 @@ jobs:
         uses: github/codeql-action/upload-sarif@v2
         with:
           sarif_file: "trivy-results-backend.sarif"
-
-  # https://github.com/marketplace/actions/aqua-security-trivy
-  trivy-frontend:
-    name: Frontend Image Report
-    runs-on: ubuntu-18.04
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      # Frontend container scan
-      - name: Trivy Image Scan
-        uses: aquasecurity/trivy-action@0.3.0
-        with:
-          image-ref: ${{ env.REGISTRY }}/${{ github.repository }}:test-frontend
-          ignore-unfixed: true
-          severity: CRITICAL
-          format: "sarif"
-          output: "trivy-results-frontend.sarif"
-
-      - name: Upload Trivy results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v2
-        with:
-          sarif_file: "trivy-results-frontend.sarif"
 
   # https://github.com/marketplace/actions/aqua-security-trivy
   trivy-repo:
@@ -214,12 +135,6 @@ jobs:
             oc delete is -l app=${{ env.NAME }}-${{ env.ZONE }}
           fi
 
-          # Create frontend config (Remove the old one if exists)
-          oc delete configmap ${{ env.NAME }}-${{ env.ZONE }}-frontend 2> /dev/null \
-            || true && echo "No existing frontend config"
-          oc create configmap ${{ env.NAME }}-${{ env.ZONE }}-frontend  \
-            --from-literal=config.js="const config = (() => { return { VITE_BACKEND_URL: 'https://${{ env.NAME }}-${{ env.ZONE }}-backend.apps.silver.devops.gov.bc.ca'}; })();"
-
           # Process and apply deployment templates
           oc process -f .github/openshift/deploy.database.yml -p ZONE=${{ env.ZONE }} | oc apply -f -
           oc process -f .github/openshift/deploy.backend.yml -p ZONE=${{ env.ZONE }} \
@@ -231,17 +146,10 @@ jobs:
             -p NODE_ENV='development' \
             -p BCEID_FORM_PASSWORD=${{ secrets.CHEFS_BCEID_FORM_PASSWORD}} \
             -p IDIR_FORM_PASSWORD=${{ secrets.CHEFS_IDIR_FORM_PASSWORD}} | oc apply -f -
-          oc process -f .github/openshift/deploy.frontend.yml -p ZONE=${{ env.ZONE }} \
-            -p PROMOTE=${{ github.repository }}:${{ env.ZONE }}-frontend | oc apply -f -
 
           # Follow any active rollouts (see deploymentconfigs)
           oc rollout status dc/${{ env.NAME }}-${{ env.ZONE }}-database -w
-
-          # Run database migration
-          # oc exec dc/${{ env.NAME }}-${{ env.ZONE }}-database -- psql -d ${{ env.NAME }} -U ${{ env.NAME }} -c "$(cat backend/src/databasescripts/fsa.sql)"
-
           oc rollout status dc/${{ env.NAME }}-${{ env.ZONE }}-backend -w
-          oc rollout status dc/${{ env.NAME }}-${{ env.ZONE }}-frontend -w
 
           # Remove completed build runs, build pods and deployment pods
           for p in $(oc get po | grep "Completed" | awk '{print $1}')
@@ -266,28 +174,10 @@ jobs:
           allow_issue_writing: false
           fail_action: false
 
-  zap-frontend:
-    name: Frontend Pen Tests
-    needs:
-      - deploy-test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
-      - name: ZAP Scan
-        uses: zaproxy/action-full-scan@v0.4.0
-        with:
-          target: https://${{ env.NAME }}-test-frontend.apps.silver.devops.gov.bc.ca/
-          cmd_options: "-a"
-          allow_issue_writing: false
-          fail_action: false
-
   deploy-prod:
     name: PROD Deployment
     needs:
       - zap-backend
-      - zap-frontend
     runs-on: ubuntu-latest
     environment:
       name: prod
@@ -313,12 +203,6 @@ jobs:
               || true && echo "No rollout in progress"
           fi
 
-          # Create frontend config (Remove the old one if exists)
-          oc delete configmap ${{ env.NAME }}-${{ env.ZONE }}-frontend 2> /dev/null \
-            || true && echo "No existing frontend config"
-          oc create configmap ${{ env.NAME }}-${{ env.ZONE }}-frontend  \
-            --from-literal=config.js="const config = (() => { return { VITE_BACKEND_URL: 'https://${{ env.NAME }}-${{ env.ZONE }}-backend.apps.silver.devops.gov.bc.ca'}; })();"
-
           # Process and apply deployment templates
           oc process -f .github/openshift/deploy.database.yml -p ZONE=${{ env.ZONE }} | oc apply -f -
           oc process -f .github/openshift/deploy.backend.yml -p ZONE=${{ env.ZONE }} \
@@ -330,13 +214,10 @@ jobs:
             -p NODE_ENV='production' \
             -p BCEID_FORM_PASSWORD=${{ secrets.CHEFS_BCEID_FORM_PASSWORD}} \
             -p IDIR_FORM_PASSWORD=${{ secrets.CHEFS_IDIR_FORM_PASSWORD}} | oc apply -f -
-          oc process -f .github/openshift/deploy.frontend.yml -p ZONE=${{ env.ZONE }} \
-            -p PROMOTE=${{ github.repository }}:${{ env.PREV }}-frontend | oc apply -f -
 
           # Follow any active rollouts (see deploymentconfigs)
           oc rollout status dc/${{ env.NAME }}-${{ env.ZONE }}-database -w
           oc rollout status dc/${{ env.NAME }}-${{ env.ZONE }}-backend -w
-          oc rollout status dc/${{ env.NAME }}-${{ env.ZONE }}-frontend -w
 
           # Remove completed build runs, build pods and deployment pods
           for p in $(oc get po | grep "Completed" | awk '{print $1}')
@@ -360,13 +241,3 @@ jobs:
           target: ${{ env.PREV }}-backend
           tags: |
             prod-backend
-
-      - name: Promote Frontend Image to PROD
-        uses: shrink/actions-docker-registry-tag@v2
-        with:
-          registry: ghcr.io
-          repository: ${{ github.repository }}
-          token: ${{ secrets.GHCR_TOKEN }}
-          target: ${{ env.PREV }}-frontend
-          tags: |
-            prod-frontend
