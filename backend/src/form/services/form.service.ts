@@ -181,7 +181,7 @@ export class FormService {
           const createdAtValue = new Date(submission.createdAt).valueOf();
           const updatedAtValue = new Date(submission.updatedAt).valueOf();
           const enableEmailUpdateNotificationDate = new Date(
-            '2022-11-20T01:14:17.531Z',
+            '2022-12-12T01:14:17.531Z',
           ).valueOf();
 
           /* get new submission list:
@@ -327,9 +327,9 @@ export class FormService {
               console.log(formId, 'mail to:', emailSendTo);
               const email: EmailEntity = {
                 emailTo: [emailSendTo],
-                emailSubject: `Old Growth Field Observation form and package, ${eachSubmission.confirmationId}`,
+                emailSubject: `Old growth field observation form and package, ${eachSubmission.confirmationId}`,
                 emailBody:
-                  `<div style="margin-bottom: 16px">An Old Growth Field Observation form and package has been ${text}. Confirmation Number: ${eachSubmission.confirmationId}</div>` +
+                  `<div style="margin-bottom: 16px">An old growth field observation form and package has been ${text}. Confirmation number: ${eachSubmission.confirmationId}</div>` +
                   `<div><a href="https://submit.digital.gov.bc.ca/app/form/view?s=${eachSubmission.id}">View the submission</a></div>`,
                 emailBodyType: 'html',
               };
