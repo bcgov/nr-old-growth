@@ -284,7 +284,7 @@ export class FormService {
               const email_type = 'html';
               const email_body =
                 `<div style="margin-bottom: 16px">An Old Growth Field Observation form and package has been submitted. Confirmation Number: ${item.confirmationId}</div>` +
-                `<div><a href="https://chefs.nrs.gov.bc.ca/app/form/view?s=${item.id}">View the submission</a></div>`;
+                `<div><a href="https://submit.digital.gov.bc.ca/app/form/view?s=$${item.id}">View the submission</a></div>`;
 
               response.push(
                 this.sendEmail(
