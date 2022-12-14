@@ -387,7 +387,6 @@ export class FormService {
       grant_type: 'client_credentials',
       client_id: process.env.EMAIL_USERNAME,
       client_secret: process.env.EMAIL_PASSWORD,
-      scope: '',
     });
 
     return getClientCredentials()
