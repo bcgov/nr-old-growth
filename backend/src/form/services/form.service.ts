@@ -21,22 +21,21 @@ export class FormService {
     private emailService: EmailService,
   ) {}
 
-  private interval = 5;
-
   // note: everytime change the cronjob interval, need to adjust the interval below that checks new submissions
-  // @Cron('*/10 * * * *') //Runs every 10 minutes
-  @Cron('*/5 * * * *') //Runs every 5 minutes
+  private interval = 10;
+  @Cron('*/10 * * * *') //Runs every 10 minutes
+  // @Cron('*/1 * * * *') //Runs every 1 minutes
   // @Cron('45 * * * * *') // Run every 45 seconds
   // @Cron('*/5 * * * * *') //Runs every 5 seconds
   handleIDIRForm(emailTo: string) {
-    this.logger.debug('called every 5 mins for idir form');
+    this.logger.debug('called every 10 mins for idir form');
     const formId = process.env.IDIR_FORM_ID;
     const formVersionId = process.env.IDIR_FORM_VERSION_ID;
     const formPassword = process.env.IDIR_FORM_PASSWORD;
     return this.handleSubmissions(emailTo, formId, formVersionId, formPassword);
   }
 
-  // @Cron('*/10 * * * *')
+  @Cron('*/10 * * * *')
   handleBCEIDForm(emailTo: string) {
     this.logger.debug('called every 10 mins for bceid form');
     const formId = process.env.BCEID_FORM_ID;
@@ -181,7 +180,7 @@ export class FormService {
           const createdAtValue = new Date(submission.createdAt).valueOf();
           const updatedAtValue = new Date(submission.updatedAt).valueOf();
           const enableEmailUpdateNotificationDate = new Date(
-            '2022-12-12T01:14:17.531Z',
+            '2022-12-14T01:14:17.531Z',
           ).valueOf();
 
           /* get new submission list:
@@ -377,10 +376,12 @@ export class FormService {
             return Promise.all(response);
           } else {
             this.logger.debug(
-              `${formId}: No new submission within the last cron job interval`,
+              `${formId}: No new or updated submission within the last cron job interval`,
             );
             return [
-              { msg: 'No new submission within the last cron job interval' },
+              {
+                msg: 'No new or updated submission within the last cron job interval',
+              },
             ];
           }
         } else {
