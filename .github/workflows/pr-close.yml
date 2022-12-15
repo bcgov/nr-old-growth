@@ -41,15 +41,6 @@ jobs:
           target: ${{ github.event.number }}-backend
           tags: |
             test-backend
-      - name: Promote Frontend Image to TEST
-        uses: shrink/actions-docker-registry-tag@v2
-        with:
-          registry: ghcr.io
-          repository: ${{ github.repository }}
-          token: ${{ secrets.GHCR_TOKEN }}
-          target: ${{ github.event.number }}-frontend
-          tags: |
-            test-frontend
 
   merge-notification:
     name: Merge Notification
