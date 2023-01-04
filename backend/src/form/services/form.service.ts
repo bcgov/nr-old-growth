@@ -180,7 +180,7 @@ export class FormService {
           const createdAtValue = new Date(submission.createdAt).valueOf();
           const updatedAtValue = new Date(submission.updatedAt).valueOf();
           const enableEmailUpdateNotificationDate = new Date(
-            '2022-12-14T01:14:17.531Z',
+            '2023-01-09T01:14:17.531Z',
           ).valueOf();
 
           /* get new submission list:
