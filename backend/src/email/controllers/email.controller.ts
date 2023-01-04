@@ -10,6 +10,6 @@ export class EmailController {
 
   @Post()
   create(@Body() createEmailDto: EmailEntity) {
-    return this.emailService.create(createEmailDto);
+    return this.emailService.sendEmail(createEmailDto);
   }
 }

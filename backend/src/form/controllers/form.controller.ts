@@ -10,38 +10,39 @@ import { FormService } from '../services/form.service';
 export class FormController {
   constructor(private formService: FormService) {}
 
-  @Get('/idir/:idirEmailTo')
-  sendIdirEmail(@Param('idirEmailTo') idirEmailTo: string) {
-    return this.formService.handleIDIRForm(idirEmailTo);
+  // @Get('/idir/:idirEmailTo')
+  // sendIdirEmail(@Param('idirEmailTo') idirEmailTo: string) {
+  //   return this.formService.handleIDIRForm(idirEmailTo);
+  // }
+
+  // @Get('/bceid/:bceidEmailTo')
+  // sendBceidEmail(@Param('bceidEmailTo') bceidEmailTo: string) {
+  //   return this.formService.handleBCEIDForm(bceidEmailTo);
+  // }
+
+  @Get('/getAllEmailSubmissionLogs')
+  findAllEmailSubmissionLogs() {
+    return this.formService.findAllEmailSubmissionLogs();
   }
 
-  @Get('/bceid/:bceidEmailTo')
-  sendBceidEmail(@Param('bceidEmailTo') bceidEmailTo: string) {
-    return this.formService.handleBCEIDForm(bceidEmailTo);
-  }
-
-  @Get('/findOne/:confirmationId')
+  @Get('/findLog/:confirmationId')
   findEmailSubmissionLog(@Param('confirmationId') confirmationId: string) {
     return this.formService.findEmailSubmissionLog(confirmationId);
   }
 
-  @Post('/update')
+  @Post('/updateLog')
   updateEmailSubmissionLog(
     @Body() emailSubmissionLog: EmailSubmissionLogEntity,
   ) {
     return this.formService.updateEmailSubmissionLog(
       emailSubmissionLog.confirmationId,
+      emailSubmissionLog.emailType,
       emailSubmissionLog,
     );
   }
 
-  @Post()
+  @Post('/postLog')
   create(@Body() emailSubmissionLog: EmailSubmissionLog) {
     return this.formService.postEmailSubmissionLog(emailSubmissionLog);
-  }
-
-  @Get('/getAllEmailSubmissionLogs')
-  findAllEmailSubmissionLogs() {
-    return this.formService.findAllEmailSubmissionLogs();
   }
 }
