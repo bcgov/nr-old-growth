@@ -109,6 +109,17 @@ export class FormService {
               emailSubmissionLog.emailType,
               { code: emailSubmissionLog.code },
             );
+          } else {
+            const foundLog = await this.findEmailSubmissionLog(
+              emailSubmissionLog.confirmationId,
+            );
+            if (foundLog && foundLogForNew.length > 0) {
+              return this.updateEmailSubmissionLog(
+                emailSubmissionLog.confirmationId,
+                emailSubmissionLog.emailType,
+                { code: emailSubmissionLog.code },
+              );
+            }
           }
         } else if (emailSubmissionLog.emailType == 'UPDATE') {
           emailSubmissionLogEntity.submissionUpdatedAt =
@@ -205,7 +216,7 @@ export class FormService {
 
           /* get update submission list:
           - select the ones with updatedAt date within the last cron job interval, and updatedBy=createdBy, and has no record (type update, same submission update time) in our db
-          - or updated but has no record (type new) in our db and update time after we enable the update email service
+          - or updated but has no record (type update) in our db and update time after we enable the update email service
           - or our records (for update) for this confirmation id indicates a failure code 
           */
           const foundRecordsForUpdate = await this.findUpdateEmailSubmissionLog(
