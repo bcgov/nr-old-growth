@@ -16,8 +16,8 @@ For the currrent version of the Old Growth project, we use [CHEFS](https://bcgov
 
 - Use the [CHEFS API](https://submit.digital.gov.bc.ca/app/api/v1/docs#tag/Submission/operation/listSubmissions) to get a list of submissions for the current form version (only the api by form version can return the submission data)
 - Check if this is a new submission
-  - createdAt time within last cron job interval and has no record (type new) in our db, or
-  - has no record (type new) in our db, or
+  - createdAt time within last cron job interval and has no record in our db, or
+  - has no record in our db, or
   - our record for this confirmation id indicates a failure code
 - Check if this is an update submission
   - updatedAt time within the last cron job interval, and updatedBy=createdBy and has no record (type update, same submission update time) in our db, or
