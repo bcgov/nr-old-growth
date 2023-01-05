@@ -110,6 +110,7 @@ export class FormService {
               { code: emailSubmissionLog.code },
             );
           } else {
+            /* this is the case for old logs which has confirmation number, but didn't introduce the email type feature yet, update them to have email type 'NEW' */
             const foundLog = await this.findEmailSubmissionLog(
               emailSubmissionLog.confirmationId,
             );
