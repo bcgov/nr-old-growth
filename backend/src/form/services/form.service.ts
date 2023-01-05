@@ -114,7 +114,7 @@ export class FormService {
             const foundLog = await this.findEmailSubmissionLog(
               emailSubmissionLog.confirmationId,
             );
-            if (foundLog && foundLogForNew.length > 0) {
+            if (foundLog && foundLog.length > 0) {
               return this.updateEmailSubmissionLog(
                 emailSubmissionLog.confirmationId,
                 emailSubmissionLog.emailType,
