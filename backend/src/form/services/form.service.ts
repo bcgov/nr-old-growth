@@ -184,20 +184,19 @@ export class FormService {
           ).valueOf();
 
           /* get new submission list:
-          - select the ones with createdAt date within the last cron job interval, and state is submitted, and has no record (type new) in our db
-          - has no record (type new) in our db or our record for this confirmation id indicates a failure code 
+          - select the ones with createdAt date within the last cron job interval, and state is submitted, and has no record in our db
+          - has no record in our db or our record for this confirmation id indicates a failure code 
           */
-          const foundRecordsForNew = await this.findNewEmailSubmissionLog(
+          const foundRecords = await this.findEmailSubmissionLog(
             submission.confirmationId,
           );
           if (
             (createdAtValue > lastTimeValue &&
               createdAtValue <= currTimeValue &&
               submission.submission.state == 'submitted' &&
-              foundRecordsForNew.length == 0) ||
-            foundRecordsForNew.length == 0 ||
-            (foundRecordsForNew.length > 0 &&
-              foundRecordsForNew[0].code == 'FAILED')
+              foundRecords.length == 0) ||
+            foundRecords.length == 0 ||
+            (foundRecords.length > 0 && foundRecords[0].code == 'FAILED')
           ) {
             submission.emailType = 'NEW';
             returnSubmissions.push(submission);
