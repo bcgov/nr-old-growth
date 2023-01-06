@@ -414,7 +414,12 @@ export class FormService {
   sendErrorNotification(errorMsg) {
     this.logger.error('Send error notification email');
     const email: EmailEntity = {
-      emailTo: ['catherine.meng@gov.bc.ca', 'maria.martinez@gov.bc.ca'],
+      emailTo: [
+        'catherine.meng@gov.bc.ca',
+        'maria.martinez@gov.bc.ca',
+        'ziad.bhunnoo@gov.bc.ca',
+        'paulo.cruz@encora.com',
+      ],
       emailSubject: 'Old Growth Email Notification Error',
       emailBody: errorMsg,
     };
