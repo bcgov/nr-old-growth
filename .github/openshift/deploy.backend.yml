@@ -38,17 +38,17 @@ parameters:
   - name: PROMOTE
     description: Image (namespace/name:tag) to promote/import
     value: bcgov/nr-old-growth:prod-backend
-  - name: EMAIL_USERNAME
-    description: CHES service client
+  - name: CHES_CLIENT_ID
+    description: CHES service client id
     required: true
-  - name: EMAIL_PASSWORD
-    description: CHES service client password
+  - name: CHES_CLIENT_SECRET
+    description: CHES service client secret
     required: true
-  - name: EMAIL_TOKEN_URL
-    description: CHES authentication url
+  - name: CHES_TOKEN_URL
+    description: CHES service authentication url
     required: true
-  - name: EMAIL_API_URL
-    description: CHES email api url
+  - name: CHES_API_URL
+    description: CHES service api url
     required: true
   - name: NODE_ENV
     description: environment mode
@@ -67,8 +67,8 @@ objects:
       labels:
         app: ${NAME}-${ZONE}
     stringData:
-      email-username: "${EMAIL_USERNAME}"
-      email-password: "${EMAIL_PASSWORD}"
+      ches-client-id: "${CHES_CLIENT_ID}"
+      ches-client-secret: "${CHES_CLIENT_SECRET}"
       idir-form-password: "${IDIR_FORM_PASSWORD}"
       bceid-form-password: "${BCEID_FORM_PASSWORD}"
   - apiVersion: v1
@@ -141,24 +141,31 @@ objects:
                   value: https://${NAME}-${ZONE}-frontend.${DOMAIN}
                 - name: BACKEND_URL
                   value: https://${NAME}-${ZONE}-backend.${DOMAIN}
-                - name: EMAIL_USERNAME
+                - name: CHES_CLIENT_ID
                   valueFrom:
                     secretKeyRef:
                       name: ${NAME}-${ZONE}-${COMPONENT}
-                      key: email-username
-                - name: EMAIL_PASSWORD
+                      key: ches-client-id
+                - name: CHES_CLIENT_SECRET
                   valueFrom:
                     secretKeyRef:
                       name: ${NAME}-${ZONE}-${COMPONENT}
-                      key: email-password
-                - name: EMAIL_TOKEN_URL
-                  value: ${EMAIL_TOKEN_URL}
-                - name: EMAIL_API_URL
-                  value: ${EMAIL_API_URL}
-                - name: EMAIL_FROM
+                      key: ches-client-secret
+                - name: CHES_TOKEN_URL
+                  value: ${CHES_TOKEN_URL}
+                - name: CHES_API_URL
+                  value: ${CHES_API_URL}
+                - name: CHES_EMAIL_FROM
                   value: "FSA_donotreply@gov.bc.ca"
                 - name: NODE_ENV
                   value: ${NODE_ENV}
+                # test form
+                # - name: IDIR_FORM_ID
+                #   value: "b6803f31-269b-4406-8cc7-b2bdc80d94dc"
+                # - name: IDIR_FORM_VERSION_ID
+                #   value: "21bae274-5f36-4fd7-a14e-89787c468824"
+                # - name: IDIR_FORM_PASSWORD
+                #   value: ""
                 - name: IDIR_FORM_ID
                   value: "b15b1975-3caa-4984-a183-471c5610c8a5"
                 - name: IDIR_FORM_VERSION_ID

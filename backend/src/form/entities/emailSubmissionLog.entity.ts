@@ -3,7 +3,6 @@ import { BaseEntity, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity({ name: 'email_submission_log' })
 export class EmailSubmissionLogEntity extends BaseEntity {
-
   @PrimaryGeneratedColumn({ name: 'email_submission_log_id' })
   id: number;
 
@@ -37,4 +36,17 @@ export class EmailSubmissionLogEntity extends BaseEntity {
   @Column({ name: 'create_timestamp' })
   createTimestamp: Date;
 
+  @ApiPropertyOptional({
+    example: 'NEW or UPDATE',
+    description:
+      'The code indicates if the email sent out for a new submission or for an update submission',
+  })
+  @Column({ name: 'email_type' })
+  emailType: string;
+
+  @ApiPropertyOptional({
+    description: 'The updatedAt time for this submission',
+  })
+  @Column({ name: 'submission_update_timestamp' })
+  submissionUpdatedAt: Date;
 }
