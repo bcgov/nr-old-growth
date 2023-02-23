@@ -59,7 +59,32 @@ parameters:
   - name: BCEID_FORM_PASSWORD
     description: CHEFS bceid form password
     required: true
+  - name: INIT_IMAGE
+    description: Imaged used by the init process
+    value: groundnuty/k8s-wait-for:1.3
 objects:
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: postgres-configmap
+      namespace: migration
+    data:
+      V1__clean_table.sql: drop table if exists email_submission_log;
+      V2__ddl.sql: |
+        create table email_submission_log(
+          email_submission_log_id     serial          not null,
+          code                        varchar(10)     not null,
+          exception_log               varchar(500)    null,
+          confirmation_id             varchar(10)     null,
+          form_id                     varchar(50)     null,
+          form_version_id             varchar(50)     null,
+          create_timestamp            timestamp       default current_timestamp not null,
+          email_type                  varchar(10)     null,
+          submission_update_timestamp timestamp       null
+        );
+      V3__alter.sql: |
+        alter table email_submission_log add 
+          constraint email_submission_log_id primary key (email_submission_log_id);
   - apiVersion: v1
     kind: Secret
     metadata:
@@ -115,6 +140,35 @@ objects:
             app: ${NAME}-${ZONE}
             deploymentconfig: ${NAME}-${ZONE}-${COMPONENT}
         spec:
+          initContainers:
+            - name: ${NAME}-init
+              image: ${INIT_IMAGE}
+              imagePullPolicy: Always
+              args: 
+                - migrate
+              env:                
+                - name: FLYWAY_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: ${NAME}-${ZONE}-database
+                      key: database-conn
+                - name: FLYWAY_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: ${NAME}-${ZONE}-database
+                      key: database-password
+                - name: FLYWAY_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: ${NAME}-${ZONE}-database
+                      key: database-user                
+              volumeMounts:
+                - mountPath: /flyway/sql
+                  name: migration
+          volumes:
+            - name: migration
+              configMap:
+                name: postgres-configmap
           containers:
             - image: ${NAME}-${ZONE}-${COMPONENT}:${IMAGE_TAG}
               imagePullPolicy: Always
