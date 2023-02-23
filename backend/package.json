@@ -4,7 +4,7 @@
   "description": "Backend for old growth project",
   "private": true,
   "license": "UNLICENSED",
-  "author": "Derek Roberts, Catherine Meng, Maria Martinez",
+  "author": "Derek Roberts, Catherine Meng, Maria Martinez, Paulo Cruz",
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "nest build",
