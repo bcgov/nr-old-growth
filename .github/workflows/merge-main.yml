@@ -4,240 +4,178 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - ".github/ISSUE_TEMPLATE/*"
+      - "**.md"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
 
 env:
   REGISTRY: ghcr.io
   NAME: nrog
 
 jobs:
+  #TODO: check sonar for OG
+  tests-backend:
+    name: Frontend Unit Tests
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
+    runs-on: ubuntu-22.04
+    continue-on-error: true
+    steps:
+      - name: Test app
+        uses: bcgov-nr/action-test-and-analyse@v0.0.1
+        with:
+          commands: |
+            npm ci
+            npm run test:cov
+          dir: frontend
+          sonar_args: >
+            -Dsonar.exclusions=**/coverage/**,**/examples/**,**/pages/**
+            -Dsonar.organization=bcgov-sonarcloud
+            -Dsonar.projectKey=forest-client-frontend
+            -Dsonar.tests=test
+          sonar_project_token: ${{ secrets.SONAR_TOKEN_BACKEND }}
+
+      - name: Report code coverage
+        uses: romeovs/lcov-reporter-action@v0.3.1
+        with:
+          title: Backend coverage report
+          delete-old-comments: true
+          github-token: ${{ secrets.GHCR_TOKEN }}
+          lcov-file: ./backend/coverage/lcov.info
+  
   codeql:
     name: Semantic Code Analysis
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
+    needs:
+      - tests-backend
     permissions:
       actions: read
       contents: read
       security-events: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Initialize
         uses: github/codeql-action/init@v2
         with:
           languages: javascript
 
-      # Autobuild attempts to build any compiled languages  (C/C++, C#, or Java).
-      # If this step fails, then you should remove it and run the build manually (see below)
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v2
+      - name: Build Backend
+        run: |
+          cd backend
+          npm ci
+          npm run build
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
 
-  # https://github.com/marketplace/actions/aqua-security-trivy
-  trivy-backend:
-    name: Backend Image Report
-    runs-on: ubuntu-18.04
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      # Backend container scan
-      - name: Trivy Image Scan
-        uses: aquasecurity/trivy-action@0.3.0
-        with:
-          image-ref: ${{ env.REGISTRY }}/${{ github.repository }}:test-backend
-          ignore-unfixed: true
-          severity: CRITICAL
-          format: "sarif"
-          output: "trivy-results-backend.sarif"
-
-      - name: Upload Trivy results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v2
-        with:
-          sarif_file: "trivy-results-backend.sarif"
-
-  # https://github.com/marketplace/actions/aqua-security-trivy
-  trivy-repo:
-    name: Repository Report
-    runs-on: ubuntu-18.04
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Run Trivy vulnerability scanner in repo mode
-        uses: aquasecurity/trivy-action@0.3.0
-        with:
-          scan-type: "fs"
-          ignore-unfixed: true
-          format: "sarif"
-          output: "trivy-results.sarif"
-          severity: "CRITICAL"
-
-      - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v2
-        with:
-          sarif_file: "trivy-results.sarif"
-
-  # https://github.com/marketplace/actions/aqua-security-trivy
-  trivy-rhel-ubi:
-    name: Base Image Report
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-
-      - name: Trivy Vulnerability Scan
-        uses: aquasecurity/trivy-action@0.3.0
-        with:
-          image-ref: registry.access.redhat.com/ubi8/ubi
-          ignore-unfixed: true
-          severity: CRITICAL
-          format: "sarif"
-          output: "trivy-results.sarif"
-
-      - name: Upload Trivy results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v2
-        with:
-          sarif_file: "trivy-results.sarif"
-
-  cleanup-ghcr:
-    name: Cleanup Container Registry
-    runs-on: ubuntu-latest
-    steps:
-      # https://github.com/marketplace/actions/ghcr-io-container-cleanup
-      - name: Delete old packages
-        uses: davahome/ghcr-cleanup@v1
-        with:
-          token: ${{ secrets.GHCR_TOKEN }}
-          package: ${{ github.event.repository.name }}
-          owner: orgs/bcgov
-          skip_tags: prod-frontend,prod-backend
-
-  deploy-test:
-    name: TEST Deployment
-    runs-on: ubuntu-latest
-    environment:
-      name: test
+  deploy-test-database:
+    name: Deploy Database on Test Env
+    needs:
+      - tests-backend
     env:
       ZONE: test
+    environment: test
+    runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v2
-      - name: Deploy
-        run: |
-          # Login to OpenShift and select project
-          oc login --token=${{ secrets.OC_TOKEN }} --server=${{ secrets.OC_SERVER }}
-          oc project ${{ secrets.OC_NAMESPACE }}
-
-          # Clear stale images for import/replacement
-          if [ $(oc get is -l app=${{ env.NAME }}-${{ env.ZONE }} -o name | grep -v database | wc -l) -gt 0 ]; then
-            oc delete is -l app=${{ env.NAME }}-${{ env.ZONE }}
-          fi
-
-          # Process and apply deployment templates
-          oc process -f .github/openshift/deploy.database.yml -p ZONE=${{ env.ZONE }} | oc apply -f -
-          oc process -f .github/openshift/deploy.backend.yml -p ZONE=${{ env.ZONE }} \
-            -p PROMOTE=${{ github.repository }}:${{ env.ZONE }}-backend \
-            -p CHES_CLIENT_ID=${{ secrets.CHES_CLIENT_ID }} \
-            -p CHES_CLIENT_SECRET=${{ secrets.CHES_CLIENT_SECRET }} \
-            -p CHES_TOKEN_URL='https://test.loginproxy.gov.bc.ca/auth/realms/comsvcauth/protocol/openid-connect/token' \
-            -p CHES_API_URL='https://ches-test.api.gov.bc.ca/api/v1' \
-            -p NODE_ENV='development' \
-            -p BCEID_FORM_PASSWORD=${{ secrets.CHEFS_BCEID_FORM_PASSWORD}} \
-            -p IDIR_FORM_PASSWORD=${{ secrets.CHEFS_IDIR_FORM_PASSWORD}} | oc apply -f -
-
-          # Follow any active rollouts (see deploymentconfigs)
-          oc rollout status dc/${{ env.NAME }}-${{ env.ZONE }}-database -w
-          oc rollout status dc/${{ env.NAME }}-${{ env.ZONE }}-backend -w
-
-          # Remove completed build runs, build pods and deployment pods
-          for p in $(oc get po | grep "Completed" | awk '{print $1}')
-          do
-            oc delete po ${p}
-          done
-
-  zap-backend:
-    name: Backend Pen Tests
-    needs:
-      - deploy-test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
-      - name: ZAP Scan
-        uses: zaproxy/action-full-scan@v0.3.0
+      - uses: actions/checkout@v3
+      - name: Deploys
+        uses: bcgov-nr/action-deployer-openshift@v1.0.2
         with:
-          target: https://${{ env.NAME }}-test-backend.apps.silver.devops.gov.bc.ca/
-          cmd_options: "-a"
-          allow_issue_writing: false
-          fail_action: false
+          file: .github/openshift/deploy.database.yml
+          oc_namespace: ${{ secrets.OC_NAMESPACE }}
+          oc_server: ${{ secrets.OC_SERVER }}
+          oc_token: ${{ secrets.OC_TOKEN }}
+          overwrite: false
+          penetration_test: false
+          parameters:
+            -p ZONE=${{ env.ZONE }} -p NAME=${{ github.event.repository.name }}
 
-  deploy-prod:
-    name: PROD Deployment
+  deploy-test-backend:
+    name: Deploy Backend on Test Env
     needs:
-      - zap-backend
-    runs-on: ubuntu-latest
-    environment:
-      name: prod
+      - deploy-test-database
     env:
-      ZONE: prod
-      PREV: test
+      ZONE: test
+    environment: test
+    runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v2
-      - name: Deploy
-        run: |
-          # Login to OpenShift and select project
-          oc login --token=${{ secrets.OC_TOKEN }} --server=${{ secrets.OC_SERVER }}
-          oc project ${{ secrets.OC_NAMESPACE }}
-
-          # Clear stale images for import/replacement
-          if [ $(oc get is -l app=${{ env.NAME }}-${{ env.ZONE }} -o name | grep -v database | wc -l) -gt 0 ]; then
-            oc delete is -l app=${{ env.NAME }}-${{ env.ZONE }}
-          fi
-
-          # Cancel db backup rollout if exists
-          if [ $(oc get dc -l app=backup-container -o name | wc -l) -gt 0 ]; then
-            oc rollout cancel dc/${{ env.NAME }}-${{ env.ZONE }}-dbbackup 2> /dev/null \
-              || true && echo "No rollout in progress"
-          fi
-
-          # Process and apply deployment templates
-          oc process -f .github/openshift/deploy.database.yml -p ZONE=${{ env.ZONE }} | oc apply -f -
-          oc process -f .github/openshift/deploy.backend.yml -p ZONE=${{ env.ZONE }} \
-            -p PROMOTE=${{ github.repository }}:${{ env.PREV }}-backend \
-            -p CHES_CLIENT_ID=${{ secrets.CHES_CLIENT_ID }} \
-            -p CHES_CLIENT_SECRET=${{ secrets.CHES_CLIENT_SECRET }} \
-            -p CHES_TOKEN_URL='https://loginproxy.gov.bc.ca/auth/realms/comsvcauth/protocol/openid-connect/token' \
-            -p CHES_API_URL='https://ches.api.gov.bc.ca/api/v1' \
-            -p NODE_ENV='production' \
-            -p BCEID_FORM_PASSWORD=${{ secrets.CHEFS_BCEID_FORM_PASSWORD}} \
-            -p IDIR_FORM_PASSWORD=${{ secrets.CHEFS_IDIR_FORM_PASSWORD}} | oc apply -f -
-
-          # Follow any active rollouts (see deploymentconfigs)
-          oc rollout status dc/${{ env.NAME }}-${{ env.ZONE }}-database -w
-          oc rollout status dc/${{ env.NAME }}-${{ env.ZONE }}-backend -w
-
-          # Remove completed build runs, build pods and deployment pods
-          for p in $(oc get po | grep "Completed" | awk '{print $1}')
-          do
-            oc delete po ${p}
-          done
-
-          # Restart db backup rollout if exists
-          if [ $(oc get dc -l app=backup-container -o name | wc -l) -gt 0 ]; then
-            oc rollout latest dc/${{ env.NAME }}-${{ env.ZONE }}-dbbackup 2> /dev/null \
-              || true && echo "Rollout in progress"
-            oc logs -f dc/${{ env.NAME }}-${{ env.ZONE }}-dbbackup
-          fi
-
-      - name: Promote Backend Image to PROD
-        uses: shrink/actions-docker-registry-tag@v2
+      - uses: actions/checkout@v3
+      - name: Deploys
+        uses: bcgov-nr/action-deployer-openshift@v1.0.2
         with:
-          registry: ghcr.io
-          repository: ${{ github.repository }}
-          token: ${{ secrets.GHCR_TOKEN }}
-          target: ${{ env.PREV }}-backend
-          tags: |
-            prod-backend
+          file: .github/openshift/deploy.backend.yml
+          oc_namespace: ${{ secrets.OC_NAMESPACE }}
+          oc_server: ${{ secrets.OC_SERVER }}
+          oc_token: ${{ secrets.OC_TOKEN }}
+          overwrite: true
+          penetration_test: true          
+          parameters:
+            -p ZONE=${{ env.ZONE }} -p NAME=${{ github.event.repository.name }}
+            -p PROMOTE=${{ github.repository }}/backend:${{ env.ZONE }}
+            -p CHES_CLIENT_ID=${{ secrets.CHES_CLIENT_ID }}
+            -p CHES_CLIENT_SECRET=${{ secrets.CHES_CLIENT_SECRET }}
+            -p CHES_TOKEN_URL='https://test.loginproxy.gov.bc.ca/auth/realms/comsvcauth/protocol/openid-connect/token'
+            -p CHES_API_URL='https://ches-test.api.gov.bc.ca/api/v1'
+            -p NODE_ENV='development'
+            -p BCEID_FORM_PASSWORD=${{ secrets.CHEFS_BCEID_FORM_PASSWORD}}
+            -p IDIR_FORM_PASSWORD=${{ secrets.CHEFS_IDIR_FORM_PASSWORD}}
+
+  deploy-prod-database:
+    name: Deploy Database on Prod Env
+    needs:
+      - deploy-test-backend
+    env:
+      PREV: test
+      ZONE: prod
+    environment: test
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Deploys
+        uses: bcgov-nr/action-deployer-openshift@v1.0.2
+        with:
+          file: .github/openshift/deploy.database.yml
+          oc_namespace: ${{ secrets.OC_NAMESPACE }}
+          oc_server: ${{ secrets.OC_SERVER }}
+          oc_token: ${{ secrets.OC_TOKEN }}
+          overwrite: false
+          penetration_test: false
+          parameters:
+            -p ZONE=${{ env.ZONE }} -p NAME=${{ github.event.repository.name }}
+
+  deploy-prod-backend:
+    name: Deploy Backend on Prod Env
+    needs:
+      - deploy-prod-database
+    env:
+      PREV: test
+      ZONE: prod
+    environment: test
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Deploys
+        uses: bcgov-nr/action-deployer-openshift@v1.0.2
+        with:
+          file: .github/openshift/deploy.backend.yml
+          oc_namespace: ${{ secrets.OC_NAMESPACE }}
+          oc_server: ${{ secrets.OC_SERVER }}
+          oc_token: ${{ secrets.OC_TOKEN }}
+          overwrite: true
+          penetration_test: true          
+          parameters:
+            -p ZONE=${{ env.ZONE }} -p NAME=${{ github.event.repository.name }}
+            -p PROMOTE=${{ github.repository }}/backend:${{ env.PREV }}
+            -p CHES_CLIENT_ID=${{ secrets.CHES_CLIENT_ID }}
+            -p CHES_CLIENT_SECRET=${{ secrets.CHES_CLIENT_SECRET }}
+            -p CHES_TOKEN_URL='https://loginproxy.gov.bc.ca/auth/realms/comsvcauth/protocol/openid-connect/token'
+            -p CHES_API_URL='https://ches.api.gov.bc.ca/api/v1'
+            -p NODE_ENV='production'
+            -p BCEID_FORM_PASSWORD=${{ secrets.CHEFS_BCEID_FORM_PASSWORD}}
+            -p IDIR_FORM_PASSWORD=${{ secrets.CHEFS_IDIR_FORM_PASSWORD}}

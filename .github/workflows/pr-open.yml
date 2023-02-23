@@ -10,214 +10,157 @@ env:
   REGISTRY: ghcr.io
   NAME: nrog
 
+concurrency:
+  # PR open and close use the same group, allowing only one at a time
+  group: pr-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  check-backend:
-    name: Check Backend
-    outputs:
-      build: ${{ steps.check.outputs.build }}
-    env:
-      TRIGGERS: ('backend/' '.github/openshift/deploy.backend.yml')
+  pr-validation:
+    name: Pull Request Validation
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-
-      - name: Check and process modified files
-        id: check
-        run: |
-          # Fetch main to diff against
-          git fetch origin main:refs/remotes/origin/master
-          # Trigger build if diff matches any triggers
-          TRIGGERS=${{ env.TRIGGERS }}
-          while read -r check
-          do
-              for t in "${TRIGGERS[@]}"; do
-                  if [[ "${check}" =~ "${t}" ]]
-                  then
-                      # Output build=true for next steps
-                      echo "::set-output name=build::true"
-                      echo -e "${t}\n --> ${check}\n"
-                      exit 0
-                  fi
-              done
-          done < <(git diff origin/main --name-only)
-          echo "Container build not required"
-
-      - name: Recycle/retag PROD Image
-        if: steps.check.outputs.build != 'true'
-        uses: shrink/actions-docker-registry-tag@v2
-        with:
-          registry: ${{ env.REGISTRY }}
-          repository: ${{ github.repository }}
-          token: ${{ secrets.GHCR_TOKEN }}
-          target: prod-backend
-          tags: |
-            ${{ github.event.number }}-backend
-
-  build-backend:
-    name: Backend Image Build
-    runs-on: ubuntu-latest
-    needs:
-      - check-backend
-    if: needs.check-backend.outputs.build == 'true'
     permissions:
       contents: read
-      packages: write
+      pull-requests: write
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
-
-      - name: Cache Docker layers
-        uses: actions/cache@v3
+      - name: Pull request size and stability labels
+        uses: actions/labeler@v4
+        continue-on-error: true
         with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-
+          repo-token: "${{ secrets.GITHUB_TOKEN }}"
 
-      - name: Log in to the Container registry
-        uses: docker/login-action@v1
+      - name: Conventional Label
+        uses: bcoe/conventional-release-labels@v1
+        continue-on-error: true
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GHCR_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ignored_types: '["chore","pr"]'
+          type_labels: '{"feat": "feature", "fix": "fix", "bug": "fix", "doc": "documentation", "ci": "ci", "chore": "chore", "breaking": "breaking", "BREAKING CHANGE": "breaking"}'
 
-      - name: Build and push Backend Docker image
-        uses: docker/build-push-action@v2
+      - name: Checkout branch
+        uses: actions/checkout@v3
         with:
-          context: ./backend/
-          push: true
-          tags: ${{ env.REGISTRY }}/${{ github.repository }}:${{ github.event.number }}-backend
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          ref: refs/heads/${{ github.head_ref }}
 
-  tests-backend:
-    name: Backend Unit Tests
-    runs-on: ubuntu-latest
-    needs:
-      - check-backend
-    if: needs.check-backend.outputs.build == 'true'
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-
-      - name: Get npm cache directory
-        id: npm-cache-dir-backend
-        run: |
-          echo "::set-output name=dir::$(npm config get cache)"
-
-      - uses: actions/cache@v3
-        id: npm-cache-backend # use this to check for `cache-hit` ==> if: steps.npm-cache.outputs.cache-hit != 'true'
+      - name: Conventional Changelog Update
+        continue-on-error: true
+        uses: TriPSs/conventional-changelog-action@v3
+        id: changelog
         with:
-          path: ${{ steps.npm-cache-dir-backend.outputs.dir }}
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
+          github-token: ${{ github.token }}
+          output-file: "CHANGELOG.md"
+          skip-version-file: "true"
+          skip-commit: "true"
+          git-push: "false"
+          git-branch: refs/heads/${{ github.head_ref }}
 
-      - name: Cache for test results
-        id: cache-backend
-        uses: actions/cache@v3
+      - name: Checkout pr
+        uses: actions/checkout@v3
         with:
-          path: backend/coverage
-          key: backend-coverage-${{ github.run_number }}
-          restore-keys: |
-            backend-coverage-
+          ref: ${{ github.ref }}
 
-      - name: Tests
-        run: |
-          cd backend
-          npm ci
-          npm run test:cov
-
-      - name: Report code coverage
-        uses: romeovs/lcov-reporter-action@v0.3.1
+      - name: Comment PR
+        continue-on-error: true
+        uses: thollander/actions-comment-pull-request@v2
+        if: ${{ steps.changelog.outputs.skipped == 'false' }}
         with:
-          title: Backend coverage report
-          delete-old-comments: true
-          github-token: ${{ secrets.GHCR_TOKEN }}
-          lcov-file: ./backend/coverage/lcov.info
-
-  sonarcloud:
-    name: Static Analysis
-    needs:
-      - build-backend
-      - tests-backend
-    if: always() && (needs.build-backend.result == 'success')
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-        # Disable shallow clone for SonarCloud analysis
-        with:
-          fetch-depth: 0
-
-      - name: Cache for backend test results
-        id: cache-backend
-        uses: actions/cache@v3
-        with:
-          path: backend/coverage
-          key: backend-coverage-${{ github.run_number }}
-          restore-keys: |
-            backend-coverage-
-
-  deploy-dev:
-    name: DEV Deployment
-    needs:
-      - build-backend
-      - tests-backend
-    if: always() && (needs.build-backend.result == 'success')
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    environment:
-      name: dev
-    env:
-      ZONE: ${{ github.event.number }}
-    steps:
-      - uses: actions/checkout@v2
-      - name: Deploy
-        run: |
-          # Login to OpenShift and select project
-          oc login --token=${{ secrets.OC_TOKEN }} --server=${{ secrets.OC_SERVER }}
-          oc project ${{ secrets.OC_NAMESPACE }}
-
-          # Database uses a default build
-          oc process -f .github/openshift/deploy.database.yml -p ZONE=${{ env.ZONE }} | oc apply -f -
-
-          # Clean previous image, if rebuilding
-          if [ ${{ needs.build-backend.outputs.build == 'true' }} ]
-          then
-            # Clear stale images for import/replacement
-            oc delete is ${{ env.NAME }}-${{ env.ZONE }}-backend || \
-              echo "No previously imported images have been found"
-          fi
-
-          # Process and apply template
-          oc process -f .github/openshift/deploy.backend.yml -p ZONE=${{ env.ZONE }} \
-            -p PROMOTE=${{ github.repository }}:${{ env.ZONE }}-backend \
-            -p CHES_CLIENT_ID=${{ secrets.CHES_CLIENT_ID }} \
-            -p CHES_CLIENT_SECRET=${{ secrets.CHES_CLIENT_SECRET }} \
-            -p CHES_TOKEN_URL='https://dev.loginproxy.gov.bc.ca/auth/realms/comsvcauth/protocol/openid-connect/token' \
-            -p CHES_API_URL='https://ches-dev.api.gov.bc.ca/api/v1' \
-            -p NODE_ENV='development' \
-            -p BCEID_FORM_PASSWORD=${{ secrets.CHEFS_BCEID_FORM_PASSWORD}} \
-            -p IDIR_FORM_PASSWORD=${{ secrets.CHEFS_IDIR_FORM_PASSWORD}} | oc apply -f -
-            
-          # Follow any active rollouts (see deploymentconfigs)
-          oc rollout status dc/${{ env.NAME }}-${{ env.ZONE }}-database -w
-
-          # Run database migration
-          oc exec dc/${{ env.NAME }}-${{ env.ZONE }}-database -- psql -d ${{ env.NAME }} -U ${{ env.NAME }} -c "$(cat backend/src/databasescripts/fsa.sql)"
-
-          oc rollout status dc/${{ env.NAME }}-${{ env.ZONE }}-backend -w
-
-      - name: DEV Deployment update
-        uses: mshick/add-pr-comment@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GHCR_TOKEN }}
-        with:
-          allow-repeats: false
           message: |
-            DEV deployments have completed successfully!
-            Backend: [https://${{ env.NAME }}-${{ github.event.number }}-backend.apps.silver.devops.gov.bc.ca/]()
+            # Current changelog
+
+            ${{ steps.changelog.outputs.clean_changelog }}
+          comment_tag: "# Current changelog"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  pr-greeting:
+    name: PR Greeting
+    env:
+      DOMAIN: apps.silver.devops.gov.bc.ca
+      PREFIX: ${{ github.event.repository.name }}-${{ github.event.number }}
+    runs-on: ubuntu-22.04
+    permissions:
+      pull-requests: write
+    steps:
+      - name: PR Greeting
+        uses: bcgov-nr/action-pr-description-add@v0.0.2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          add_markdown: |
+            ---
+            Thanks for the PR!
+
+            Any successful deployments (not always required) will be available below.
+            [Backend](https://${{ env.PREFIX }}-backend.${{ env.DOMAIN }}/) available
+
+            Once merged, code will be promoted and handed off to following workflow run.
+            [Main Merge Workflow](https://github.com/${{ github.repository }}/actions/workflows/merge-main.yml)
+
+  builds:
+    name: Image Build
+    runs-on: ubuntu-22.04    
+    permissions:      
+      packages: write    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Build Image
+        uses: bcgov-nr/action-builder-ghcr@v1.1.0
+        with:
+          build_context: ./backend
+          build_file: ./backend/Dockerfile
+          package: backend
+          tag: ${{ github.event.number }}
+          tag_fallback: test
+          token: ${{ secrets.GITHUB_TOKEN }}
+          triggers: backend/
+
+  deploy-database:
+    name: Deploy Database
+    needs:      
+      - builds
+    environment: dev
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Deploys
+        uses: bcgov-nr/action-deployer-openshift@v1.0.2
+        with:
+          file: .github/openshift/deploy.database.yml
+          oc_namespace: ${{ secrets.OC_NAMESPACE }}
+          oc_server: ${{ secrets.OC_SERVER }}
+          oc_token: ${{ secrets.OC_TOKEN }}
+          overwrite: false
+          parameters:
+            -p ZONE=${{ github.event.number }} -p NAME=${{ github.event.repository.name }}
+  
+  deploy-backend:
+    name: Deploy Backend
+    needs:      
+      - deploy-database
+    environment: dev
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Deploys
+        uses: bcgov-nr/action-deployer-openshift@v1.0.2
+        with:
+          file: .github/openshift/deploy.backend.yml
+          oc_namespace: ${{ secrets.OC_NAMESPACE }}
+          oc_server: ${{ secrets.OC_SERVER }}
+          oc_token: ${{ secrets.OC_TOKEN }}
+          overwrite: true          
+          parameters:
+            -p ZONE=${{ github.event.number }} -p NAME=${{ github.event.repository.name }}
+            -p PROMOTE=${{ github.repository }}/backend:${{ github.event.number }}
+            -p CHES_CLIENT_ID=${{ secrets.CHES_CLIENT_ID }}
+            -p CHES_CLIENT_SECRET=${{ secrets.CHES_CLIENT_SECRET }}
+            -p CHES_TOKEN_URL='https://dev.loginproxy.gov.bc.ca/auth/realms/comsvcauth/protocol/openid-connect/token'
+            -p CHES_API_URL='https://ches-dev.api.gov.bc.ca/api/v1'
+            -p NODE_ENV='development'
+            -p BCEID_FORM_PASSWORD=${{ secrets.CHEFS_BCEID_FORM_PASSWORD}}
+            -p IDIR_FORM_PASSWORD=${{ secrets.CHEFS_IDIR_FORM_PASSWORD}}
+            -p INIT_IMAGE='flyway/flyway'
+  

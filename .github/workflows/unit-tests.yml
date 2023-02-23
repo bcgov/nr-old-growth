@@ -1,0 +1,72 @@
+name: Unit Tests and Analysis
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - "**.md"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  #TODO: check sonar for OG
+  tests-backend:
+    name: Backend Unit Tests
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
+    continue-on-error: true
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Test app
+        uses: bcgov-nr/action-test-and-analyse@v0.0.1
+        with:
+          commands: |
+            npm ci
+            npm run test:cov
+          dir: backend
+          sonar_args: >
+            -Dsonar.exclusions=**/coverage/**,**/examples/**,**/pages/**
+            -Dsonar.organization=bcgov-sonarcloud
+            -Dsonar.projectKey=forest-client-frontend
+            -Dsonar.tests=test
+          sonar_project_token: ${{ secrets.SONAR_TOKEN_BACKEND }}
+
+      - name: Report code coverage
+        uses: romeovs/lcov-reporter-action@v0.3.1
+        with:
+          title: Backend coverage report
+          delete-old-comments: true
+          github-token: ${{ secrets.GHCR_TOKEN }}
+          lcov-file: ./backend/coverage/lcov.info
+  
+  trivy:
+    name: Repository Report
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Run Trivy vulnerability scanner in repo mode
+        uses: aquasecurity/trivy-action@0.9.1
+        with:
+          scan-type: "fs"
+          format: "sarif"
+          output: "trivy-results.sarif"
+          ignore-unfixed: true
+          severity: "CRITICAL,HIGH"
+          security-checks: "vuln,secret,config"
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: "trivy-results.sarif"

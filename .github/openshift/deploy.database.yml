@@ -47,6 +47,7 @@ objects:
       database-name: "${NAME}"
       database-password: "${DB_PASSWORD}"
       database-user: "${NAME}"
+      database-conn: "jdbc:postgresql://${NAME}-${ZONE}-database/${NAME}"
   - kind: PersistentVolumeClaim
     apiVersion: v1
     metadata:
