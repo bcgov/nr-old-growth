@@ -1,0 +1,22 @@
+github_actions:
+  - .github/*
+
+tests:
+  - backend/test/**/*
+
+source:
+  - backend/src/**/*
+
+docker:
+  - backend/Dockerfile
+
+dependencies:
+  - backend/package.json
+
+documentation:
+  - backend/docs/**/*
+  - docs/**/*
+
+
+openshift:
+  - .github/openshift/.*.yml

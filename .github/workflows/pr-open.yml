@@ -134,7 +134,6 @@ jobs:
           overwrite: false
           parameters:
             -p ZONE=${{ github.event.number }} -p NAME=${{ github.event.repository.name }}
-            -p PROMOTE=${{ github.repository }}/database:${{ github.event.number }}
   
   deploy-backend:
     name: Deploy Backend
