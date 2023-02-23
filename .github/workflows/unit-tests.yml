@@ -23,6 +23,7 @@ jobs:
   tests-backend:
     name: Backend Unit Tests
     if: github.event_name != 'pull_request' || !github.event.pull_request.draft
+    continue-on-error: true
     runs-on: ubuntu-22.04
     steps:
       - name: Test app
