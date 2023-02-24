@@ -2,13 +2,6 @@ name: Pull Request
 
 on:
   pull_request:
-    branches:
-      - main
-      - dev
-
-env:
-  REGISTRY: ghcr.io
-  NAME: nrog
 
 concurrency:
   # PR open and close use the same group, allowing only one at a time
