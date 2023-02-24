@@ -162,7 +162,7 @@ objects:
                       name: ${NAME}-${ZONE}-database
                       key: database-user
                 - name: FLYWAY_BASELINE_ON_MIGRATE
-                  value: true
+                  value: "true"
               volumeMounts:
                 - mountPath: /flyway/sql
                   name: migration
