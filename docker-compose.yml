@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: default
       POSTGRES_DB: default
     hostname: database
-    image: postgres:12
+    image: postgres:12@sha256:43b752e182ad5fd6b12d468f369853257fc88b3ab3494a55bacb60dc7af00c6d
     restart: always
     volumes:
       - /pgdata
@@ -33,7 +33,7 @@ services:
       retries: 3
       start_period: 40s
     hostname: backend
-    image: node:14
+    image: node:14@sha256:1b5300317e95ed8bb2a1c25003f57e52400ce7af1e2e1efd9f52407293f88317
     links:
       - database
     ports:
