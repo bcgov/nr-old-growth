@@ -61,17 +61,16 @@ parameters:
     required: true
   - name: INIT_IMAGE
     description: Imaged used by the init process
-    value: hello-world
+    value: flyway/flyway
 objects:
   - apiVersion: v1
     kind: ConfigMap
     metadata:
       name: postgres-configmap
       namespace: migration
-    data:
-      V1__clean_table.sql: drop table if exists email_submission_log;
-      V2__ddl.sql: |
-        create table email_submission_log(
+    data:      
+      V1__ddl_email_submission_log.sql: |
+        create table if not exists email_submission_log(
           email_submission_log_id     serial          not null,
           code                        varchar(10)     not null,
           exception_log               varchar(500)    null,
@@ -82,9 +81,9 @@ objects:
           email_type                  varchar(10)     null,
           submission_update_timestamp timestamp       null
         );
-      V3__alter.sql: |
-        alter table email_submission_log add 
-          constraint email_submission_log_id primary key (email_submission_log_id);
+      V2__constraint_email_submission_log.sql: |
+        alter table email_submission_log drop constraint if exists email_submission_log_id;
+        alter table email_submission_log add constraint email_submission_log_id primary key (email_submission_log_id);
   - apiVersion: v1
     kind: Secret
     metadata:
