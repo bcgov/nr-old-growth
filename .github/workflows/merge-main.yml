@@ -20,22 +20,22 @@ env:
 jobs:
   #TODO: check sonar for OG
   tests-backend:
-    name: Frontend Unit Tests
+    name: Backend Unit Tests
     if: github.event_name != 'pull_request' || !github.event.pull_request.draft
     runs-on: ubuntu-22.04
     continue-on-error: true
     steps:
-      - name: Test app
+      - name: Run tests
         uses: bcgov-nr/action-test-and-analyse@v0.0.1
         with:
           commands: |
             npm ci
             npm run test:cov
-          dir: frontend
+          dir: backend
           sonar_args: >
             -Dsonar.exclusions=**/coverage/**,**/examples/**,**/pages/**
             -Dsonar.organization=bcgov-sonarcloud
-            -Dsonar.projectKey=forest-client-frontend
+            -Dsonar.projectKey=nr-old-growth
             -Dsonar.tests=test
           sonar_project_token: ${{ secrets.SONAR_TOKEN_BACKEND }}
 
