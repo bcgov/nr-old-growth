@@ -2,13 +2,6 @@ name: Pull Request
 
 on:
   pull_request:
-    branches:
-      - main
-      - dev
-
-env:
-  REGISTRY: ghcr.io
-  NAME: nrog
 
 concurrency:
   # PR open and close use the same group, allowing only one at a time
@@ -162,5 +155,5 @@ jobs:
             -p NODE_ENV='development'
             -p BCEID_FORM_PASSWORD=${{ secrets.CHEFS_BCEID_FORM_PASSWORD}}
             -p IDIR_FORM_PASSWORD=${{ secrets.CHEFS_IDIR_FORM_PASSWORD}}
-            -p INIT_IMAGE='flyway/flyway'
+            
   

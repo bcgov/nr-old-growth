@@ -5,9 +5,6 @@ on:
     types:
       - closed
 
-env:
-  NAME: nrog
-
 concurrency:
   # PR open and close use the same group, allowing only one at a time
   group: pr-${{ github.ref }}
@@ -26,7 +23,7 @@ jobs:
           oc login --token=${{ secrets.OC_TOKEN }} --server=${{ secrets.OC_SERVER }}
           oc project ${{ secrets.OC_NAMESPACE }}
           # Remove old build runs, build pods and deployment pods
-          oc delete all,pvc,secret,cm -l app=${{ env.NAME }}-${{ github.event.number }}
+          oc delete all,pvc,secret,cm -l app=${{ github.event.repository.name }}-${{ github.event.number }}
 
   image-promotions:
     name: Image Promotions
