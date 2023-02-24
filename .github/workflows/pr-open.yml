@@ -162,5 +162,5 @@ jobs:
             -p NODE_ENV='development'
             -p BCEID_FORM_PASSWORD=${{ secrets.CHEFS_BCEID_FORM_PASSWORD}}
             -p IDIR_FORM_PASSWORD=${{ secrets.CHEFS_IDIR_FORM_PASSWORD}}
-            -p INIT_IMAGE='flyway/flyway'
+            
   
