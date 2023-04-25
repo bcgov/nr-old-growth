@@ -9,17 +9,24 @@ export class AppService {
   }
 
   getToken() {
+    const tokenUrl = process.env.CHES_TOKEN_URL;
+    const clientId = process.env.CHES_CLIENT_ID;
+    const clientSecret = process.env.CHES_CLIENT_SECRET;
+
     const getClientCredentials = oauth.client(axios.create(), {
-      url: process.env.CHES_TOKEN_URL,
+      url: tokenUrl,
       grant_type: 'client_credentials',
-      client_id: process.env.CHES_CLIENT_ID,
-      client_secret: process.env.CHES_CLIENT_SECRET,
+      client_id: clientId,
+      client_secret: clientSecret,
     });
 
     return getClientCredentials()
       .then((res) => {
-        if (res && res.access_token) return res.access_token;
-        else return null;
+        if (res && res.access_token) {
+          return res.access_token;
+        } else {
+          return null;
+        }
       })
       .catch((e) => {
         throw new HttpException(
