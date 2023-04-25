@@ -18,7 +18,6 @@ jobs:
         package: [ test, prod ]
     env:
       OS_DOMAIN: apps.silver.devops.gov.bc.ca
-      GTW_DOMAIN: api.gov.bc.ca
     steps:
       - uses: actions/checkout@v3
 
