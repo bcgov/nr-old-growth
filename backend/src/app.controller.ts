@@ -12,9 +12,6 @@ export class AppController {
 
   @Get('check')
   getCheck(): string {
-    return this.appService.getToken().then((response) => {
-      console.log(response);
-      return 'Ok';
-    });
+    return this.appService.getToken();
   }
 }
