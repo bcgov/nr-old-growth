@@ -91,9 +91,9 @@ jobs:
 
   builds:
     name: Image Build
-    runs-on: ubuntu-22.04    
-    permissions:      
-      packages: write    
+    runs-on: ubuntu-22.04
+    permissions:
+      packages: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -111,7 +111,7 @@ jobs:
 
   deploy-database:
     name: Deploy Database
-    needs:      
+    needs:
       - builds
     environment: dev
     runs-on: ubuntu-22.04
@@ -127,16 +127,16 @@ jobs:
           overwrite: false
           parameters:
             -p ZONE=${{ github.event.number }} -p NAME=${{ github.event.repository.name }}
-  
+
   deploy-backend:
     name: Deploy Backend
-    needs:      
+    needs:
       - deploy-database
     environment: dev
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Deploys
         uses: bcgov-nr/action-deployer-openshift@v1.0.3
         with:
@@ -144,7 +144,7 @@ jobs:
           oc_namespace: ${{ secrets.OC_NAMESPACE }}
           oc_server: ${{ secrets.OC_SERVER }}
           oc_token: ${{ secrets.OC_TOKEN }}
-          overwrite: true          
+          overwrite: true
           parameters:
             -p ZONE=${{ github.event.number }} -p NAME=${{ github.event.repository.name }}
             -p PROMOTE=${{ github.repository }}/backend:${{ github.event.number }}
@@ -155,5 +155,3 @@ jobs:
             -p NODE_ENV='development'
             -p BCEID_FORM_PASSWORD=${{ secrets.CHEFS_BCEID_FORM_PASSWORD}}
             -p IDIR_FORM_PASSWORD=${{ secrets.CHEFS_IDIR_FORM_PASSWORD}}
-            
-  

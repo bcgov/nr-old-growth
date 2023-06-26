@@ -47,7 +47,7 @@ jobs:
           delete-old-comments: true
           github-token: ${{ secrets.GHCR_TOKEN }}
           lcov-file: ./backend/coverage/lcov.info
-  
+
   trivy:
     name: Repository Report
     if: github.event_name != 'pull_request' || !github.event.pull_request.draft
