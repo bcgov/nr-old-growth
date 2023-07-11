@@ -21,7 +21,7 @@ export class ChesService {
       })
       .catch((e) => {
         throw new HttpException(
-          `Failed to get email auth token from API: ${e}`,
+          { message: 'Failed to get email auth token from API: ' + e },
           HttpStatus.INTERNAL_SERVER_ERROR,
         );
       });
@@ -41,15 +41,15 @@ export class ChesService {
       !process.env.CHES_EMAIL_FROM
     ) {
       throw new HttpException(
-        'Failed to config email, server side missing config of authentication url' +
-        'or CHES email server url or from email address',
+        { message: 'Failed to config email, server side missing config of authentication url' +
+        'or CHES email server url or from email address' },
         HttpStatus.BAD_REQUEST,
       );
     }
 
     if (!emailTo) {
       throw new HttpException(
-        'Failed to send email, missing required emailTo parameter',
+        { message: 'Failed to send email, missing required emailTo parameter' },
         HttpStatus.BAD_REQUEST,
       );
     }
@@ -85,7 +85,7 @@ export class ChesService {
               })
               .catch((e) => {
                 throw new HttpException(
-                  `Failed to post email to API: ${e}`,
+                  { message: 'Failed to post email to API: ' + e },
                   HttpStatus.INTERNAL_SERVER_ERROR,
                 );
               });
@@ -97,12 +97,15 @@ export class ChesService {
           }
         }
         throw new HttpException(
-          'Failed to get email auth token: response or response access token is null',
+          { message: 'Failed to get email auth token: response or response access token is null' },
           HttpStatus.BAD_REQUEST,
         );
       })
       .catch((e) => {
-        throw new HttpException(e, HttpStatus.INTERNAL_SERVER_ERROR);
+        throw new HttpException(
+          { message: e }, 
+          HttpStatus.INTERNAL_SERVER_ERROR
+        );
       });
   }
 }

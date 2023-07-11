@@ -277,13 +277,13 @@ export class FormService {
           );
         } else
           throw new HttpException(
-            'Failed to get new submission data: response or response data is null',
+            { message: 'Failed to get new submission data: response or response data is null' },
             HttpStatus.BAD_REQUEST,
           );
       })
       .catch((e) => {
         throw new HttpException(
-          `Failed to get submission data from API: ${e}`,
+          { message: 'Failed to get submission data from API: ' + e },
           HttpStatus.INTERNAL_SERVER_ERROR,
         );
       });
@@ -366,7 +366,7 @@ export class FormService {
                       `${formId}: Failed to send email, error logged in db`,
                     );
                     return new HttpException(
-                      err,
+                      { message: err },
                       HttpStatus.INTERNAL_SERVER_ERROR,
                     );
                   }),
@@ -407,7 +407,10 @@ export class FormService {
         this.logger.error(formId + errorMsg);
         this.sendErrorNotification(formId + errorMsg);
 
-        return new HttpException(e, HttpStatus.INTERNAL_SERVER_ERROR);
+        return new HttpException(
+          { message: e }, 
+          HttpStatus.INTERNAL_SERVER_ERROR
+        );
       });
   }
 
