@@ -1,23 +1,37 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
-import axios from 'axios';
+//import axios from 'axios';
 import { EmailEntity } from '../../email/model/email.entity';
 
-const oauth = require('axios-oauth-client');
+const simpleOauth2 = require('simple-oauth2');
+const axios = require('axios');
 
 @Injectable()
 export class ChesService {
   getToken() {
-    const getClientCredentials = oauth.clientCredentials({
-      url: process.env.CHES_TOKEN_URL,
-      grant_type: 'client_credentials',
-      client_id: process.env.CHES_CLIENT_ID,
-      client_secret: process.env.CHES_CLIENT_SECRET,
+    const oauth2 = simpleOauth2.create({
+      client: {
+        id: process.env.CHES_CLIENT_ID,
+        secret: process.env.CHES_CLIENT_SECRET,
+      },
+      auth: {
+        tokenHost: process.env.CHES_TOKEN_URL,
+      },
     });
 
-    return getClientCredentials()
-      .then((res) => {
-        if (res && res.access_token) return res.access_token;
-        else return null;
+    const tokenConfig = {
+      grant_type: 'client_credentials',
+    };
+
+    return oauth2.clientCredentials
+      .getToken(tokenConfig)
+      .then((result) => {
+        const accessToken = oauth2.accessToken.create(result);
+
+        if (accessToken && accessToken.token) {
+          return accessToken.token.access_token;
+        } else {
+          return null;
+        }
       })
       .catch((e) => {
         throw new HttpException(
