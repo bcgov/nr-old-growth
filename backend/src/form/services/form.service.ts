@@ -9,8 +9,6 @@ import { EmailService } from '../../email/services/email.service';
 import { EmailEntity } from '../../email/model/email.entity';
 import { from } from 'rxjs';
 
-const oauth = require('axios-oauth-client');
-
 @Injectable()
 export class FormService {
   private readonly logger = new Logger(FormService.name);

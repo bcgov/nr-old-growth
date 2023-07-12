@@ -7,7 +7,7 @@ const oauth = require('axios-oauth-client');
 @Injectable()
 export class ChesService {
   getToken() {
-    const getClientCredentials = oauth.client(axios.create(), {
+    const getClientCredentials = oauth.createClient(axios.create(), {
       url: process.env.CHES_TOKEN_URL,
       grant_type: 'client_credentials',
       client_id: process.env.CHES_CLIENT_ID,
