@@ -393,7 +393,7 @@ export class FormService {
         }
       })
       .catch((e) => {
-        const errorMsg = `Failed to get submissions list need notification from API: ${e}`;
+        const errorMsg = 'Failed to get submissions list need notification from API: ' + e;
         const emailSubmissionLogEntity: EmailSubmissionLog = {
           code: 'FAILED',
           exceptionLog: errorMsg,
