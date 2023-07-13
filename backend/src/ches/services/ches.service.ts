@@ -20,9 +20,8 @@ export class ChesService {
         data: 'grant_type=client_credentials',
       })
       .then((res) => res.data)
-      .then((token) => token?.access_token ?? null)
+      .then((token) => token?.access_token)
       .catch((e) => {
-        this.logger.log(e);
         throw new HttpException(
           { message: 'Failed to get email auth token from API: ' + e },
           HttpStatus.INTERNAL_SERVER_ERROR,
