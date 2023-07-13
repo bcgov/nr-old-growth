@@ -9,8 +9,6 @@ import { EmailService } from '../../email/services/email.service';
 import { EmailEntity } from '../../email/model/email.entity';
 import { from } from 'rxjs';
 
-const oauth = require('axios-oauth-client');
-
 @Injectable()
 export class FormService {
   private readonly logger = new Logger(FormService.name);
@@ -395,7 +393,7 @@ export class FormService {
         }
       })
       .catch((e) => {
-        const errorMsg = `Failed to get submissions list need notification from API: ${e}`;
+        const errorMsg = 'Failed to get submissions list need notification from API: ' + e;
         const emailSubmissionLogEntity: EmailSubmissionLog = {
           code: 'FAILED',
           exceptionLog: errorMsg,
