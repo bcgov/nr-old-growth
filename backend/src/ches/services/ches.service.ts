@@ -8,7 +8,7 @@ const axios = require('axios');
 @Injectable()
 export class ChesService {
   getToken() {
-    const oauth2 = simpleOauth2.create({
+    const oauth2 = simpleOauth2({
       client: {
         id: process.env.CHES_CLIENT_ID,
         secret: process.env.CHES_CLIENT_SECRET,
