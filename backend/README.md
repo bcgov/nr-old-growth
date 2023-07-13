@@ -18,9 +18,9 @@ The backend for nr-old-growth project is written in [NestJS](https://github.com/
 
   CHES_CLIENT_ID=[CHES service dev username]
   CHES_CLIENT_SECRET=[CHES service dev password]
-  // CHES dev authentication url
+  # CHES dev authentication url
   CHES_TOKEN_URL=https://dev.oidc.gov.bc.ca/auth/realms/jbd6rnxw/protocol/openid-connect/token
-  // CHES dev email url
+  # CHES dev email url
   EMAIL_POST_URL=https://ches-dev.apps.silver.devops.gov.bc.ca/api/v1/email
   CHES_EMAIL_FROM=[send from email address]
 

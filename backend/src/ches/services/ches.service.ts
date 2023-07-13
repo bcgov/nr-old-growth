@@ -1,39 +1,28 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
-//import axios from 'axios';
-import { EmailEntity } from '../../email/model/email.entity';
+import axios from 'axios';
 
-const { create } = require('simple-oauth2');
-const axios = require('axios');
+import { EmailEntity } from '../../email/model/email.entity';
 
 @Injectable()
 export class ChesService {
   getToken() {
-    const oauth2 = create({
-      client: {
-        id: process.env.CHES_CLIENT_ID,
-        secret: process.env.CHES_CLIENT_SECRET,
-      },
-      auth: {
-        tokenHost: process.env.CHES_TOKEN_URL,
-      },
-    });
-
-    const tokenConfig = {
-      grant_type: 'client_credentials',
-    };
-
-    return oauth2.clientCredentials
-      .getToken(tokenConfig)
-      .then((result) => {
-        const accessToken = oauth2.accessToken.create(result);
-
-        if (accessToken && accessToken.token) {
-          return accessToken.token.access_token;
-        } else {
-          return null;
-        }
+    return axios
+      .request({
+        method: 'POST',
+        url: process.env.CHES_TOKEN_URL,
+        auth: {
+          username: process.env.CHES_CLIENT_ID,
+          password: process.env.CHES_CLIENT_SECRET,
+        },
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        data: 'grant_type=client_credentials',
       })
+      .then((res) => res.data)
+      .then((token) => token?.access_token ?? null)
       .catch((e) => {
+        this.logger.log(e);
         throw new HttpException(
           { message: 'Failed to get email auth token from API: ' + e },
           HttpStatus.INTERNAL_SERVER_ERROR,
@@ -55,8 +44,11 @@ export class ChesService {
       !process.env.CHES_EMAIL_FROM
     ) {
       throw new HttpException(
-        { message: 'Failed to config email, server side missing config of authentication url' +
-        'or CHES email server url or from email address' },
+        {
+          message:
+            'Failed to config email, server side missing config of authentication url' +
+            'or CHES email server url or from email address',
+        },
         HttpStatus.BAD_REQUEST,
       );
     }
@@ -111,14 +103,17 @@ export class ChesService {
           }
         }
         throw new HttpException(
-          { message: 'Failed to get email auth token: response or response access token is null' },
+          {
+            message:
+              'Failed to get email auth token: response or response access token is null',
+          },
           HttpStatus.BAD_REQUEST,
         );
       })
       .catch((e) => {
         throw new HttpException(
-          { message: e }, 
-          HttpStatus.INTERNAL_SERVER_ERROR
+          { message: e },
+          HttpStatus.INTERNAL_SERVER_ERROR,
         );
       });
   }
