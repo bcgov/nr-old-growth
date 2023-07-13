@@ -2,13 +2,13 @@ import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 //import axios from 'axios';
 import { EmailEntity } from '../../email/model/email.entity';
 
-const simpleOauth2 = require('simple-oauth2');
+const { create } = require('simple-oauth2');
 const axios = require('axios');
 
 @Injectable()
 export class ChesService {
   getToken() {
-    const oauth2 = simpleOauth2({
+    const oauth2 = create({
       client: {
         id: process.env.CHES_CLIENT_ID,
         secret: process.env.CHES_CLIENT_SECRET,
