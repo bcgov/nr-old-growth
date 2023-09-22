@@ -402,8 +402,8 @@ export class FormService {
         };
 
         this.postEmailSubmissionLog(emailSubmissionLogEntity);
-        this.logger.error(formId + errorMsg);
-        this.sendErrorNotification(formId + errorMsg);
+        this.logger.error(formId + ' ' + errorMsg);
+        this.sendErrorNotification(formId + ' ' + errorMsg);
 
         return new HttpException(
           { message: e }, 
@@ -416,10 +416,9 @@ export class FormService {
     this.logger.error('Send error notification email');
     const email: EmailEntity = {
       emailTo: [
-        'catherine.meng@gov.bc.ca',
         'maria.martinez@gov.bc.ca',
         'ziad.bhunnoo@gov.bc.ca',
-        'paulo.cruz@encora.com',
+        'paulo.cruz@gov.bc.ca',
       ],
       emailSubject: 'Old Growth Email Notification Error',
       emailBody: errorMsg,
