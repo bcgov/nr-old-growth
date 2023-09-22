@@ -165,8 +165,8 @@ export class FormService {
 
   async filterSubmissionList(
     allSubmissions: Array<{ [key: string]: any }>,
-    currTimeValue: Number,
-    lastTimeValue: Number,
+    currTimeValue: number,
+    lastTimeValue: number,
     formId: string,
     formVersionId: string,
   ) {
