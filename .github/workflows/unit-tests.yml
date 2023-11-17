@@ -27,18 +27,19 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Test app
-        uses: bcgov-nr/action-test-and-analyse@v0.0.2
+        uses: bcgov-nr/action-test-and-analyse@v1.1.0
         with:
           commands: |
             npm ci
             npm run test:cov
           dir: backend
+          node_version: 16
           sonar_args: >
             -Dsonar.exclusions=**/coverage/**,**/examples/**,**/pages/**
             -Dsonar.organization=bcgov-sonarcloud
             -Dsonar.projectKey=forest-client-frontend
             -Dsonar.tests=test
-          sonar_project_token: ${{ secrets.SONAR_TOKEN_BACKEND }}
+          sonar_token: ${{ secrets.SONAR_TOKEN_BACKEND }}
 
       - name: Report code coverage
         uses: romeovs/lcov-reporter-action@v0.3.1
@@ -54,7 +55,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Run Trivy vulnerability scanner in repo mode
         uses: aquasecurity/trivy-action@0.14.0
