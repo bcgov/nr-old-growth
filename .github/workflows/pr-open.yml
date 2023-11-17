@@ -16,7 +16,7 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Pull request size and stability labels
         uses: actions/labeler@v4
@@ -33,13 +33,13 @@ jobs:
           type_labels: '{"feat": "feature", "fix": "fix", "bug": "fix", "doc": "documentation", "ci": "ci", "chore": "chore", "breaking": "breaking", "BREAKING CHANGE": "breaking"}'
 
       - name: Checkout branch
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: refs/heads/${{ github.head_ref }}
 
       - name: Conventional Changelog Update
         continue-on-error: true
-        uses: TriPSs/conventional-changelog-action@v3
+        uses: TriPSs/conventional-changelog-action@v4
         id: changelog
         with:
           github-token: ${{ github.token }}
@@ -50,7 +50,7 @@ jobs:
           git-branch: refs/heads/${{ github.head_ref }}
 
       - name: Checkout pr
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.ref }}
 
@@ -76,7 +76,7 @@ jobs:
       pull-requests: write
     steps:
       - name: PR Greeting
-        uses: bcgov-nr/action-pr-description-add@v0.0.2
+        uses: bcgov-nr/action-pr-description-add@v1.1.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           add_markdown: |
@@ -96,10 +96,10 @@ jobs:
       packages: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Build Image
-        uses: bcgov-nr/action-builder-ghcr@v1.3.0
+        uses: bcgov-nr/action-builder-ghcr@v2.0.0
         with:
           build_context: ./backend
           build_file: ./backend/Dockerfile
@@ -116,9 +116,9 @@ jobs:
     environment: dev
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Deploys
-        uses: bcgov-nr/action-deployer-openshift@v1.4.0
+        uses: bcgov-nr/action-deployer-openshift@v2.0.0
         with:
           file: .github/openshift/deploy.database.yml
           oc_namespace: ${{ secrets.OC_NAMESPACE }}
@@ -135,10 +135,10 @@ jobs:
     environment: dev
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Deploys
-        uses: bcgov-nr/action-deployer-openshift@v1.4.0
+        uses: bcgov-nr/action-deployer-openshift@v2.0.0
         with:
           file: .github/openshift/deploy.backend.yml
           oc_namespace: ${{ secrets.OC_NAMESPACE }}
