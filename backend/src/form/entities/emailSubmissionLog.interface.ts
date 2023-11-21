@@ -1,5 +1,5 @@
 export interface EmailSubmissionLog {
-  id?: string;
+  id?: number;
   code?: string;
   exceptionLog?: string;
   confirmationId?: string;
