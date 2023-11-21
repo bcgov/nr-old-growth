@@ -21,10 +21,10 @@ export class FormService {
 
   // note: everytime change the cronjob interval, need to adjust the interval below that checks new submissions
   private interval = 10;
-  @Cron('*/10 * * * *') //Runs every 10 minutes
+  //@Cron('*/10 * * * *') //Runs every 10 minutes
   // @Cron('*/1 * * * *') //Runs every 1 minutes
   // @Cron('45 * * * * *') // Run every 45 seconds
-  // @Cron('*/5 * * * * *') //Runs every 5 seconds
+   @Cron('*/5 * * * * *') //Runs every 5 seconds
   handleIDIRForm(emailTo: string) {
     this.logger.debug('called every 10 mins for idir form');
     const formId = process.env.IDIR_FORM_ID;
@@ -320,6 +320,9 @@ export class FormService {
               ) {
                 text = 'updated';
               }
+              console.log(formId, 'Submission Data: ', JSON.stringify(eachSubmission.submission.data));
+              console.log(formId, 'emailTo: ', emailTo);
+              console.log(formId, 'emailDistrict: ', emailDistrict);
               console.log(formId, 'mail to:', emailSendTo);
               const email: EmailEntity = {
                 emailTo: [emailSendTo],
@@ -363,6 +366,7 @@ export class FormService {
                     this.logger.error(
                       `${formId}: Failed to send email, error logged in db`,
                     );
+                    console.log("Log ID: " + emailSubmissionLogEntity.id + "\n");
                     return new HttpException(
                       { message: err },
                       HttpStatus.INTERNAL_SERVER_ERROR,
