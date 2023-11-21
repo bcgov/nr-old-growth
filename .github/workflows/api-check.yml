@@ -27,5 +27,4 @@ jobs:
           collection: postman/OG.postman_collection.json
           envVar: '[{"key":"URL_OG","value":"https://${{ github.event.repository.name }}-${{ matrix.package }}-backend.${{ env.OS_DOMAIN }}"}]'
           reporters: '["cli"]'
-          folder: '["general"]'
           
