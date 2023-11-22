@@ -366,7 +366,9 @@ export class FormService {
                     this.logger.error(
                       `${formId}: Failed to send email, error logged in db`,
                     );
-                    console.log("Log ID: " + emailSubmissionLogEntity.id + "\n");
+                    console.log("Confirmation ID: " + eachSubmission.confirmationId + "\n" +
+                                "Form ID: " + formId + "\n" +
+                                "Form Version ID: " + formVersionId);
                     return new HttpException(
                       { message: err },
                       HttpStatus.INTERNAL_SERVER_ERROR,
