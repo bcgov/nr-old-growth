@@ -33,7 +33,7 @@ services:
       retries: 3
       start_period: 40s
     hostname: backend
-    image: node:20@sha256:191b360003a7458df0f14bbc0aa1d298a706e32786e1830191036971eb1547a2
+    image: node:20@sha256:445acd9b2ef7e9de665424053bf95652e0b8995ef36500557d48faf29300170a
     links:
       - database
     ports:
