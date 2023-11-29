@@ -40,14 +40,6 @@ jobs:
             -Dsonar.tests=test
           sonar_token: ${{ secrets.SONAR_TOKEN_BACKEND }}
 
-      - name: Report code coverage
-        uses: romeovs/lcov-reporter-action@v0.3.1
-        with:
-          title: Backend coverage report
-          delete-old-comments: true
-          github-token: ${{ secrets.GHCR_TOKEN }}
-          lcov-file: ./backend/coverage/lcov.info
-  
   codeql:
     name: Semantic Code Analysis
     runs-on: ubuntu-22.04
@@ -94,8 +86,7 @@ jobs:
           oc_token: ${{ secrets.OC_TOKEN }}
           overwrite: false
           penetration_test: false
-          parameters:
-            -p ZONE=${{ env.ZONE }} -p NAME=${{ github.event.repository.name }}
+          parameters: -p ZONE=${{ env.ZONE }} -p NAME=${{ github.event.repository.name }}
 
   deploy-test-backend:
     name: Deploy Backend on Test Env
@@ -115,7 +106,7 @@ jobs:
           oc_server: ${{ secrets.OC_SERVER }}
           oc_token: ${{ secrets.OC_TOKEN }}
           overwrite: true
-          penetration_test: true          
+          penetration_test: true
           parameters:
             -p ZONE=${{ env.ZONE }} -p NAME=${{ github.event.repository.name }}
             -p PROMOTE=${{ github.repository }}/backend:${{ env.ZONE }}
@@ -147,8 +138,7 @@ jobs:
           oc_token: ${{ secrets.OC_TOKEN }}
           overwrite: false
           penetration_test: false
-          parameters:
-            -p ZONE=${{ env.ZONE }} -p NAME=${{ github.event.repository.name }}
+          parameters: -p ZONE=${{ env.ZONE }} -p NAME=${{ github.event.repository.name }}
 
   deploy-prod-backend:
     name: Deploy Backend on Prod Env
@@ -169,7 +159,7 @@ jobs:
           oc_server: ${{ secrets.OC_SERVER }}
           oc_token: ${{ secrets.OC_TOKEN }}
           overwrite: true
-          penetration_test: true          
+          penetration_test: true
           parameters:
             -p ZONE=${{ env.ZONE }} -p NAME=${{ github.event.repository.name }}
             -p PROMOTE=${{ github.repository }}/backend:${{ env.PREV }}
