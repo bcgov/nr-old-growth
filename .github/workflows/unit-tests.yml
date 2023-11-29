@@ -42,12 +42,14 @@ jobs:
           sonar_token: ${{ secrets.SONAR_TOKEN_BACKEND }}
 
       - name: Report code coverage
-        uses: romeovs/lcov-reporter-action@v0.3.1
+        uses: zgosalvez/github-actions-report-lcov@v3
         with:
-          title: Backend coverage report
-          delete-old-comments: true
-          github-token: ${{ secrets.GHCR_TOKEN }}
-          lcov-file: ./backend/coverage/lcov.info
+          coverage-files: coverage/lcov.info
+          minimum-coverage: 75
+          artifact-name: code-coverage-report
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          working-directory: ./backend
+          update-comment: true
 
   trivy:
     name: Repository Report
