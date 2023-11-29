@@ -46,7 +46,7 @@ jobs:
         with:
           title: Backend coverage report
           delete-old-comments: true
-          github-token: ${{ secrets.GHCR_TOKEN }}
+          github-token: ${{ github.token }}
           lcov-file: ./backend/coverage/lcov.info
 
   trivy:
