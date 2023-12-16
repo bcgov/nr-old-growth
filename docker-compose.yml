@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: default
       POSTGRES_DB: default
     hostname: database
-    image: postgres:12@sha256:ebea7de2ac0b96e84d328586c400122d3f7b8cc89f47df040f83844662af9363
+    image: postgres:12@sha256:43c7a98be4866edf09b1ccd398e9bb32a795d4b44227bd45ecb2f3f498f49dac
     restart: always
     volumes:
       - /pgdata
