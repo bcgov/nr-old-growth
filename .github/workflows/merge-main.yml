@@ -54,7 +54,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Initialize
-        uses: github/codeql-action/init@v2
+        uses: github/codeql-action/init@v3
         with:
           languages: javascript
 
@@ -65,7 +65,7 @@ jobs:
           npm run build
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v2
+        uses: github/codeql-action/analyze@v3
 
   deploy-test-database:
     name: Deploy Database on Test Env
