@@ -1,5 +1,5 @@
 # RedHat UBI 8 with nodejs 16
-FROM registry.access.redhat.com/ubi8/ubi@sha256:1fdb97f2d2a44fdef3feaa69100f154631bae65130105ac685d0e34eb1d8c3d0
+FROM registry.access.redhat.com/ubi8/ubi@sha256:fc88b136e97b4160a74f4a4a8fd50965a286e855ac5a221a4bfdb2c9b765397a
 RUN dnf module install -y nodejs:16
 
 # Install packages, build and keep only prod packages
