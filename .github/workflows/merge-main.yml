@@ -85,7 +85,6 @@ jobs:
           oc_server: ${{ secrets.OC_SERVER }}
           oc_token: ${{ secrets.OC_TOKEN }}
           overwrite: false
-          penetration_test: false
           parameters: -p ZONE=${{ env.ZONE }} -p NAME=${{ github.event.repository.name }}
 
   deploy-test-backend:
@@ -106,7 +105,6 @@ jobs:
           oc_server: ${{ secrets.OC_SERVER }}
           oc_token: ${{ secrets.OC_TOKEN }}
           overwrite: true
-          penetration_test: true
           parameters:
             -p ZONE=${{ env.ZONE }} -p NAME=${{ github.event.repository.name }}
             -p PROMOTE=${{ github.repository }}/backend:${{ env.ZONE }}
@@ -137,7 +135,6 @@ jobs:
           oc_server: ${{ secrets.OC_SERVER }}
           oc_token: ${{ secrets.OC_TOKEN }}
           overwrite: false
-          penetration_test: false
           parameters: -p ZONE=${{ env.ZONE }} -p NAME=${{ github.event.repository.name }}
 
   deploy-prod-backend:
@@ -159,7 +156,6 @@ jobs:
           oc_server: ${{ secrets.OC_SERVER }}
           oc_token: ${{ secrets.OC_TOKEN }}
           overwrite: true
-          penetration_test: true
           parameters:
             -p ZONE=${{ env.ZONE }} -p NAME=${{ github.event.repository.name }}
             -p PROMOTE=${{ github.repository }}/backend:${{ env.PREV }}
