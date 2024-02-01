@@ -23,5 +23,5 @@ EXPOSE 3000
 HEALTHCHECK --interval=35s --timeout=4s CMD curl -f http://localhost:3000/ || exit 1
 
 # Start up command
-USER app
-ENTRYPOINT ["node", "dist/main"]
+USER nonroot
+CMD ["--max-old-space-size=50", "/app/dist/main"]
