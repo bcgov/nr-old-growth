@@ -78,7 +78,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Deploys
-        uses: bcgov-nr/action-deployer-openshift@v2.3.0
+        uses: bcgov-nr/action-deployer-openshift@v3.0.0
         with:
           file: .github/openshift/deploy.database.yml
           oc_namespace: ${{ secrets.OC_NAMESPACE }}
@@ -98,7 +98,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Deploys
-        uses: bcgov-nr/action-deployer-openshift@v2.3.0
+        uses: bcgov-nr/action-deployer-openshift@v3.0.0
         with:
           file: .github/openshift/deploy.backend.yml
           oc_namespace: ${{ secrets.OC_NAMESPACE }}
@@ -128,7 +128,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Deploys
-        uses: bcgov-nr/action-deployer-openshift@v2.3.0
+        uses: bcgov-nr/action-deployer-openshift@v3.0.0
         with:
           file: .github/openshift/deploy.database.yml
           oc_namespace: ${{ secrets.OC_NAMESPACE }}
@@ -149,7 +149,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Deploys
-        uses: bcgov-nr/action-deployer-openshift@v2.3.0
+        uses: bcgov-nr/action-deployer-openshift@v3.0.0
         with:
           file: .github/openshift/deploy.backend.yml
           oc_namespace: ${{ secrets.OC_NAMESPACE }}
