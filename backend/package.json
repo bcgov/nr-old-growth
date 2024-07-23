@@ -38,7 +38,7 @@
     "follow-redirects": "^1.15.6",
     "pg": "^8.11.5",
     "reflect-metadata": "^0.2.2",
-    "rimraf": "^5.0.7",
+    "rimraf": "^6.0.0",
     "rxjs": "^7.8.1",
     "swagger-ui-express": "^5.0.0",
     "typeorm": "^0.3.18",
