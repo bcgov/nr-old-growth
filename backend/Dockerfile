@@ -11,7 +11,7 @@ RUN npm ci --only=prod && \
 FROM gcr.io/distroless/nodejs20-debian12:nonroot
 
 # Set node to production
-ENV NODE_ENV production
+ENV NODE_ENV=production
 
 # Copy from build stage
 WORKDIR /app
