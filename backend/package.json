@@ -1,8 +1,10 @@
 {
   "name": "old-growth-backend",
+  "version": "0.0.1",
   "description": "Backend for old growth project",
   "private": true,
-  "license": "Apache-2.0",
+  "license": "UNLICENSED",
+  "author": "Derek Roberts, Catherine Meng, Maria Martinez, Paulo Cruz",
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "nest build",
