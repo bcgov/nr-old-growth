@@ -102,22 +102,6 @@ objects:
       idir-form-password: "${IDIR_FORM_PASSWORD}"
       bceid-form-password: "${BCEID_FORM_PASSWORD}"
   - apiVersion: v1
-    kind: ImageStream
-    metadata:
-      labels:
-        app: ${NAME}-${ZONE}
-      name: ${NAME}-${ZONE}-${COMPONENT}
-    spec:
-      lookupPolicy:
-        local: false
-      tags:
-        - name: ${IMAGE_TAG}
-          from:
-            kind: DockerImage
-            name: ${REGISTRY}/${PROMOTE}
-          referencePolicy:
-            type: Local
-  - apiVersion: v1
     kind: Deployment
     metadata:
       labels:
