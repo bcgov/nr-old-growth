@@ -96,7 +96,7 @@ objects:
                 claimName: ${NAME}-${ZONE}-${COMPONENT}
           containers:
             - name: ${NAME}
-              image: ${REGISTRY}/${ORG}/${NAME}/${COMPONENT}:${ZONE}
+              image: ${REGISTRY}/${PROMOTE}
               ports:
                 - containerPort: 5432
                   protocol: TCP
