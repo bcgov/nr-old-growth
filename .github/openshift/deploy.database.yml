@@ -31,9 +31,6 @@ parameters:
     name: DB_PVC_SIZE
     required: true
     value: 1Gi
-  - name: REGISTRY
-    description: Container registry to import from (internal is image-registry.openshift-image-registry.svc:5000)
-    value: ghcr.io
   - name: ORG
     description: Organization name
     value: bcgov
