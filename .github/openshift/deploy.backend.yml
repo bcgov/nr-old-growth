@@ -22,6 +22,12 @@ parameters:
   - name: IMAGE_TAG
     description: Image tag to use
     value: latest
+  - name: REGISTRY
+    description: Container registry to import from (internal is image-registry.openshift-image-registry.svc:5000)
+    value: ghcr.io
+  - name: ORG
+    description: Organization name
+    value: bcgov
   - name: DOMAIN
     value: apps.silver.devops.gov.bc.ca
   - name: CPU_LIMIT
@@ -162,7 +168,7 @@ objects:
               configMap:
                 name: postgres-configmap
           containers:
-            - image: ${NAME}-${ZONE}-${COMPONENT}:${IMAGE_TAG}
+            - image: ${REGISTRY}/${ORG}/${NAME}/${COMPONENT}:${ZONE}
               imagePullPolicy: Always
               name: ${NAME}
               env:

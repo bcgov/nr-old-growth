@@ -32,6 +32,12 @@ parameters:
     required: true
     value: 1Gi
   - name: REGISTRY
+    description: Container registry to import from (internal is image-registry.openshift-image-registry.svc:5000)
+    value: ghcr.io
+  - name: ORG
+    description: Organization name
+    value: bcgov
+  - name: REGISTRY
     value: image-registry.openshift-image-registry.svc:5000
   - name: PROMOTE
     description: Image (namespace/name:tag) to promote/import
@@ -106,7 +112,7 @@ objects:
                 claimName: ${NAME}-${ZONE}-${COMPONENT}
           containers:
             - name: ${NAME}
-              image: ${NAME}-${ZONE}-${COMPONENT}:${IMAGE_TAG}
+              image: ${REGISTRY}/${ORG}/${NAME}/${COMPONENT}:${ZONE}
               ports:
                 - containerPort: 5432
                   protocol: TCP
