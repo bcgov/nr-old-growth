@@ -62,6 +62,10 @@ parameters:
   - name: INIT_IMAGE
     description: Imaged used by the init process
     value: flyway/flyway
+  - name: RANDOM_EXPRESSION
+    description: Random expression to make sure deployments update
+    from: "[a-zA-Z0-9]{32}"
+    generate: expression
 objects:
   - apiVersion: v1
     kind: ConfigMap
@@ -96,22 +100,6 @@ objects:
       idir-form-password: "${IDIR_FORM_PASSWORD}"
       bceid-form-password: "${BCEID_FORM_PASSWORD}"
   - apiVersion: v1
-    kind: ImageStream
-    metadata:
-      labels:
-        app: ${NAME}-${ZONE}
-      name: ${NAME}-${ZONE}-${COMPONENT}
-    spec:
-      lookupPolicy:
-        local: false
-      tags:
-        - name: ${IMAGE_TAG}
-          from:
-            kind: DockerImage
-            name: ${REGISTRY}/${PROMOTE}
-          referencePolicy:
-            type: Local
-  - apiVersion: v1
     kind: DeploymentConfig
     metadata:
       labels:
@@ -121,14 +109,6 @@ objects:
       replicas: 1
       triggers:
         - type: ConfigChange
-        - type: ImageChange
-          imageChangeParams:
-            automatic: true
-            containerNames:
-              - ${NAME}
-            from:
-              kind: ImageStreamTag
-              name: ${NAME}-${ZONE}-${COMPONENT}:${IMAGE_TAG}
       selector:
         deploymentconfig: ${NAME}-${ZONE}-${COMPONENT}
       strategy:
@@ -171,7 +151,7 @@ objects:
               configMap:
                 name: postgres-configmap
           containers:
-            - image: ${NAME}-${ZONE}-${COMPONENT}:${IMAGE_TAG}
+            - image: ${REGISTRY}/${ORG}/${NAME}/${COMPONENT}:${ZONE}
               imagePullPolicy: Always
               name: ${NAME}
               env:
@@ -239,7 +219,8 @@ objects:
                     secretKeyRef:
                       name: ${NAME}-${ZONE}-${COMPONENT}
                       key: bceid-form-password
-
+                - name: RANDOM_EXPRESSION
+                  value: ${RANDOM_EXPRESSION}
               ports:
                 - containerPort: 3000
                   protocol: TCP

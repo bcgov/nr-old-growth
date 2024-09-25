@@ -36,6 +36,10 @@ parameters:
   - name: PROMOTE
     description: Image (namespace/name:tag) to promote/import
     value: openshift/postgresql:12
+  - name: RANDOM_EXPRESSION
+    description: Random expression to make sure deployments update
+    from: "[a-zA-Z0-9]{32}"
+    generate: expression
 objects:
   - apiVersion: v1
     kind: Secret
@@ -61,22 +65,6 @@ objects:
         requests:
           storage: "${DB_PVC_SIZE}"
       storageClassName: netapp-file-standard
-  - kind: ImageStream
-    apiVersion: v1
-    metadata:
-      name: ${NAME}-${ZONE}-${COMPONENT}
-      labels:
-        app: ${NAME}-${ZONE}
-    spec:
-      lookupPolicy:
-        local: false
-      tags:
-      - name: ${IMAGE_TAG}
-        from:
-          kind: DockerImage
-          name: ${REGISTRY}/${PROMOTE}
-        referencePolicy:
-          type: Local
   - kind: DeploymentConfig
     apiVersion: v1
     metadata:
@@ -87,14 +75,6 @@ objects:
       replicas: 1
       triggers:
       - type: ConfigChange
-      - type: ImageChange
-        imageChangeParams:
-          automatic: true
-          containerNames:
-          - ${NAME}
-          from:
-            kind: ImageStreamTag
-            name: ${NAME}-${ZONE}-${COMPONENT}:${IMAGE_TAG}
       selector:
         deploymentconfig: ${NAME}-${ZONE}-${COMPONENT}
       strategy:
@@ -115,7 +95,7 @@ objects:
                 claimName: ${NAME}-${ZONE}-${COMPONENT}
           containers:
             - name: ${NAME}
-              image: ${NAME}-${ZONE}-${COMPONENT}:${IMAGE_TAG}
+              image: ${REGISTRY}/${PROMOTE}
               ports:
                 - containerPort: 5432
                   protocol: TCP
@@ -161,6 +141,8 @@ objects:
                     secretKeyRef:
                       name: ${NAME}-${ZONE}-${COMPONENT}
                       key: database-user
+                - name: RANDOM_EXPRESSION
+                  value: ${RANDOM_EXPRESSION}
               volumeMounts:
                 - name: ${NAME}-${ZONE}-${COMPONENT}
                   mountPath: "/var/lib/pgsql/data"
