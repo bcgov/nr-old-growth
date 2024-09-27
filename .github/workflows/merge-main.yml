@@ -22,7 +22,7 @@ jobs:
   tests-backend:
     name: Backend Unit Tests
     if: github.event_name != 'pull_request' || !github.event.pull_request.draft
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     continue-on-error: true
     steps:
       - name: Run tests
@@ -42,7 +42,7 @@ jobs:
 
   codeql:
     name: Semantic Code Analysis
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs:
       - tests-backend
     permissions:
@@ -74,16 +74,17 @@ jobs:
     env:
       ZONE: test
     environment: test
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - name: Deploys
-        uses: bcgov-nr/action-deployer-openshift@v3.0.0
+        uses: bcgov-nr/action-deployer-openshift@v3.0.1
         with:
           file: .github/openshift/deploy.database.yml
           oc_namespace: ${{ secrets.OC_NAMESPACE }}
           oc_server: ${{ secrets.OC_SERVER }}
           oc_token: ${{ secrets.OC_TOKEN }}
+          oc_version: "4.13"
           overwrite: false
           parameters: -p ZONE=${{ env.ZONE }} -p NAME=${{ github.event.repository.name }}
 
@@ -94,16 +95,17 @@ jobs:
     env:
       ZONE: test
     environment: test
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - name: Deploys
-        uses: bcgov-nr/action-deployer-openshift@v3.0.0
+        uses: bcgov-nr/action-deployer-openshift@v3.0.1
         with:
           file: .github/openshift/deploy.backend.yml
           oc_namespace: ${{ secrets.OC_NAMESPACE }}
           oc_server: ${{ secrets.OC_SERVER }}
           oc_token: ${{ secrets.OC_TOKEN }}
+          oc_version: "4.13"
           overwrite: true
           parameters:
             -p ZONE=${{ env.ZONE }} -p NAME=${{ github.event.repository.name }}
@@ -124,16 +126,17 @@ jobs:
       PREV: test
       ZONE: prod
     environment: prod
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - name: Deploys
-        uses: bcgov-nr/action-deployer-openshift@v3.0.0
+        uses: bcgov-nr/action-deployer-openshift@v3.0.1
         with:
           file: .github/openshift/deploy.database.yml
           oc_namespace: ${{ secrets.OC_NAMESPACE }}
           oc_server: ${{ secrets.OC_SERVER }}
           oc_token: ${{ secrets.OC_TOKEN }}
+          oc_version: "4.13"
           overwrite: false
           parameters: -p ZONE=${{ env.ZONE }} -p NAME=${{ github.event.repository.name }}
 
@@ -145,16 +148,17 @@ jobs:
       PREV: test
       ZONE: prod
     environment: prod
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - name: Deploys
-        uses: bcgov-nr/action-deployer-openshift@v3.0.0
+        uses: bcgov-nr/action-deployer-openshift@v3.0.1
         with:
           file: .github/openshift/deploy.backend.yml
           oc_namespace: ${{ secrets.OC_NAMESPACE }}
           oc_server: ${{ secrets.OC_SERVER }}
           oc_token: ${{ secrets.OC_TOKEN }}
+          oc_version: "4.13"
           overwrite: true
           parameters:
             -p ZONE=${{ env.ZONE }} -p NAME=${{ github.event.repository.name }}
