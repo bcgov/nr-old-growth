@@ -18,6 +18,9 @@ jobs:
       name: dev
     steps:
       - uses: actions/checkout@v4
+      - uses: redhat-actions/openshift-tools-installer@v1
+        with:
+          oc: "4"
       - name: Remove OpenShift artifacts
         run: |
           oc login --token=${{ secrets.OC_TOKEN }} --server=${{ secrets.OC_SERVER }}
