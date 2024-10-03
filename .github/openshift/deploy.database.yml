@@ -1,18 +1,9 @@
 apiVersion: template.openshift.io/v1
 kind: Template
-metadata:
-  name: ${NAME}
-  annotations:
-    description: "Nr-Old-Growth"
-    tags: "nrog"
-    iconClass: icon-js
-labels:
-  app: ${NAME}-${ZONE}
-  app.kubernetes.io/part-of: ${NAME}-${ZONE}
 parameters:
   - name: NAME
     description: Product name
-    value: nrog
+    value: nr-old-growth
   - name: COMPONENT
     description: Component name
     value: database
@@ -88,7 +79,7 @@ objects:
                 claimName: ${NAME}-${ZONE}-${COMPONENT}
           containers:
             - name: ${NAME}
-              image: openshift/postgresql:12
+              image: image-registry.openshift-image-registry.svc:5000/openshift/postgresql:12
               ports:
                 - containerPort: 5432
                   protocol: TCP

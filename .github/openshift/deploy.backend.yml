@@ -1,18 +1,9 @@
 apiVersion: template.openshift.io/v1
 kind: Template
-metadata:
-  name: ${NAME}
-  annotations:
-    description: "Nr-Old-Growth"
-    tags: "nrog"
-    iconClass: icon-js
-labels:
-  app: ${NAME}-${ZONE}
-  app.kubernetes.io/part-of: ${NAME}-${ZONE}
 parameters:
   - name: NAME
     description: Module name
-    value: nrog
+    value: nr-old-growth
   - name: COMPONENT
     description: Component name
     value: backend
