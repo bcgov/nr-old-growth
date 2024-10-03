@@ -53,6 +53,10 @@ parameters:
   - name: INIT_IMAGE
     description: Imaged used by the init process
     value: flyway/flyway
+  - name: RANDOM_EXPRESSION
+    description: Random expression to make sure deployments update
+    from: "[a-zA-Z0-9]{32}"
+    generate: expression
 objects:
   - apiVersion: v1
     kind: ConfigMap
@@ -129,6 +133,8 @@ objects:
                       key: database-user
                 - name: FLYWAY_BASELINE_ON_MIGRATE
                   value: "true"
+                - name: RANDOM_EXPRESSION
+                  value: ${RANDOM_EXPRESSION}
               volumeMounts:
                 - mountPath: /flyway/sql
                   name: migration
