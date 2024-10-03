@@ -21,7 +21,6 @@ jobs:
   #TODO: check sonar for OG
   tests-backend:
     name: Backend Unit Tests
-    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
     runs-on: ubuntu-24.04
     continue-on-error: true
     steps:
@@ -109,7 +108,6 @@ jobs:
           overwrite: true
           parameters:
             -p ZONE=${{ env.ZONE }} -p NAME=${{ github.event.repository.name }}
-            -p PROMOTE=${{ github.repository }}/backend:${{ env.ZONE }}
             -p CHES_CLIENT_ID=${{ secrets.CHES_CLIENT_ID }}
             -p CHES_CLIENT_SECRET=${{ secrets.CHES_CLIENT_SECRET }}
             -p CHES_TOKEN_URL='https://test.loginproxy.gov.bc.ca/auth/realms/comsvcauth/protocol/openid-connect/token'
@@ -118,12 +116,24 @@ jobs:
             -p BCEID_FORM_PASSWORD=${{ secrets.CHEFS_BCEID_FORM_PASSWORD}}
             -p IDIR_FORM_PASSWORD=${{ secrets.CHEFS_IDIR_FORM_PASSWORD}}
 
+  prod-promotions:
+    name: Promote Images to Prod
+    needs:
+      - deploy-test-backend
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: shrink/actions-docker-registry-tag@v4
+        with:
+          registry: ghcr.io
+          repository: ${{ github.repository }}/backend
+          target: test
+          tags: prod
+
   deploy-prod-database:
     name: Deploy Database on Prod Env
     needs:
-      - deploy-test-backend
+      - prod-promotions
     env:
-      PREV: test
       ZONE: prod
     environment: prod
     runs-on: ubuntu-24.04
@@ -145,7 +155,6 @@ jobs:
     needs:
       - deploy-prod-database
     env:
-      PREV: test
       ZONE: prod
     environment: prod
     runs-on: ubuntu-24.04
@@ -162,7 +171,6 @@ jobs:
           overwrite: true
           parameters:
             -p ZONE=${{ env.ZONE }} -p NAME=${{ github.event.repository.name }}
-            -p PROMOTE=${{ github.repository }}/backend:${{ env.PREV }}
             -p CHES_CLIENT_ID=${{ secrets.CHES_CLIENT_ID }}
             -p CHES_CLIENT_SECRET=${{ secrets.CHES_CLIENT_SECRET }}
             -p CHES_TOKEN_URL='https://loginproxy.gov.bc.ca/auth/realms/comsvcauth/protocol/openid-connect/token'
