@@ -1,27 +1,15 @@
 apiVersion: template.openshift.io/v1
 kind: Template
-metadata:
-  name: ${NAME}
-  annotations:
-    description: "Nr-Old-Growth"
-    tags: "nrog"
-    iconClass: icon-js
-labels:
-  app: ${NAME}-${ZONE}
-  app.kubernetes.io/part-of: ${NAME}-${ZONE}
 parameters:
   - name: NAME
     description: Module name
-    value: nrog
+    value: nr-old-growth
   - name: COMPONENT
     description: Component name
     value: backend
   - name: ZONE
     description: Deployment zone, e.g. pr-### or prod
     required: true
-  - name: IMAGE_TAG
-    description: Image tag to use
-    value: latest
   - name: DOMAIN
     value: apps.silver.devops.gov.bc.ca
   - name: CPU_LIMIT
@@ -35,6 +23,9 @@ parameters:
   - name: REGISTRY
     description: Container registry to import from (internal is image-registry.openshift-image-registry.svc:5000)
     value: ghcr.io
+  - name: ORG
+    description: Organization name
+    value: bcgov
   - name: PROMOTE
     description: Image (namespace/name:tag) to promote/import
     value: bcgov/nr-old-growth:prod-backend
@@ -62,6 +53,10 @@ parameters:
   - name: INIT_IMAGE
     description: Imaged used by the init process
     value: flyway/flyway
+  - name: RANDOM_EXPRESSION
+    description: Random expression to make sure deployments update
+    from: "[a-zA-Z0-9]{32}"
+    generate: expression
 objects:
   - apiVersion: v1
     kind: ConfigMap
@@ -95,49 +90,24 @@ objects:
       ches-client-secret: "${CHES_CLIENT_SECRET}"
       idir-form-password: "${IDIR_FORM_PASSWORD}"
       bceid-form-password: "${BCEID_FORM_PASSWORD}"
-  - apiVersion: v1
-    kind: ImageStream
-    metadata:
-      labels:
-        app: ${NAME}-${ZONE}
-      name: ${NAME}-${ZONE}-${COMPONENT}
-    spec:
-      lookupPolicy:
-        local: false
-      tags:
-        - name: ${IMAGE_TAG}
-          from:
-            kind: DockerImage
-            name: ${REGISTRY}/${PROMOTE}
-          referencePolicy:
-            type: Local
-  - apiVersion: v1
-    kind: DeploymentConfig
+  - kind: Deployment
+    apiVersion: apps/v1
     metadata:
       labels:
         app: ${NAME}-${ZONE}
       name: ${NAME}-${ZONE}-${COMPONENT}
     spec:
       replicas: 1
-      triggers:
-        - type: ConfigChange
-        - type: ImageChange
-          imageChangeParams:
-            automatic: true
-            containerNames:
-              - ${NAME}
-            from:
-              kind: ImageStreamTag
-              name: ${NAME}-${ZONE}-${COMPONENT}:${IMAGE_TAG}
       selector:
-        deploymentconfig: ${NAME}-${ZONE}-${COMPONENT}
+        matchLabels:
+          deployment: ${NAME}-${ZONE}-${COMPONENT}
       strategy:
-        type: Rolling
+        type: RollingUpdate
       template:
         metadata:
           labels:
             app: ${NAME}-${ZONE}
-            deploymentconfig: ${NAME}-${ZONE}-${COMPONENT}
+            deployment: ${NAME}-${ZONE}-${COMPONENT}
         spec:
           initContainers:
             - name: ${NAME}-init
@@ -163,6 +133,8 @@ objects:
                       key: database-user
                 - name: FLYWAY_BASELINE_ON_MIGRATE
                   value: "true"
+                - name: RANDOM_EXPRESSION
+                  value: ${RANDOM_EXPRESSION}
               volumeMounts:
                 - mountPath: /flyway/sql
                   name: migration
@@ -171,7 +143,7 @@ objects:
               configMap:
                 name: postgres-configmap
           containers:
-            - image: ${NAME}-${ZONE}-${COMPONENT}:${IMAGE_TAG}
+            - image: ${REGISTRY}/${ORG}/${NAME}/${COMPONENT}:${ZONE}
               imagePullPolicy: Always
               name: ${NAME}
               env:
@@ -281,7 +253,7 @@ objects:
           port: 80
           targetPort: 3000
       selector:
-        deploymentconfig: ${NAME}-${ZONE}-${COMPONENT}
+        deployment: ${NAME}-${ZONE}-${COMPONENT}
   - apiVersion: route.openshift.io/v1
     kind: Route
     metadata:
