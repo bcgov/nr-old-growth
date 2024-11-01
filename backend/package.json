@@ -42,7 +42,7 @@
     "rxjs": "^7.8.1",
     "swagger-ui-express": "^5.0.0",
     "typeorm": "^0.3.18",
-    "webpack": "^5.91.0"
+    "webpack": "^5.96.1"
   },
   "jest": {
     "moduleFileExtensions": [
@@ -71,7 +71,7 @@
     "@types/cron": "^2.4.3",
     "@types/express": "^5.0.0",
     "@types/jest": "^29.5.14",
-    "@types/node": "^22.0.0",
+    "@types/node": "^22.8.6",
     "@types/supertest": "^6.0.2",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.10.0",
