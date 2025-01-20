@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Test app
-        uses: bcgov-nr/action-test-and-analyse@v1.2.1
+        uses: bcgov/action-test-and-analyse@v1.2.1
         with:
           commands: |
             npm ci

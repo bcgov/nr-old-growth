@@ -8,7 +8,7 @@ on:
 
 jobs:
   automate-project-columns:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: alex-page/github-project-automation-plus@v0.8.1
         with:
