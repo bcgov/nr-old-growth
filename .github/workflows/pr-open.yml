@@ -64,8 +64,8 @@ jobs:
             # Current changelog
 
             ${{ steps.changelog.outputs.clean_changelog }}
-          comment_tag: "# Current changelog"
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          comment-tag: "# Current changelog"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
   pr-greeting:
     name: PR Greeting
