@@ -1,5 +1,5 @@
 # Build - includes npm
-FROM node:20-bookworm-slim@sha256:732791c6e9c88972602b18b56358b3c97af2ee11de1e18efbd25b5f64cacd736 AS build
+FROM node:20-bookworm-slim@sha256:cb4abfbba7dfaa78e21ddf2a72a592e5f9ed36ccf98bdc8ad3ff945673d288c2 AS build
 
 # Install packages, build and keep only prod packages
 WORKDIR /app
