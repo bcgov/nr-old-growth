@@ -105,7 +105,6 @@ jobs:
           build_context: ./backend
           build_file: ./backend/Dockerfile
           package: backend
-          tag: ${{ github.event.number }}
           tag_fallback: test
           token: ${{ secrets.GITHUB_TOKEN }}
           triggers: backend/
