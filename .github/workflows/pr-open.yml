@@ -17,16 +17,16 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: actions/checkout@v4
 
       - name: Pull request size and stability labels
-        uses: actions/labeler@8558fd74291d67161a8a78ce36a881fa63b766a9 # v5
+        uses: actions/labeler@v5
         continue-on-error: true
         with:
           repo-token: "${{ secrets.GITHUB_TOKEN }}"
 
       - name: Conventional Label
-        uses: bcoe/conventional-release-labels@886f696738527c7be444262c327c89436dfb95a8 # v1
+        uses: bcoe/conventional-release-labels@v1
         continue-on-error: true
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -34,7 +34,7 @@ jobs:
           type_labels: '{"feat": "feature", "fix": "fix", "bug": "fix", "doc": "documentation", "ci": "ci", "chore": "chore", "breaking": "breaking", "BREAKING CHANGE": "breaking"}'
 
       - name: Checkout branch
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        uses: actions/checkout@v4
         with:
           ref: refs/heads/${{ github.head_ref }}
 
@@ -51,7 +51,7 @@ jobs:
           git-branch: refs/heads/${{ github.head_ref }}
 
       - name: Checkout pr
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.ref }}
 
@@ -97,7 +97,7 @@ jobs:
       packages: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        uses: actions/checkout@v4
 
       - name: Build Image
         uses: bcgov/action-builder-ghcr@d63c76a4bb7914d3a986a035904b49d99c2c4613 # v3.0.0
@@ -116,7 +116,7 @@ jobs:
     environment: dev
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: actions/checkout@v4
       - name: Deploys
         uses: bcgov/action-deployer-openshift@d972993c70aba88e4f2fe66a66c4b7149fa9fcad # v4.0.0
         with:
@@ -136,7 +136,7 @@ jobs:
     environment: dev
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: actions/checkout@v4
 
       - name: Deploys
         uses: bcgov/action-deployer-openshift@d972993c70aba88e4f2fe66a66c4b7149fa9fcad # v4.0.0
