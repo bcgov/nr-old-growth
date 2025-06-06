@@ -26,7 +26,7 @@ jobs:
           repo-token: "${{ secrets.GITHUB_TOKEN }}"
 
       - name: Conventional Label
-        uses: bcoe/conventional-release-labels@v1
+        uses: bcoe/conventional-release-labels@886f696738527c7be444262c327c89436dfb95a8 # v1
         continue-on-error: true
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -100,7 +100,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build Image
-        uses: bcgov/action-builder-ghcr@d63c76a4bb7914d3a986a035904b49d99c2c4613 # v3.0.0
+        uses: bcgov/action-builder-ghcr@ec30e4ce1ac3c25c93ec26cf370ecba028dc478e # v3.0.1
         with:
           build_context: ./backend
           build_file: ./backend/Dockerfile
