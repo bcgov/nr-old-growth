@@ -8,7 +8,7 @@ RUN npm ci --only=prod && \
     npm run build
 
 # Deploy - has node, but not npm
-FROM gcr.io/distroless/nodejs20-debian12:nonroot@sha256:34958092aa848dc0e037cd188136a3145ceee02229471d1d1eabffbeffe42250
+FROM gcr.io/distroless/nodejs20-debian12:nonroot@sha256:dd38b3570d7c84fd65afb2c72fece6ea5099ebb3f52c2122206087afa0bdc04c
 
 # Set node to production
 ENV NODE_ENV=production
