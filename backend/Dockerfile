@@ -1,5 +1,5 @@
 # Build - includes npm
-FROM node:20-bookworm-slim@sha256:7cd3fbc830c75c92256fe1122002add9a1c025831af8770cd0bf8e45688ef661 AS build
+FROM node:20-bookworm-slim AS build
 
 # Install packages, build and keep only prod packages
 WORKDIR /app
@@ -8,7 +8,7 @@ RUN npm ci --only=prod && \
     npm run build
 
 # Deploy - has node, but not npm
-FROM gcr.io/distroless/nodejs20-debian12:nonroot@sha256:34958092aa848dc0e037cd188136a3145ceee02229471d1d1eabffbeffe42250
+FROM gcr.io/distroless/nodejs20-debian12:nonroot
 
 # Set node to production
 ENV NODE_ENV=production
