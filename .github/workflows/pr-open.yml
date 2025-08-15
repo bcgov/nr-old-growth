@@ -100,7 +100,7 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Build Image
-        uses: bcgov/action-builder-ghcr@v4.0.0
+        uses: bcgov/action-builder-ghcr@v4.1.0
         with:
           build_context: ./backend
           build_file: ./backend/Dockerfile
