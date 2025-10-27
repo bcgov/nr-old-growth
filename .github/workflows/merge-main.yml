@@ -31,7 +31,7 @@ jobs:
             npm ci
             npm run test:cov
           dir: backend
-          node_version: 16
+          node_version: 20
           sonar_args: >
             -Dsonar.exclusions=**/coverage/**,**/examples/**,**/pages/**
             -Dsonar.organization=bcgov-sonarcloud
