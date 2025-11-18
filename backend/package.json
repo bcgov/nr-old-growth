@@ -58,7 +58,6 @@
   },
   "overrides": {
     "semver@6.3.0": "6.3.1",
-    "minimist@<1.2.6": "1.2.6",
     "tmp": "^0.2.4",
     "@nestjs/cli": {
       "glob": "11.1.0"
