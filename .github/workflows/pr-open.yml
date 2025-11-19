@@ -77,7 +77,7 @@ jobs:
       pull-requests: write
     steps:
       - name: PR Greeting
-        uses: bcgov/action-pr-description-add@14338bfe0278ead273b3c1189e5aa286ff6709c4 # v2.0.0
+        uses: bcgov/action-pr-description-add@9bf88aec33edb7c00ed72f9305aa1721d0cdab9f # v2.0.3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           add_markdown: |
@@ -100,7 +100,7 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Build Image
-        uses: bcgov/action-builder-ghcr@4.1.1
+        uses: bcgov/action-builder-ghcr@v4.2.0
         with:
           build_context: ./backend
           build_file: ./backend/Dockerfile
