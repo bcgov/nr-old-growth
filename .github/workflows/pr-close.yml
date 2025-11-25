@@ -17,7 +17,7 @@ jobs:
     environment:
       name: dev
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Install CLI tools from OpenShift Mirror
         uses: redhat-actions/openshift-tools-installer@144527c7d98999f2652264c048c7a9bd103f8a82 # v1
         with:        
