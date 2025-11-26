@@ -118,7 +118,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Deploys
-        uses: bcgov/action-deployer-openshift@v4.0.0
+        uses: bcgov/action-deployer-openshift@v4.0.1
         with:
           file: .github/openshift/deploy.database.yml
           oc_namespace: ${{ secrets.OC_NAMESPACE }}
@@ -139,7 +139,7 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: Deploys
-        uses: bcgov/action-deployer-openshift@v4.0.0
+        uses: bcgov/action-deployer-openshift@v4.0.1
         with:
           file: .github/openshift/deploy.backend.yml
           oc_namespace: ${{ secrets.OC_NAMESPACE }}
