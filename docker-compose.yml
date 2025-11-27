@@ -19,7 +19,7 @@ services:
     entrypoint:
       - "sh"
       - "-c"
-      - "npm ci && npm run start"
+      - "npm ci --ignore-scripts && npm run start"
     environment:
       NODE_ENV: development
       POSTGRESQL_HOST: database
