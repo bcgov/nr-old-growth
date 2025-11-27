@@ -4,7 +4,7 @@ FROM node:24-bookworm-slim AS build
 # Install packages, build and keep only prod packages
 WORKDIR /app
 COPY . ./
-RUN npm ci --only=prod && \
+RUN npm ci --only=prod --ignore-scripts && \
     npm run build
 
 # Deploy - has node, but not npm
