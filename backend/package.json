@@ -65,7 +65,9 @@
     "typeorm": {
       "glob": "13.0.0"
     },
-    "express": "5.2.0"
+    "@nestjs/platform-express": {
+      "express": "5.2.0"
+    }
   },
   "devDependencies": {
     "@nestjs/testing": "^11.1.9",
