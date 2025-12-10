@@ -77,7 +77,7 @@ jobs:
       pull-requests: write
     steps:
       - name: PR Greeting
-        uses: bcgov/action-pr-description-add@9bf88aec33edb7c00ed72f9305aa1721d0cdab9f # v2.0.3
+        uses: bcgov/action-pr-description-add@d79a5c3b49d3b3b3215495afac3ae599cef191bb # v2.0.1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           add_markdown: |
@@ -126,8 +126,7 @@ jobs:
           oc_token: ${{ secrets.OC_TOKEN }}
           oc_version: "4.13"
           overwrite: false
-          parameters:
-            -p ZONE=${{ github.event.number }} -p NAME=${{ github.event.repository.name }}
+          parameters: -p ZONE=${{ github.event.number }} -p NAME=${{ github.event.repository.name }}
 
   deploy-backend:
     name: Deploy Backend
