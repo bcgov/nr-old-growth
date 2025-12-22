@@ -25,7 +25,7 @@ jobs:
     continue-on-error: true
     steps:
       - name: Run tests
-        uses: bcgov/action-test-and-analyse@c20d16c26d9b7e6e486f01702880053ed4ebdc91 # v1.5.0
+        uses: bcgov/action-test-and-analyse@87f88c90526b8b05cea760492ff33db4ba6e271b # v1.6.0
         with:
           commands: |
             npm ci
