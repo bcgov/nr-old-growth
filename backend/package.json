@@ -57,6 +57,7 @@
     "testEnvironment": "node"
   },
   "overrides": {
+    "lodash@^4.0.0": "^4.17.23",
     "qs": "6.14.1",
     "semver@6.3.0": "6.3.1",
     "tmp": "^0.2.4",
