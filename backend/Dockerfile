@@ -7,6 +7,7 @@ COPY . ./
 RUN npm ci --only=prod --ignore-scripts && \
     npm run build
 
+
 # Deploy - has node, but not npm
 FROM gcr.io/distroless/nodejs20-debian12:nonroot
 
