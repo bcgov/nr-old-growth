@@ -63,10 +63,10 @@
     "semver@6.3.0": "6.3.1",
     "tmp": "^0.2.4",
     "@nestjs/cli": {
-      "glob": "13.0.5"
+      "glob": "13.0.6"
     },
     "typeorm": {
-      "glob": "13.0.5"
+      "glob": "13.0.6"
     },
     "@nestjs/platform-express": {
       "express": "5.2.1"
