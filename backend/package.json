@@ -64,7 +64,7 @@
     "qs": "6.15.1",
     "semver@6.3.0": "6.3.1",
     "tmp": "^0.2.4",
-    "follow-redirects@1.15.11": "1.16.0",
+    "follow-redirects@^1.15.11": "1.16.0",
     "@nestjs/cli": {
       "glob": "13.0.6"
     },
