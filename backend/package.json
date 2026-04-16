@@ -25,8 +25,8 @@
     "@nestjs/cli": "^11.0.16",
     "@nestjs/common": "^11.1.18",
     "@nestjs/config": "^4.0.3",
-    "@nestjs/core": "^11.1.18",
     "@nestjs/platform-express": "^11.1.18",
+    "@nestjs/core": "^11.1.19",
     "@nestjs/schedule": "^6.1.1",
     "@nestjs/swagger": "^11.2.6",
     "@nestjs/typeorm": "^11.0.0",
@@ -64,6 +64,7 @@
     "qs": "6.15.1",
     "semver@6.3.0": "6.3.1",
     "tmp": "^0.2.4",
+    "follow-redirects@^1.15.11": "1.16.0",
     "@nestjs/cli": {
       "glob": "13.0.6"
     },
