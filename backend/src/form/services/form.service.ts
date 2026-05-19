@@ -1,13 +1,43 @@
 import { Injectable, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { Cron } from '@nestjs/schedule';
 import { EmailSubmissionLogEntity } from '../entities/emailSubmissionLog.entity';
 import { EmailSubmissionLog } from '../entities/emailSubmissionLog.interface';
 import { EmailService } from '../../email/services/email.service';
 import { EmailEntity } from '../../email/model/email.entity';
-import { from } from 'rxjs';
+
+// --- Constants ---
+
+/** Cron interval in minutes. Update the @Cron expression below to match. */
+const CRON_INTERVAL_MINUTES = 10;
+
+/** Earliest date from which update-email notifications are considered valid. */
+const UPDATE_NOTIFICATION_EPOCH = new Date('2023-01-09T01:14:17.531Z');
+
+const CHEFS_SUBMISSIONS_URL = (formId: string, formVersionId: string) =>
+  `https://submit.digital.gov.bc.ca/app/api/v1/forms/${formId}/versions/${formVersionId}/submissions`;
+
+const ERROR_NOTIFICATION_RECIPIENTS = [
+  'maria.martinez@gov.bc.ca',
+  'ziad.bhunnoo@gov.bc.ca',
+  'paulo.cruz@gov.bc.ca',
+];
+
+/** Strongly-typed email classification for submission log entries. */
+enum EmailType {
+  NEW = 'NEW',
+  UPDATE = 'UPDATE',
+}
+
+/** Result codes stored against each log entry. */
+enum LogCode {
+  DELIVERED = 'DELIVERED',
+  FAILED = 'FAILED',
+}
+
+// ---------------------------------------------------------------------------
 
 @Injectable()
 export class FormService {
@@ -15,59 +45,64 @@ export class FormService {
 
   constructor(
     @InjectRepository(EmailSubmissionLogEntity)
-    private emailSubmissionLogRepository: Repository<EmailSubmissionLogEntity>,
-    private emailService: EmailService,
+    private readonly emailSubmissionLogRepository: Repository<EmailSubmissionLogEntity>,
+    private readonly emailService: EmailService,
   ) {}
 
-  // note: everytime change the cronjob interval, need to adjust the interval below that checks new submissions
-  private interval = 10;
-  @Cron('*/10 * * * *') //Runs every 10 minutes
-  // @Cron('*/1 * * * *') //Runs every 1 minutes
-  // @Cron('45 * * * * *') // Run every 45 seconds
-  // @Cron('*/5 * * * * *') //Runs every 5 seconds
-  handleIDIRForm(emailTo: string) {
-    this.logger.debug('called every 10 mins for idir form');
+  // -------------------------------------------------------------------------
+  // Cron handlers
+  // -------------------------------------------------------------------------
+
+  /** Runs every 10 minutes – keep the @Cron expression in sync with CRON_INTERVAL_MINUTES. */
+  @Cron('*/10 * * * *')
+  async handleIDIRForm(): Promise<unknown> {
+    this.logger.debug('IDIR form cron triggered');
     const formId = process.env.IDIR_FORM_ID;
     const formVersionId = process.env.IDIR_FORM_VERSION_ID;
     const formPassword = process.env.IDIR_FORM_PASSWORD;
-    return this.handleSubmissions(emailTo, formId, formVersionId, formPassword);
+
+    if (!formId || !formVersionId || !formPassword) {
+      const msg = 'IDIR form environment variables are not set; skipping cron run';
+      this.logger.warn(msg);
+      await this.sendErrorNotification(msg);
+      return null;
+    }
+
+    return this.handleSubmissions(formId, formVersionId, formPassword);
   }
 
   @Cron('*/10 * * * *')
-  handleBCEIDForm(emailTo: string) {
-    this.logger.debug('called every 10 mins for bceid form');
+  async handleBCEIDForm(): Promise<unknown> {
+    this.logger.debug('BCEID form cron triggered');
     const formId = process.env.BCEID_FORM_ID;
     const formVersionId = process.env.BCEID_FORM_VERSION_ID;
     const formPassword = process.env.BCEID_FORM_PASSWORD;
-    return this.handleSubmissions(emailTo, formId, formVersionId, formPassword);
+
+    if (!formId || !formVersionId || !formPassword) {
+      const msg = 'BCEID form environment variables are not set; skipping cron run';
+      this.logger.warn(msg);
+      await this.sendErrorNotification(msg);
+      return null;
+    }
+
+    return this.handleSubmissions(formId, formVersionId, formPassword);
   }
 
-  getStoredSubmissionss(): Promise<EmailSubmissionLogEntity[]> {
-    return this.emailSubmissionLogRepository
-      .createQueryBuilder()
-      .select('eslog')
-      .from(EmailSubmissionLogEntity, 'eslog')
-      .where('eslog.confirmationId is not null')
-      .getMany();
-  }
+  // -------------------------------------------------------------------------
+  // Repository helpers
+  // -------------------------------------------------------------------------
 
   findAllEmailSubmissionLogs(): Promise<EmailSubmissionLog[]> {
     return this.emailSubmissionLogRepository.find();
   }
 
-  findEmailSubmissionLog(
-    confirmationId: string,
-  ): Promise<EmailSubmissionLog[]> {
-    return this.emailSubmissionLogRepository.find({
-      where: { confirmationId },
-    });
+  findEmailSubmissionLog(confirmationId: string): Promise<EmailSubmissionLog[]> {
+    return this.emailSubmissionLogRepository.find({ where: { confirmationId } });
   }
 
-  findNewEmailSubmissionLog(
-    confirmationId: string,
-  ): Promise<EmailSubmissionLog[]> {
+  findNewEmailSubmissionLog(confirmationId: string): Promise<EmailSubmissionLog[]> {
     return this.emailSubmissionLogRepository.find({
-      where: { confirmationId, emailType: 'NEW' },
+      where: { confirmationId, emailType: EmailType.NEW },
     });
   }
 
@@ -76,361 +111,326 @@ export class FormService {
     submissionUpdatedAt: Date,
   ): Promise<EmailSubmissionLog[]> {
     return this.emailSubmissionLogRepository.find({
-      where: {
-        confirmationId,
-        emailType: 'UPDATE',
-        submissionUpdatedAt,
-      },
+      where: { confirmationId, emailType: EmailType.UPDATE, submissionUpdatedAt },
     });
   }
 
-  async postEmailSubmissionLog(
-    emailSubmissionLog: EmailSubmissionLog,
-  ): Promise<any> {
-    const emailSubmissionLogEntity = new EmailSubmissionLogEntity();
-    emailSubmissionLogEntity.code = emailSubmissionLog.code;
-    emailSubmissionLogEntity.exceptionLog = emailSubmissionLog.exceptionLog;
-    emailSubmissionLogEntity.confirmationId = emailSubmissionLog.confirmationId;
-    emailSubmissionLogEntity.formId = emailSubmissionLog.formId;
-    emailSubmissionLogEntity.formVersionId = emailSubmissionLog.formVersionId;
-    emailSubmissionLogEntity.emailType = emailSubmissionLog.emailType;
-
+  /**
+   * Persists a new log entry, or updates an existing one when appropriate:
+   *  - NEW  entry: updates if a record already exists (idempotent re-delivery).
+   *  - UPDATE entry: updates only when the existing record shows FAILED.
+   */
+  async postEmailSubmissionLog(log: EmailSubmissionLog): Promise<void> {
     try {
-      if (emailSubmissionLog.confirmationId) {
-        if (emailSubmissionLog.emailType == 'NEW') {
-          const foundLogForNew = await this.findNewEmailSubmissionLog(
-            emailSubmissionLog.confirmationId,
-          );
-          if (foundLogForNew && foundLogForNew.length > 0) {
-            return this.updateEmailSubmissionLog(
-              emailSubmissionLog.confirmationId,
-              emailSubmissionLog.emailType,
-              { code: emailSubmissionLog.code },
-            );
+      if (log.confirmationId) {
+        if (log.emailType === EmailType.NEW) {
+          const existing = await this.findNewEmailSubmissionLog(log.confirmationId);
+          if (existing.length > 0) {
+            await this.updateEmailSubmissionLog(log.confirmationId, log.emailType, {
+              code: log.code,
+            });
+            return;
           }
-        } else if (emailSubmissionLog.emailType == 'UPDATE') {
-          emailSubmissionLogEntity.submissionUpdatedAt =
-            emailSubmissionLog.submissionUpdatedAt;
-          const foundRecordsForUpdate = await this.findUpdateEmailSubmissionLog(
-            emailSubmissionLog.confirmationId,
-            emailSubmissionLog.submissionUpdatedAt,
+        } else if (log.emailType === EmailType.UPDATE) {
+          const existing = await this.findUpdateEmailSubmissionLog(
+            log.confirmationId,
+            log.submissionUpdatedAt,
           );
-          if (
-            foundRecordsForUpdate &&
-            foundRecordsForUpdate.length > 0 &&
-            foundRecordsForUpdate[0].code == 'FAILED'
-          ) {
-            return this.updateEmailSubmissionLog(
-              emailSubmissionLog.confirmationId,
-              emailSubmissionLog.emailType,
-              { code: emailSubmissionLog.code },
-              emailSubmissionLog.submissionUpdatedAt,
+          if (existing.length > 0 && existing[0].code === LogCode.FAILED) {
+            await this.updateEmailSubmissionLog(
+              log.confirmationId,
+              log.emailType,
+              { code: log.code },
+              log.submissionUpdatedAt,
             );
+            return;
           }
         }
       }
-      return from(
-        this.emailSubmissionLogRepository.save(emailSubmissionLogEntity),
-      );
+
+      const entity = Object.assign(new EmailSubmissionLogEntity(), log);
+      await this.emailSubmissionLogRepository.save(entity);
     } catch (e) {
-      this.logger.error(`Failed to write into db: ${e}`);
-      this.sendErrorNotification(`Failed to write into db: ${e}`);
-      return null;
+      this.logger.error(`Failed to write log to DB: ${e}`);
+      await this.sendErrorNotification(`Failed to write log to DB: ${e}`);
     }
   }
 
-  updateEmailSubmissionLog(
+  async updateEmailSubmissionLog(
     confirmationId: string,
-    emailType: string,
-    emailSubmissionLog: EmailSubmissionLog,
+    emailType: EmailType | string,
+    patch: Partial<EmailSubmissionLog>,
     submissionUpdatedAt?: Date,
-  ): Promise<any> {
+  ): Promise<void> {
     try {
-      if (submissionUpdatedAt) {
-        return this.emailSubmissionLogRepository.update(
-          { confirmationId, emailType, submissionUpdatedAt },
-          emailSubmissionLog,
-        );
-      }
-      return this.emailSubmissionLogRepository.update(
-        { confirmationId, emailType },
-        emailSubmissionLog,
-      );
+      const criteria = submissionUpdatedAt
+        ? { confirmationId, emailType, submissionUpdatedAt }
+        : { confirmationId, emailType };
+      await this.emailSubmissionLogRepository.update(criteria, patch);
     } catch (e) {
-      this.logger.error(`Failed to update the db: ${e}`);
-      this.sendErrorNotification(`Failed to update the db: ${e}`);
-      return null;
+      this.logger.error(`Failed to update log in DB: ${e}`);
+      await this.sendErrorNotification(`Failed to update log in DB: ${e}`);
     }
   }
 
-  async filterSubmissionList(
-    allSubmissions: Array<{ [key: string]: any }>,
-    currTimeValue: number,
-    lastTimeValue: number,
-    formId: string,
-    formVersionId: string,
-  ) {
-    try {
-      const returnSubmissions = [];
-
-      await Promise.all(
-        allSubmissions.map(async (submission) => {
-          const createdAtValue = new Date(submission.createdAt).valueOf();
-          const updatedAtValue = new Date(submission.updatedAt).valueOf();
-          const enableEmailUpdateNotificationDate = new Date(
-            '2023-01-09T01:14:17.531Z',
-          ).valueOf();
-
-          /* get new submission list:
-          - select the ones with createdAt date within the last cron job interval, and state is submitted, and has no record in our db
-          - has no record in our db or our record for this confirmation id indicates a failure code 
-          */
-          const foundRecords = await this.findEmailSubmissionLog(
-            submission.confirmationId,
-          );
-          if (
-            (createdAtValue > lastTimeValue &&
-              createdAtValue <= currTimeValue &&
-              submission.submission.state == 'submitted' &&
-              foundRecords.length == 0) ||
-            foundRecords.length == 0 ||
-            (foundRecords.length > 0 && foundRecords[0].code == 'FAILED')
-          ) {
-            submission.emailType = 'NEW';
-            returnSubmissions.push(submission);
-          }
-
-          /* get update submission list:
-          - select the ones with updatedAt date within the last cron job interval, and updatedBy=createdBy, and has no record (type update, same submission update time) in our db
-          - or updated but has no record (type update) in our db and update time after we enable the update email service
-          - or our records (for update) for this confirmation id indicates a failure code 
-          */
-          const foundRecordsForUpdate = await this.findUpdateEmailSubmissionLog(
-            submission.confirmationId,
-            new Date(submission.updatedAt),
-          );
-          if (
-            (updatedAtValue > lastTimeValue &&
-              updatedAtValue <= currTimeValue &&
-              submission.updatedBy &&
-              submission.updatedBy == submission.createdBy &&
-              foundRecordsForUpdate.length == 0) ||
-            (submission.updatedBy &&
-              submission.updatedBy == submission.createdBy &&
-              foundRecordsForUpdate.length == 0 &&
-              updatedAtValue > enableEmailUpdateNotificationDate) ||
-            (foundRecordsForUpdate.length > 0 &&
-              foundRecordsForUpdate[0].code == 'FAILED')
-          ) {
-            const submissionCopy = Object.assign({}, submission);
-            submissionCopy.emailType = 'UPDATE';
-            returnSubmissions.push(submissionCopy);
-          }
-        }),
-      );
-
-      return returnSubmissions;
-    } catch (e) {
-      const emailSubmissionLogEntity: EmailSubmissionLog = {
-        code: 'FAILED',
-        exceptionLog: 'Failed to filter submission data: ' + e,
-        formId: formId,
-        formVersionId: formVersionId,
-      };
-      this.postEmailSubmissionLog(emailSubmissionLogEntity);
-      return null;
-    }
+  /** Minimal HTML escape to avoid injecting submission values into emails. */
+  private escapeHtml(input: string): string {
+    if (!input) return '';
+    return input
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
-  getSubmissionsNeedNotification(
-    formId: string,
-    formVersionId: string,
-    fromPassword: string,
-  ) {
-    return axios
-      .get(
-        `https://submit.digital.gov.bc.ca/app/api/v1/forms/${formId}/versions/${formVersionId}/submissions`,
-        {
-          auth: {
-            username: formId,
-            password: fromPassword,
-          },
-        },
-      )
-      .then((allSubmissions) => {
-        if (allSubmissions && allSubmissions.data) {
-          const currTime = new Date();
-          const lastTime = new Date(
-            currTime.getTime() - 1000 * 60 * this.interval,
-          ); //TODO: put time in variable so we only change it in 1 place
-          const currTimeValue = currTime.valueOf();
-          const lastTimeValue = lastTime.valueOf();
+  // -------------------------------------------------------------------------
+  // Core processing
+  // -------------------------------------------------------------------------
 
-          return this.filterSubmissionList(
-            allSubmissions.data,
-            currTimeValue,
-            lastTimeValue,
-            formId,
-            formVersionId,
-          );
-        } else
-          throw new HttpException(
-            { message: 'Failed to get new submission data: response or response data is null' },
-            HttpStatus.BAD_REQUEST,
-          );
-      })
-      .catch((e) => {
-        throw new HttpException(
-          { message: 'Failed to get submission data from API: ' + e },
-          HttpStatus.INTERNAL_SERVER_ERROR,
-        );
-      });
-  }
-
-  handleSubmissions(
-    emailTo: string, // for quick email test
+  /**
+   * Fetches all submissions for a form version from CHEFS and returns only
+   * those that require an email notification (new or updated since last cron run).
+   */
+  async getSubmissionsNeedingNotification(
     formId: string,
     formVersionId: string,
     formPassword: string,
-  ) {
-    return this.getSubmissionsNeedNotification(
-      formId,
-      formVersionId,
-      formPassword,
-    )
-      .then((submissionList) => {
-        if (submissionList) {
-          if (submissionList.length > 0) {
-            console.log(
-              formId,
-              'submissions need to send notification: ',
-              submissionList,
-            );
-            let response = [];
-            submissionList.forEach((eachSubmission) => {
-              const emailDistrict =
-                eachSubmission.submission.data.naturalResourceDistrict.split(
-                  '-',
-                )[1];
-              const emailSendTo = emailTo || emailDistrict;
-              let text = 'submitted';
-              if (
-                eachSubmission.emailType &&
-                eachSubmission.emailType == 'UPDATE'
-              ) {
-                text = 'updated';
-              }
-              console.log(formId, 'Submission Data: ', JSON.stringify(eachSubmission.submission.data));
-              console.log(formId, 'emailTo: ', emailTo);
-              console.log(formId, 'emailDistrict: ', emailDistrict);
-              console.log(formId, 'mail to:', emailSendTo);
-              const email: EmailEntity = {
-                emailTo: [emailSendTo],
-                emailSubject: `Old growth field observation form and package, ${eachSubmission.confirmationId}`,
-                emailBody:
-                  `<div style="margin-bottom: 16px">An old growth field observation form and package has been ${text}. Confirmation number: ${eachSubmission.confirmationId}</div>` +
-                  `<div><a href="https://submit.digital.gov.bc.ca/app/form/view?s=${eachSubmission.id}">View the submission</a></div>`,
-                emailBodyType: 'html',
-              };
-              response.push(
-                this.emailService
-                  .sendEmail(email)
-                  .then((mailResponse) => {
-                    console.log(formId, 'mailResponse: ', mailResponse.data);
-                    const emailSubmissionLogEntity: EmailSubmissionLog = {
-                      code: 'DELIVERED',
-                      confirmationId: eachSubmission.confirmationId,
-                      exceptionLog: '',
-                      formId: formId,
-                      formVersionId: formVersionId,
-                      emailType: eachSubmission.emailType,
-                      submissionUpdatedAt: new Date(eachSubmission.updatedAt),
-                    };
-                    this.postEmailSubmissionLog(emailSubmissionLogEntity);
-                    return {
-                      status: mailResponse.status,
-                      data: mailResponse.data,
-                    };
-                  })
-                  .catch((err) => {
-                    const emailSubmissionLogEntity: EmailSubmissionLog = {
-                      code: 'FAILED',
-                      confirmationId: eachSubmission.confirmationId,
-                      exceptionLog: 'Failed to send email: ' + err,
-                      formId: formId,
-                      formVersionId: formVersionId,
-                      emailType: eachSubmission.emailType,
-                      submissionUpdatedAt: new Date(eachSubmission.updatedAt),
-                    };
-                    this.postEmailSubmissionLog(emailSubmissionLogEntity);
-                    this.logger.error(
-                      `${formId}: Failed to send email, error logged in db`,
-                    );
-                    console.log("Confirmation ID: " + eachSubmission.confirmationId + "\n" +
-                                "Form ID: " + formId + "\n" +
-                                "Form Version ID: " + formVersionId);
-                    return new HttpException(
-                      { message: err },
-                      HttpStatus.INTERNAL_SERVER_ERROR,
-                    );
-                  }),
-              );
-            });
-            return Promise.all(response);
-          } else {
-            this.logger.debug(
-              `${formId}: No new or updated submission within the last cron job interval`,
-            );
-            return [
-              {
-                msg: 'No new or updated submission within the last cron job interval',
-              },
-            ];
-          }
-        } else {
-          this.logger.error(
-            `${formId}: get submissions list need notification returns null, error logged in db`,
-          );
-          return [
-            {
-              msg: 'get submissions list need notification returns null, error logged in db',
-            },
-          ];
-        }
-      })
-      .catch((e) => {
-        const errorMsg = 'Failed to get submissions list need notification from API: ' + e;
-        const emailSubmissionLogEntity: EmailSubmissionLog = {
-          code: 'FAILED',
-          exceptionLog: errorMsg,
-          formId: formId,
-          formVersionId: formVersionId,
-        };
+  ): Promise<Array<{ [key: string]: any }>> {
+    let allSubmissions: Array<{ [key: string]: any }>;
 
-        this.postEmailSubmissionLog(emailSubmissionLogEntity);
-        this.logger.error(formId + ' ' + errorMsg);
-        this.sendErrorNotification(formId + ' ' + errorMsg);
-
-        return new HttpException(
-          { message: e }, 
-          HttpStatus.INTERNAL_SERVER_ERROR
-        );
+    try {
+      const response = await axios.get(CHEFS_SUBMISSIONS_URL(formId, formVersionId), {
+        auth: { username: formId, password: formPassword },
       });
+
+      if (!response?.data) {
+        throw new HttpException(
+          { message: 'CHEFS API returned an empty response' },
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      allSubmissions = response.data;
+    } catch (e) {
+      if (e instanceof HttpException) throw e;
+
+      const axiosError = e as AxiosError;
+      throw new HttpException(
+        { message: `Failed to fetch submissions from CHEFS: ${axiosError.message}` },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+
+    const now = new Date();
+    const windowStart = new Date(now.getTime() - 1000 * 60 * CRON_INTERVAL_MINUTES);
+    return this.filterSubmissions(allSubmissions, windowStart, now, formId, formVersionId);
   }
 
-  sendErrorNotification(errorMsg) {
-    this.logger.error('Send error notification email');
+  /**
+   * Classifies each submission as NEW, UPDATE, both, or neither based on
+   * database state and the current cron window.
+   */
+  async filterSubmissions(
+    submissions: Array<{ [key: string]: any }>,
+    windowStart: Date,
+    windowEnd: Date,
+    formId: string,
+    formVersionId: string,
+  ): Promise<Array<{ [key: string]: any }>> {
+    const windowStartMs = windowStart.valueOf();
+    const windowEndMs = windowEnd.valueOf();
+    const results: Array<{ [key: string]: any }> = [];
+
+    try {
+      await Promise.all(
+        submissions.map(async (submission) => {
+          const createdMs = new Date(submission.createdAt).valueOf();
+          const updatedMs = new Date(submission.updatedAt).valueOf();
+
+          // --- NEW email ---
+          const logsAll = await this.findEmailSubmissionLog(submission.confirmationId);
+          const needsNew =
+            (logsAll.length === 0 &&
+              createdMs > windowStartMs &&
+              createdMs <= windowEndMs &&
+              submission.submission?.state === 'submitted') ||
+            logsAll[0]?.code === LogCode.FAILED;
+
+          const pushIfNotExists = (item: any) => {
+            const exists = results.some(
+              (r) => r.confirmationId === item.confirmationId && r.emailType === item.emailType,
+            );
+            if (!exists) results.push(item);
+          };
+
+          if (needsNew) {
+            pushIfNotExists({ ...submission, emailType: EmailType.NEW });
+          }
+
+          // --- UPDATE email ---
+          const logsUpdate = await this.findUpdateEmailSubmissionLog(
+            submission.confirmationId,
+            new Date(submission.updatedAt),
+          );
+          const submitterIsOwner = submission.updatedBy && submission.updatedBy === submission.createdBy;
+          const updatedAfterEpoch = updatedMs > UPDATE_NOTIFICATION_EPOCH.valueOf();
+
+          const needsUpdate =
+            ((updatedMs > windowStartMs && updatedMs <= windowEndMs && submitterIsOwner && logsUpdate.length === 0) ||
+              (submitterIsOwner && logsUpdate.length === 0 && updatedAfterEpoch) ||
+              logsUpdate[0]?.code === LogCode.FAILED);
+
+          if (needsUpdate) {
+            pushIfNotExists({ ...submission, emailType: EmailType.UPDATE });
+          }
+        }),
+      );
+    } catch (e) {
+      this.logger.error(`Failed to filter submissions: ${e}`);
+      await this.postEmailSubmissionLog({
+        code: LogCode.FAILED,
+        exceptionLog: `Failed to filter submission data: ${e}`,
+        formId,
+        formVersionId,
+      });
+      return [];
+    }
+
+    return results;
+  }
+
+  /**
+   * Orchestrates the full notification pipeline for a single form:
+   * fetch → filter → send emails → log outcomes.
+   */
+  async handleSubmissions(
+    formId: string,
+    formVersionId: string,
+    formPassword: string,
+  ): Promise<unknown[]> {
+    let submissionsToNotify: Array<{ [key: string]: any }>;
+
+    try {
+      submissionsToNotify = await this.getSubmissionsNeedingNotification(
+        formId,
+        formVersionId,
+        formPassword,
+      );
+    } catch (e) {
+      const errorMsg = `Failed to fetch submissions needing notification for form ${formId}: ${e}`;
+      this.logger.error(errorMsg);
+      await this.postEmailSubmissionLog({
+        code: LogCode.FAILED,
+        exceptionLog: errorMsg,
+        formId,
+        formVersionId,
+      });
+      await this.sendErrorNotification(errorMsg);
+      return [new HttpException({ message: errorMsg }, HttpStatus.INTERNAL_SERVER_ERROR)];
+    }
+
+    if (!submissionsToNotify?.length) {
+      this.logger.debug(`${formId}: No notifications needed in this cron window`);
+      return [{ msg: 'No new or updated submissions within the last cron job interval' }];
+    }
+
+    this.logger.log(`${formId}: Sending ${submissionsToNotify.length} notification(s)`);
+
+    return Promise.all(
+      submissionsToNotify.map((submission) => this.sendSubmissionEmail(submission, formId, formVersionId)),
+    );
+  }
+
+  // -------------------------------------------------------------------------
+  // Email helpers
+  // -------------------------------------------------------------------------
+
+  /**
+   * Sends a single submission notification email and records the outcome.
+   */
+  private async sendSubmissionEmail(
+    submission: { [key: string]: any },
+    formId: string,
+    formVersionId: string,
+  ): Promise<{ status: number; data: unknown } | HttpException> {
+    const isUpdate = submission.emailType === EmailType.UPDATE;
+    const actionWord = isUpdate ? 'updated' : 'submitted';
+
+    const districtRaw: string = submission.submission?.data?.naturalResourceDistrict ?? '';
+    const emailTo = districtRaw.split('-')[1]?.trim();
+
+    const isValidEmail = (addr: string) => !!addr && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(addr);
+
+    if (!emailTo || !isValidEmail(emailTo)) {
+      this.logger.warn(
+        `${formId}: Could not parse valid district email from "${districtRaw}" for ${submission.confirmationId}`,
+      );
+      const errMsg = `${formId}: Invalid or missing recipient for ${submission.confirmationId}`;
+      await this.postEmailSubmissionLog({
+        confirmationId: submission.confirmationId,
+        formId,
+        formVersionId,
+        emailType: submission.emailType,
+        submissionUpdatedAt: new Date(submission.updatedAt),
+        code: LogCode.FAILED,
+        exceptionLog: errMsg,
+      });
+      await this.sendErrorNotification(errMsg);
+      return new HttpException({ message: errMsg }, HttpStatus.BAD_REQUEST);
+    }
+
+    this.logger.debug(`${formId}: Notifying "${emailTo}" for submission ${submission.confirmationId} (${actionWord})`);
+
     const email: EmailEntity = {
-      emailTo: [
-        'maria.martinez@gov.bc.ca',
-        'ziad.bhunnoo@gov.bc.ca',
-        'paulo.cruz@gov.bc.ca',
-      ],
+      emailTo: [emailTo],
+      emailSubject: `Old growth field observation form and package, ${submission.confirmationId}`,
+      emailBody:
+        `<div style="margin-bottom:16px">An old growth field observation form and package has been ${actionWord}. ` +
+        `Confirmation number: ${this.escapeHtml(String(submission.confirmationId))}</div>` +
+        `<div><a href="https://submit.digital.gov.bc.ca/app/form/view?s=${this.escapeHtml(String(submission.id))}">View the submission</a></div>`,
+      emailBodyType: 'html',
+    };
+
+    const baseLog: EmailSubmissionLog = {
+      confirmationId: submission.confirmationId,
+      formId,
+      formVersionId,
+      emailType: submission.emailType,
+      submissionUpdatedAt: new Date(submission.updatedAt),
+    };
+
+    try {
+      const mailResponse = await this.emailService.sendEmail(email);
+      this.logger.log(`${formId}: Email delivered for ${submission.confirmationId}`);
+      await this.postEmailSubmissionLog({
+        ...baseLog,
+        code: LogCode.DELIVERED,
+        exceptionLog: '',
+      });
+      return { status: mailResponse.status, data: mailResponse.data };
+    } catch (err) {
+      const errorMsg = `Failed to send email for ${submission.confirmationId}: ${err}`;
+      this.logger.error(`${formId}: ${errorMsg}`);
+      await this.postEmailSubmissionLog({
+        ...baseLog,
+        code: LogCode.FAILED,
+        exceptionLog: errorMsg,
+      });
+      return new HttpException({ message: errorMsg }, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /** Sends an operational alert email to the on-call list. */
+  async sendErrorNotification(errorMsg: string): Promise<void> {
+    this.logger.error(`Dispatching error notification: ${errorMsg}`);
+    const email: EmailEntity = {
+      emailTo: ERROR_NOTIFICATION_RECIPIENTS,
       emailSubject: 'Old Growth Email Notification Error',
       emailBody: errorMsg,
     };
     try {
-      this.emailService.sendEmail(email);
+      await this.emailService.sendEmail(email);
     } catch (e) {
       this.logger.error(`Failed to send error notification email: ${e}`);
     }
