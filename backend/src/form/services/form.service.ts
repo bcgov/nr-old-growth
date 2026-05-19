@@ -360,7 +360,21 @@ export class FormService {
     const districtRaw: string = submission.submission?.data?.naturalResourceDistrict ?? '';
     const emailTo = districtRaw.split('-')[1]?.trim();
 
-    const isValidEmail = (addr: string) => !!addr && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(addr);
+    const isValidEmail = (addr: string): boolean => {
+      if (!addr) return false;
+
+      const atIndex = addr.indexOf("@");
+      if (atIndex <= 0 || atIndex !== addr.lastIndexOf("@")) return false;
+
+      const local = addr.slice(0, atIndex);
+      const domain = addr.slice(atIndex + 1);
+
+      if (!local || !domain) return false;
+      if (domain.startsWith(".") || domain.endsWith(".")) return false;
+      if (!domain.includes(".")) return false;
+
+      return !addr.includes(" ");
+    };
 
     if (!emailTo || !isValidEmail(emailTo)) {
       this.logger.warn(
