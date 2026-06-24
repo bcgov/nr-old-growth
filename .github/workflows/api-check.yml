@@ -19,7 +19,7 @@ jobs:
     env:
       OS_DOMAIN: apps.silver.devops.gov.bc.ca
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Check Health on ${{ matrix.package }} environment
         uses: matt-ball/newman-action@master
