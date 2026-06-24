@@ -171,3 +171,4 @@ objects:
         deployment: ${NAME}-${ZONE}-${COMPONENT}
       sessionAffinity: None
       type: ClusterIP
+      # Trigger deployment to pull patched PG12 image
