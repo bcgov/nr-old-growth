@@ -57,6 +57,7 @@
     "testEnvironment": "node"
   },
   "overrides": {
+    "js-yaml": "^4.2.0",
     "uuid": "^14.0.0",
     "path-to-regexp@^8.3.0": "^8.4.2",
     "picomatch@^4.0.0": "^4.0.4",
