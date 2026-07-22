@@ -77,7 +77,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Deploys
-        uses: bcgov/action-deployer-openshift@1ffe5c65252909912e1dfad2dc7f683587d21da9 # v4.2.0
+        uses: bcgov/action-deployer-openshift@27a85b7b157bfc9c3c9bf0aca53bcd288d4d2506 # v4.2.1
         with:
           file: .github/openshift/deploy.database.yml
           oc_namespace: ${{ secrets.OC_NAMESPACE }}
@@ -98,7 +98,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Deploys
-        uses: bcgov/action-deployer-openshift@1ffe5c65252909912e1dfad2dc7f683587d21da9 # v4.2.0
+        uses: bcgov/action-deployer-openshift@27a85b7b157bfc9c3c9bf0aca53bcd288d4d2506 # v4.2.1
         with:
           file: .github/openshift/deploy.backend.yml
           oc_namespace: ${{ secrets.OC_NAMESPACE }}
@@ -140,7 +140,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Deploys
-        uses: bcgov/action-deployer-openshift@1ffe5c65252909912e1dfad2dc7f683587d21da9 # v4.2.0
+        uses: bcgov/action-deployer-openshift@27a85b7b157bfc9c3c9bf0aca53bcd288d4d2506 # v4.2.1
         with:
           file: .github/openshift/deploy.database.yml
           oc_namespace: ${{ secrets.OC_NAMESPACE }}
@@ -161,7 +161,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Deploys
-        uses: bcgov/action-deployer-openshift@1ffe5c65252909912e1dfad2dc7f683587d21da9 # v4.2.0
+        uses: bcgov/action-deployer-openshift@27a85b7b157bfc9c3c9bf0aca53bcd288d4d2506 # v4.2.1
         with:
           file: .github/openshift/deploy.backend.yml
           oc_namespace: ${{ secrets.OC_NAMESPACE }}
