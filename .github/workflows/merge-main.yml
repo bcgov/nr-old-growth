@@ -60,7 +60,7 @@ jobs:
       - name: Build Backend
         run: |
           cd backend
-          npm ci
+          npm ci --ignore-scripts
           npm run build
 
       - name: Perform CodeQL Analysis
