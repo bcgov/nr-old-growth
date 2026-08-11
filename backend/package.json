@@ -68,7 +68,7 @@
     "tmp": "^0.2.4",
     "follow-redirects@^1.15.11": "1.16.0",
     "brace-expansion": "^5.0.9",
-    "fast-uri": "^3.1.5",
+    "fast-uri": "^4.0.0",
     "@nestjs/cli": {
       "glob": "13.0.6"
     },
