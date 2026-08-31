@@ -9,7 +9,7 @@ RUN npm ci --only=prod --ignore-scripts && \
 
 
 # Deploy - has node, but not npm
-FROM gcr.io/distroless/nodejs20-debian12:nonroot
+FROM gcr.io/distroless/nodejs22-debian12:nonroot
 
 # Set node to production
 ENV NODE_ENV=production
