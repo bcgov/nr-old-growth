@@ -75,7 +75,7 @@
     "testEnvironment": "node"
   },
   "overrides": {
-    "multer": ">=2.2.0",
+    "multer": ">=2.3.0",
     "js-yaml": "^5.0.0",
     "uuid": "^14.0.0",
     "path-to-regexp@^8.3.0": "^8.4.2",
