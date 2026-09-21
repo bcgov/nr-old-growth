@@ -21,7 +21,7 @@ jobs:
   #TODO: check sonar for OG
   tests-backend:
     name: Backend Unit Tests
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     continue-on-error: true
     steps:
       - name: Run tests
@@ -41,7 +41,7 @@ jobs:
 
   codeql:
     name: Semantic Code Analysis
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     needs:
       - tests-backend
     permissions:
@@ -73,7 +73,7 @@ jobs:
     env:
       ZONE: test
     environment: test
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@v7
       - name: Deploys
@@ -94,7 +94,7 @@ jobs:
     env:
       ZONE: test
     environment: test
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@v7
       - name: Deploys
@@ -120,7 +120,7 @@ jobs:
     name: Promote Images to Prod
     needs:
       - deploy-test-backend
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - uses: shrink/actions-docker-registry-tag@e6aaef25c595b6e0edd18bf4c7dbfea3abd43299 # v5
         with:
@@ -136,7 +136,7 @@ jobs:
     env:
       ZONE: prod
     environment: prod
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@v7
       - name: Deploys
@@ -157,7 +157,7 @@ jobs:
     env:
       ZONE: prod
     environment: prod
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@v7
       - name: Deploys
