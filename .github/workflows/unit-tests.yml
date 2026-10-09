@@ -21,7 +21,8 @@ jobs:
       postgres:
         image: postgres:12
         env:
-          POSTGRES_PASSWORD: postgres
+          # Ephemeral e2e database on the runner, no credentials needed
+          POSTGRES_HOST_AUTH_METHOD: trust
         ports:
           - 5432:5432
         options: >-
@@ -29,9 +30,6 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
-    env:
-      # Throwaway password for the ephemeral e2e test database
-      POSTGRESQL_PASSWORD: postgres
     steps:
       - name: Test app
         uses: bcgov/action-test-and-analyse@8f699e3fd3fadd9a6adf6f4b1f2638ef7ecfefb9 # v2.0.0
