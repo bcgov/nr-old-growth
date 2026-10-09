@@ -1,9 +1,24 @@
 {
+  "preset": "ts-jest/presets/default-esm",
   "moduleFileExtensions": ["js", "json", "ts"],
   "rootDir": ".",
   "testEnvironment": "node",
   "testRegex": ".e2e-spec.ts$",
+  "extensionsToTreatAsEsm": [".ts"],
   "transform": {
-    "^.+\\.(t|j)s$": "ts-jest"
-  }
+    "^.+\\.(t|j)s$": [
+      "ts-jest",
+      {
+        "useESM": true,
+        "tsconfig": {
+          "module": "esnext",
+          "target": "es2022",
+          "esModuleInterop": true,
+          "allowSyntheticDefaultImports": true
+        },
+        "diagnostics": false
+      }
+    ]
+  },
+  "transformIgnorePatterns": ["node_modules/(?!(@nestjs)/)"]
 }
