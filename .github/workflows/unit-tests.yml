@@ -16,8 +16,20 @@ jobs:
   tests-backend:
     name: Backend Unit Tests
     if: github.event_name != 'pull_request' || !github.event.pull_request.draft
-    continue-on-error: true
     runs-on: ubuntu-26.04
+    services:
+      postgres:
+        image: postgres:12
+        env:
+          # Ephemeral e2e database on the runner, no credentials needed
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - name: Test app
         uses: bcgov/action-test-and-analyse@8f699e3fd3fadd9a6adf6f4b1f2638ef7ecfefb9 # v2.0.0
@@ -25,6 +37,7 @@ jobs:
           commands: |
             npm ci
             npm run test:cov
+            npm run test:e2e
           dir: backend
           node_version: 22
           sonar_args: >
@@ -35,6 +48,7 @@ jobs:
           sonar_token: ${{ secrets.SONAR_TOKEN_BACKEND }}
 
       - name: Report code coverage
+        if: github.event_name == 'pull_request'
         uses: romeovs/lcov-reporter-action@87a815f34ec27a5826abba44ce09bbc688da58fd # v0.4.0
         with:
           title: Backend coverage report
@@ -64,3 +78,22 @@ jobs:
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: "trivy-results.sarif"
+
+  results:
+    name: Unit Test Results
+    needs: [tests-backend, trivy]
+    if: always()
+    runs-on: ubuntu-slim
+    timeout-minutes: 1
+    steps:
+      - name: Log Job Results Context
+        run: |
+          echo "=== Upstream Job Statuses ==="
+          echo '${{ toJson(needs) }}'
+      - name: Evaluate Overall Status
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: |
+          echo "❌ Critical Check Failure: At least one required job has failed or was cancelled."
+          exit 1
+      - name: Success Message
+        run: echo "✅ All critical checks passed or were intentionally skipped!"
