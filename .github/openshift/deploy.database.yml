@@ -150,6 +150,14 @@ objects:
                     - pg_isready -h localhost -p 5432
                 initialDelaySeconds: 20
                 timeoutSeconds: 15
+              # PostgreSQL writes outside its data volume (sockets, locks), so the root filesystem stays writable
+              securityContext:
+                allowPrivilegeEscalation: false
+                runAsNonRoot: true
+                capabilities:
+                  drop: ["ALL"]
+                seccompProfile:
+                  type: RuntimeDefault
               terminationMessagePath: "/dev/termination-log"
               terminationMessagePolicy: File
               imagePullPolicy: Always

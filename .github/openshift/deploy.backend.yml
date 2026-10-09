@@ -135,13 +135,25 @@ objects:
                   value: "true"
                 - name: RANDOM_EXPRESSION
                   value: ${RANDOM_EXPRESSION}
+              securityContext:
+                allowPrivilegeEscalation: false
+                runAsNonRoot: true
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: ["ALL"]
+                seccompProfile:
+                  type: RuntimeDefault
               volumeMounts:
                 - mountPath: /flyway/sql
                   name: migration
+                - mountPath: /tmp
+                  name: tmp
           volumes:
             - name: migration
               configMap:
                 name: postgres-configmap
+            - name: tmp
+              emptyDir: {}
           containers:
             - image: ${REGISTRY}/${ORG}/${NAME}/${COMPONENT}:${ZONE}
               imagePullPolicy: Always
@@ -222,6 +234,17 @@ objects:
                 requests:
                   cpu: ${CPU_REQUEST}
                   memory: ${MEMORY_REQUEST}
+              securityContext:
+                allowPrivilegeEscalation: false
+                runAsNonRoot: true
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: ["ALL"]
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /tmp
+                  name: tmp
               readinessProbe:
                 httpGet:
                   path: /
