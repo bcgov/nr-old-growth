@@ -22,7 +22,7 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Check Health on ${{ matrix.package }} environment
-        uses: matt-ball/newman-action@master
+        uses: matt-ball/newman-action@170d252f10d199d75d6be4c739b48a3bd5f15ece # v2.0.0
         with:
           collection: postman/OG.postman_collection.json
           envVar: '[{"key":"URL_OG","value":"https://${{ github.event.repository.name }}-${{ matrix.package }}-backend.${{ env.OS_DOMAIN }}"}]'
