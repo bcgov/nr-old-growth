@@ -13,6 +13,9 @@ parameters:
   - name: ZONE
     description: Deployment zone, e.g. pr-### or prod
     required: true
+  - name: TAG
+    description: Image tag suffix. A tag is :123. A digest is @sha256:...
+    required: true
   - name: DOMAIN
     value: apps.silver.devops.gov.bc.ca
   - name: CPU_LIMIT
@@ -155,7 +158,7 @@ objects:
             - name: tmp
               emptyDir: {}
           containers:
-            - image: ${REGISTRY}/${ORG}/${NAME}/${COMPONENT}:${ZONE}
+            - image: ${REGISTRY}/${ORG}/${NAME}/${COMPONENT}${TAG}
               imagePullPolicy: Always
               name: ${NAME}
               env:
