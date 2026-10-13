@@ -19,12 +19,6 @@ const UPDATE_NOTIFICATION_EPOCH = new Date('2023-01-09T01:14:17.531Z');
 const CHEFS_SUBMISSIONS_URL = (formId: string, formVersionId: string) =>
   `https://submit.digital.gov.bc.ca/app/api/v1/forms/${formId}/versions/${formVersionId}/submissions`;
 
-const ERROR_NOTIFICATION_RECIPIENTS = [
-  'maria.martinez@gov.bc.ca',
-  'ziad.bhunnoo@gov.bc.ca',
-  'paulo.cruz@gov.bc.ca',
-];
-
 /** Strongly-typed email classification for submission log entries. */
 enum EmailType {
   NEW = 'NEW',
@@ -63,8 +57,7 @@ export class FormService {
 
     if (!formId || !formVersionId || !formPassword) {
       const msg = 'IDIR form environment variables are not set; skipping cron run';
-      this.logger.warn(msg);
-      await this.sendErrorNotification(msg);
+      this.logger.error(msg);
       return null;
     }
 
@@ -80,8 +73,7 @@ export class FormService {
 
     if (!formId || !formVersionId || !formPassword) {
       const msg = 'BCEID form environment variables are not set; skipping cron run';
-      this.logger.warn(msg);
-      await this.sendErrorNotification(msg);
+      this.logger.error(msg);
       return null;
     }
 
@@ -152,7 +144,6 @@ export class FormService {
       await this.emailSubmissionLogRepository.save(entity);
     } catch (e) {
       this.logger.error(`Failed to write log to DB: ${e}`);
-      await this.sendErrorNotification(`Failed to write log to DB: ${e}`);
     }
   }
 
@@ -169,7 +160,6 @@ export class FormService {
       await this.emailSubmissionLogRepository.update(criteria, patch);
     } catch (e) {
       this.logger.error(`Failed to update log in DB: ${e}`);
-      await this.sendErrorNotification(`Failed to update log in DB: ${e}`);
     }
   }
 
@@ -326,7 +316,6 @@ export class FormService {
         formId,
         formVersionId,
       });
-      await this.sendErrorNotification(errorMsg);
       return [new HttpException({ message: errorMsg }, HttpStatus.INTERNAL_SERVER_ERROR)];
     }
 
@@ -390,7 +379,6 @@ export class FormService {
         code: LogCode.FAILED,
         exceptionLog: errMsg,
       });
-      await this.sendErrorNotification(errMsg);
       return new HttpException({ message: errMsg }, HttpStatus.BAD_REQUEST);
     }
 
@@ -432,21 +420,6 @@ export class FormService {
         exceptionLog: errorMsg,
       });
       return new HttpException({ message: errorMsg }, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  /** Sends an operational alert email to the on-call list. */
-  async sendErrorNotification(errorMsg: string): Promise<void> {
-    this.logger.error(`Dispatching error notification: ${errorMsg}`);
-    const email: EmailEntity = {
-      emailTo: ERROR_NOTIFICATION_RECIPIENTS,
-      emailSubject: 'Old Growth Email Notification Error',
-      emailBody: errorMsg,
-    };
-    try {
-      await this.emailService.sendEmail(email);
-    } catch (e) {
-      this.logger.error(`Failed to send error notification email: ${e}`);
     }
   }
 }

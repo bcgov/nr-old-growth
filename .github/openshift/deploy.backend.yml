@@ -250,7 +250,7 @@ objects:
                   name: tmp
               readinessProbe:
                 httpGet:
-                  path: /
+                  path: /health
                   port: 3000
                   scheme: HTTP
                 initialDelaySeconds: 60
