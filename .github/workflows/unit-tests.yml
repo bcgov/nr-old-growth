@@ -32,7 +32,7 @@ jobs:
           --health-retries 10
     steps:
       - name: Test app
-        uses: bcgov/action-test-and-analyse@8f699e3fd3fadd9a6adf6f4b1f2638ef7ecfefb9 # v2.0.0
+        uses: bcgov/actions/test-and-analyse@79aefe3a7abb2d0d00b1b3ea4cfbf12727a10638 # v0.9.0
         with:
           commands: |
             npm ci
