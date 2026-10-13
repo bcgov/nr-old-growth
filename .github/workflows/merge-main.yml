@@ -40,7 +40,7 @@ jobs:
     runs-on: ubuntu-26.04
     services:
       postgres:
-        image: postgres:12
+        image: postgres:13
         env:
           # Ephemeral e2e database on the runner, no credentials needed
           POSTGRES_HOST_AUTH_METHOD: trust
