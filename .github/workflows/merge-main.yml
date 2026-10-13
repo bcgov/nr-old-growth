@@ -95,6 +95,27 @@ jobs:
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
 
+  resolve:
+    name: Resolve Images
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: read
+      packages: read
+      pull-requests: read
+    timeout-minutes: 5
+    outputs:
+      digest: ${{ steps.tracker.outputs.digest }}
+    steps:
+      - uses: actions/checkout@v7
+
+      # Walk per package. An image that was not built for this commit keeps its last digest.
+      - name: Resolve images
+        id: tracker
+        uses: bcgov/actions/image-tracker@79aefe3a7abb2d0d00b1b3ea4cfbf12727a10638 # v0.9.0
+        with:
+          package: backend
+          max_depth: 100
+
   deploy-test-database:
     name: Deploy Database on Test Env
     needs:
@@ -120,6 +141,7 @@ jobs:
     name: Deploy Backend on Test Env
     needs:
       - deploy-test-database
+      - resolve
     env:
       ZONE: test
     environment: test
@@ -136,7 +158,7 @@ jobs:
           oc_version: "4.13"
           overwrite: true
           parameters:
-            -p ZONE=${{ env.ZONE }} -p NAME=${{ github.event.repository.name }}
+            -p ZONE=${{ env.ZONE }} -p TAG=@${{ needs.resolve.outputs.digest }} -p NAME=${{ github.event.repository.name }}
             -p CHES_CLIENT_ID=${{ secrets.CHES_CLIENT_ID }}
             -p CHES_CLIENT_SECRET=${{ secrets.CHES_CLIENT_SECRET }}
             -p CHES_TOKEN_URL='https://test.loginproxy.gov.bc.ca/auth/realms/comsvcauth/protocol/openid-connect/token'
@@ -145,23 +167,10 @@ jobs:
             -p BCEID_FORM_PASSWORD=${{ secrets.CHEFS_BCEID_FORM_PASSWORD}}
             -p IDIR_FORM_PASSWORD=${{ secrets.CHEFS_IDIR_FORM_PASSWORD}}
 
-  prod-promotions:
-    name: Promote Images to Prod
-    needs:
-      - deploy-test-backend
-    runs-on: ubuntu-26.04
-    steps:
-      - uses: shrink/actions-docker-registry-tag@e6aaef25c595b6e0edd18bf4c7dbfea3abd43299 # v5
-        with:
-          registry: ghcr.io
-          repository: ${{ github.repository }}/backend
-          target: test
-          tags: prod
-
   deploy-prod-database:
     name: Deploy Database on Prod Env
     needs:
-      - prod-promotions
+      - deploy-test-backend
     env:
       ZONE: prod
     environment: prod
@@ -183,6 +192,7 @@ jobs:
     name: Deploy Backend on Prod Env
     needs:
       - deploy-prod-database
+      - resolve
     env:
       ZONE: prod
     environment: prod
@@ -199,7 +209,7 @@ jobs:
           oc_version: "4.13"
           overwrite: true
           parameters:
-            -p ZONE=${{ env.ZONE }} -p NAME=${{ github.event.repository.name }}
+            -p ZONE=${{ env.ZONE }} -p TAG=@${{ needs.resolve.outputs.digest }} -p NAME=${{ github.event.repository.name }}
             -p CHES_CLIENT_ID=${{ secrets.CHES_CLIENT_ID }}
             -p CHES_CLIENT_SECRET=${{ secrets.CHES_CLIENT_SECRET }}
             -p CHES_TOKEN_URL='https://loginproxy.gov.bc.ca/auth/realms/comsvcauth/protocol/openid-connect/token'
@@ -208,9 +218,26 @@ jobs:
             -p BCEID_FORM_PASSWORD=${{ secrets.CHEFS_BCEID_FORM_PASSWORD}}
             -p IDIR_FORM_PASSWORD=${{ secrets.CHEFS_IDIR_FORM_PASSWORD}}
 
+  image-promotions:
+    name: Promote Images to Prod
+    needs:
+      - resolve
+      - deploy-prod-backend
+    permissions:
+      packages: write
+    runs-on: ubuntu-26.04
+    timeout-minutes: 1
+    steps:
+      - uses: shrink/actions-docker-registry-tag@e6aaef25c595b6e0edd18bf4c7dbfea3abd43299 # v5
+        with:
+          registry: ghcr.io
+          repository: ${{ github.repository }}/backend
+          target: ${{ needs.resolve.outputs.digest }}
+          tags: prod
+
   results:
     name: Merge Results
-    needs: [changes, tests-backend, codeql, deploy-test-database, deploy-test-backend, prod-promotions, deploy-prod-database, deploy-prod-backend]
+    needs: [changes, tests-backend, codeql, resolve, deploy-test-database, deploy-test-backend, deploy-prod-database, deploy-prod-backend, image-promotions]
     if: always()
     runs-on: ubuntu-slim
     timeout-minutes: 1

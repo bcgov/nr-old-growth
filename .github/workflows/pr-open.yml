@@ -147,7 +147,7 @@ jobs:
           oc_version: "4.13"
           overwrite: true
           parameters:
-            -p ZONE=${{ github.event.number }} -p NAME=${{ github.event.repository.name }}
+            -p ZONE=${{ github.event.number }} -p TAG=:${{ github.event.number }} -p NAME=${{ github.event.repository.name }}
             -p CHES_CLIENT_ID=${{ secrets.CHES_CLIENT_ID }}
             -p CHES_CLIENT_SECRET=${{ secrets.CHES_CLIENT_SECRET }}
             -p CHES_TOKEN_URL='https://dev.loginproxy.gov.bc.ca/auth/realms/comsvcauth/protocol/openid-connect/token'

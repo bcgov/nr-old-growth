@@ -6,6 +6,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { FormModule } from './form/form.module';
 import { ChesService } from './ches/services/ches.service';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { ChesService } from './ches/services/ches.service';
       synchronize: false, // This changes the DB schema to match changes to entities, which we might not want.
     }),
     ScheduleModule.forRoot(),
+    HealthModule,
     FormModule,
   ],
   controllers: [AppController],

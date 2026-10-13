@@ -116,10 +116,14 @@ describe('FormService', () => {
     delete process.env.IDIR_FORM_PASSWORD;
   });
 
-  it('skips the cron run and alerts when form settings are missing', async () => {
+  it('skips the cron run and logs an error when form settings are missing', async () => {
+    const errorSpy = jest.spyOn(service['logger'], 'error');
     await expect(service.handleIDIRForm()).resolves.toBeNull();
     expect(get).not.toHaveBeenCalled();
-    expect(errorEmails()).toHaveLength(1);
+    expect(errorSpy).toHaveBeenCalledWith(
+      'IDIR form environment variables are not set; skipping cron run',
+    );
+    expect(sendEmail).not.toHaveBeenCalled();
   });
 
   it('reads the configured form from CHEFS with its credentials', async () => {
@@ -225,7 +229,7 @@ describe('FormService', () => {
     expect(email.emailBody).not.toContain('<b>X</b>');
   });
 
-  it('logs a failure and alerts when the district email is invalid', async () => {
+  it('logs a failure and warns when the district email is invalid', async () => {
     chefsReturns([
       submission({
         submission: {
@@ -239,7 +243,7 @@ describe('FormService', () => {
 
     expect(result).toBeInstanceOf(HttpException);
     expect(submissionEmails()).toHaveLength(0);
-    expect(errorEmails()).toHaveLength(1);
+    expect(errorEmails()).toHaveLength(0);
     expect(repo.rows).toEqual([
       expect.objectContaining({ confirmationId: 'ABC123', code: 'FAILED' }),
     ]);
@@ -257,13 +261,17 @@ describe('FormService', () => {
     ]);
   });
 
-  it('logs a failure and alerts when CHEFS cannot be read', async () => {
+  it('logs a failure when CHEFS cannot be read', async () => {
+    const errorSpy = jest.spyOn(service['logger'], 'error');
     get.mockRejectedValue(new Error('unreachable'));
 
     const [result] = await service.handleSubmissions(FORM_ID, VERSION_ID, 'pw');
 
     expect(result).toBeInstanceOf(HttpException);
-    expect(errorEmails()).toHaveLength(1);
+    expect(errorEmails()).toHaveLength(0);
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining(`Failed to fetch submissions needing notification for form ${FORM_ID}`),
+    );
     expect(repo.rows).toEqual([
       expect.objectContaining({ code: 'FAILED', formId: FORM_ID }),
     ]);
