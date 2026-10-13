@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - main
-    paths-ignore:
-      - ".github/ISSUE_TEMPLATE/*"
-      - "**.md"
   workflow_dispatch:
 
 concurrency:
@@ -18,11 +15,42 @@ env:
   NAME: nrog
 
 jobs:
+  changes:
+    name: Changes
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: read
+    outputs:
+      triggered: ${{ steps.diff.outputs.triggered }}
+    steps:
+      - name: Skip issue templates and docs
+        id: diff
+        uses: bcgov/actions/diff-triggers@4026bfd276b8a5839029106099b13edfb594b2c3 # v0.8.0
+        with:
+          triggers: |
+            .
+            !.github/ISSUE_TEMPLATE/*
+            !**.md
+
   #TODO: check sonar for OG
   tests-backend:
     name: Backend Unit Tests
+    needs: [changes]
+    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.triggered == 'true'
     runs-on: ubuntu-26.04
-    continue-on-error: true
+    services:
+      postgres:
+        image: postgres:12
+        env:
+          # Ephemeral e2e database on the runner, no credentials needed
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - name: Run tests
         uses: bcgov/actions/test-and-analyse@79aefe3a7abb2d0d00b1b3ea4cfbf12727a10638 # v0.9.0
@@ -30,6 +58,7 @@ jobs:
           commands: |
             npm ci
             npm run test:cov
+            npm run test:e2e
           dir: backend
           node_version: 20
           sonar_args: >
@@ -205,3 +234,22 @@ jobs:
           repository: ${{ github.repository }}/backend
           target: ${{ needs.resolve.outputs.digest }}
           tags: prod
+
+  results:
+    name: Merge Results
+    needs: [changes, tests-backend, codeql, resolve, deploy-test-database, deploy-test-backend, deploy-prod-database, deploy-prod-backend, image-promotions]
+    if: always()
+    runs-on: ubuntu-slim
+    timeout-minutes: 1
+    steps:
+      - name: Log Job Results Context
+        run: |
+          echo "=== Upstream Job Statuses ==="
+          echo '${{ toJson(needs) }}'
+      - name: Evaluate Overall Status
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: |
+          echo "❌ Critical Check Failure: At least one required job has failed or was cancelled."
+          exit 1
+      - name: Success Message
+        run: echo "✅ All critical checks passed or were intentionally skipped!"
