@@ -33,7 +33,7 @@ services:
       retries: 3
       start_period: 40s
     hostname: backend
-    image: node:24-bookworm-slim
+    image: node:22-bookworm-slim
     links:
       - database
     ports:
