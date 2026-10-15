@@ -1,4 +1,4 @@
-name: Pull Request
+name: PR
 
 on:
   pull_request:
@@ -88,7 +88,7 @@ jobs:
             [Backend](https://${{ env.PREFIX }}-backend.${{ env.DOMAIN }}/) available
 
             Once merged, code will be promoted and handed off to following workflow run.
-            [Main Merge Workflow](https://github.com/${{ github.repository }}/actions/workflows/merge-main.yml)
+            [Merge Workflow](https://github.com/${{ github.repository }}/actions/workflows/merge-main.yml)
 
   builds:
     name: Image Build
