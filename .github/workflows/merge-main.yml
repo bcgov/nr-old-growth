@@ -59,7 +59,7 @@ jobs:
             npm run test:cov
             npm run test:e2e
           dir: backend
-          node_version: 24
+          node_version: 20
 
   codeql:
     name: Semantic Code Analysis
