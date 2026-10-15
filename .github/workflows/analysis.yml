@@ -1,4 +1,4 @@
-name: Unit Tests and Analysis
+name: Analysis
 
 on:
   pull_request:
@@ -106,9 +106,9 @@ jobs:
           args: -color
 
   results:
-    name: Unit Test Results
+    name: Analysis Results
     needs: [tests-backend, trivy, workflow-lint]
-    if: always()
+    if: always() && (! github.event.pull_request.draft)
     runs-on: ubuntu-slim
     timeout-minutes: 1
     steps:
