@@ -32,7 +32,6 @@ jobs:
             !.github/ISSUE_TEMPLATE/*
             !**.md
 
-  #TODO: check sonar for OG
   tests-backend:
     name: Backend Unit Tests
     needs: [changes]
@@ -61,12 +60,6 @@ jobs:
             npm run test:e2e
           dir: backend
           node_version: 20
-          sonar_args: >
-            -Dsonar.exclusions=**/coverage/**,**/examples/**,**/pages/**
-            -Dsonar.organization=bcgov-sonarcloud
-            -Dsonar.projectKey=nr-old-growth
-            -Dsonar.tests=test
-          sonar_token: ${{ secrets.SONAR_TOKEN_BACKEND }}
 
   codeql:
     name: Semantic Code Analysis

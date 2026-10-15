@@ -1,4 +1,4 @@
-name: Unit Tests and Analysis
+name: Analysis
 
 on:
   pull_request:
@@ -12,7 +12,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  #TODO: check sonar for OG
   tests-backend:
     name: Backend Unit Tests
     if: github.event_name != 'pull_request' || !github.event.pull_request.draft
@@ -40,12 +39,6 @@ jobs:
             npm run test:e2e
           dir: backend
           node_version: 22
-          sonar_args: >
-            -Dsonar.exclusions=**/coverage/**,**/examples/**,**/pages/**
-            -Dsonar.organization=bcgov-sonarcloud
-            -Dsonar.projectKey=forest-client-frontend
-            -Dsonar.tests=test
-          sonar_token: ${{ secrets.SONAR_TOKEN_BACKEND }}
 
       - name: Report code coverage
         if: github.event_name == 'pull_request'
@@ -90,21 +83,29 @@ jobs:
         with:
           sarif_file: "trivy-results.sarif"
 
+
+  # Catches broken workflows on the PR, including those that only run after merge or on a schedule
+  workflow-lint:
+    name: Workflow Lint
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
+    runs-on: ubuntu-26.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker://rhysd/actionlint:1.7.12@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667
+        with:
+          args: -color
+
   results:
-    name: Unit Test Results
-    needs: [tests-backend, trivy]
+    name: Analysis Results
+    needs: [tests-backend, trivy, workflow-lint]
     if: always()
     runs-on: ubuntu-slim
     timeout-minutes: 1
     steps:
-      - name: Log Job Results Context
-        run: |
-          echo "=== Upstream Job Statuses ==="
-          echo '${{ toJson(needs) }}'
-      - name: Evaluate Overall Status
-        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
-        run: |
-          echo "❌ Critical Check Failure: At least one required job has failed or was cancelled."
-          exit 1
-      - name: Success Message
-        run: echo "✅ All critical checks passed or were intentionally skipped!"
+      - uses: bcgov/actions/workflow-results@79aefe3a7abb2d0d00b1b3ea4cfbf12727a10638 # v0.9.0
+        with:
+          needs: ${{ toJson(needs) }}
+          title: "Analysis Results"
