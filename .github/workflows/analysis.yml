@@ -31,7 +31,7 @@ jobs:
           --health-retries 10
     steps:
       - name: Test app
-        uses: bcgov/actions/test-and-analyse@79aefe3a7abb2d0d00b1b3ea4cfbf12727a10638 # v0.9.0
+        uses: bcgov/actions/test-and-analyse@122a9b1c6c082b1b1f18c300020fbdc417b6b0b2 # v0.10.0
         with:
           commands: |
             npm ci
@@ -105,6 +105,6 @@ jobs:
     runs-on: ubuntu-slim
     timeout-minutes: 1
     steps:
-      - uses: bcgov/actions/workflow-results@79aefe3a7abb2d0d00b1b3ea4cfbf12727a10638 # v0.9.0
+      - uses: bcgov/actions/workflow-results@122a9b1c6c082b1b1f18c300020fbdc417b6b0b2 # v0.10.0
         with:
           needs: ${{ toJson(needs) }}
