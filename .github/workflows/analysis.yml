@@ -11,11 +11,16 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions: {}
+
 jobs:
   tests-backend:
     name: Backend Unit Tests
     if: github.event_name != 'pull_request' || !github.event.pull_request.draft
     runs-on: ubuntu-26.04
+    permissions:
+      contents: read
+      pull-requests: write # coverage report comment
     services:
       postgres:
         image: postgres:18
@@ -53,6 +58,9 @@ jobs:
     name: Repository Report
     if: github.event_name != 'pull_request' || !github.event.pull_request.draft
     runs-on: ubuntu-26.04
+    permissions:
+      contents: read
+      security-events: write # SARIF upload
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
