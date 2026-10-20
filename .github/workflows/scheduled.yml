@@ -8,10 +8,14 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions: {}
+
 jobs:
   zap_scan:
     runs-on: ubuntu-26.04
     name: Penetration Tests
+    permissions:
+      issues: write # ZAP findings issue
     steps:
       - name: ZAP Scan
         uses: zaproxy/action-full-scan@3c58388149901b9a03b7718852c5ba889646c27c # v0.13.0
