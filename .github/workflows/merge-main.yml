@@ -1,5 +1,7 @@
 name: Merge
 
+# Merges deploy to TEST. Publishing a GitHub release deploys PROD (release.yml).
+
 on:
   push:
     branches:
@@ -160,77 +162,9 @@ jobs:
             -p BCEID_FORM_PASSWORD=${{ secrets.CHEFS_BCEID_FORM_PASSWORD}}
             -p IDIR_FORM_PASSWORD=${{ secrets.CHEFS_IDIR_FORM_PASSWORD}}
 
-  deploy-prod-database:
-    name: Deploy Database on Prod Env
-    needs:
-      - deploy-test-backend
-    env:
-      ZONE: prod
-    environment: prod
-    runs-on: ubuntu-26.04
-    steps:
-      - uses: actions/checkout@v7
-      - name: Deploys
-        uses: bcgov/actions-openshift/deployer@4dbe4f6d25d14cbdb01e525a302e61e31f96c3ed # v0.5.0
-        with:
-          file: .github/openshift/deploy.database.yml
-          oc_namespace: ${{ secrets.OC_NAMESPACE }}
-          oc_server: ${{ secrets.OC_SERVER }}
-          oc_token: ${{ secrets.OC_TOKEN }}
-          oc_version: "4.13"
-          overwrite: false
-          parameters: -p ZONE=${{ env.ZONE }} -p NAME=${{ github.event.repository.name }}
-
-  deploy-prod-backend:
-    name: Deploy Backend on Prod Env
-    needs:
-      - deploy-prod-database
-      - resolve
-    env:
-      ZONE: prod
-    environment: prod
-    runs-on: ubuntu-26.04
-    steps:
-      - uses: actions/checkout@v7
-      - name: Deploys
-        uses: bcgov/actions-openshift/deployer@4dbe4f6d25d14cbdb01e525a302e61e31f96c3ed # v0.5.0
-        with:
-          file: .github/openshift/deploy.backend.yml
-          oc_namespace: ${{ secrets.OC_NAMESPACE }}
-          oc_server: ${{ secrets.OC_SERVER }}
-          oc_token: ${{ secrets.OC_TOKEN }}
-          oc_version: "4.13"
-          overwrite: true
-          parameters:
-            -p ZONE=${{ env.ZONE }} -p TAG=@${{ needs.resolve.outputs.digest }} -p NAME=${{ github.event.repository.name }}
-            -p CHES_CLIENT_ID=${{ secrets.CHES_CLIENT_ID }}
-            -p CHES_CLIENT_SECRET=${{ secrets.CHES_CLIENT_SECRET }}
-            -p CHES_TOKEN_URL='https://loginproxy.gov.bc.ca/auth/realms/comsvcauth/protocol/openid-connect/token'
-            -p CHES_API_URL='https://ches.api.gov.bc.ca/api/v1'
-            -p NODE_ENV='production'
-            -p BCEID_FORM_PASSWORD=${{ secrets.CHEFS_BCEID_FORM_PASSWORD}}
-            -p IDIR_FORM_PASSWORD=${{ secrets.CHEFS_IDIR_FORM_PASSWORD}}
-
-  image-promotions:
-    name: Promote Images to Prod
-    needs:
-      - resolve
-      - deploy-prod-backend
-    permissions:
-      packages: write
-    runs-on: ubuntu-26.04
-    timeout-minutes: 1
-    steps:
-      - uses: shrink/actions-docker-registry-tag@e6aaef25c595b6e0edd18bf4c7dbfea3abd43299 # v5
-        with:
-          registry: ghcr.io
-          repository: ${{ github.repository }}/backend
-          target: ${{ needs.resolve.outputs.digest }}
-          tags: prod
-
   results:
     name: Merge Results
-    needs: [changes, tests-backend, codeql, resolve, deploy-test-database, deploy-test-backend, deploy-prod-database, deploy-prod-backend, image-promotions]
+    needs: [changes, tests-backend, codeql, resolve, deploy-test-database, deploy-test-backend]
     if: always()
     runs-on: ubuntu-slim
     timeout-minutes: 1
