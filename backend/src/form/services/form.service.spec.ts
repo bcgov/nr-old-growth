@@ -273,7 +273,9 @@ describe('FormService', () => {
     expect(result).toBeInstanceOf(HttpException);
     expect(errorEmails()).toHaveLength(0);
     expect(errorSpy).toHaveBeenCalledWith(
-      expect.stringContaining(`Failed to fetch submissions needing notification for form ${FORM_ID}`),
+      expect.stringContaining(
+        `Failed to fetch submissions needing notification for form ${FORM_ID}`,
+      ),
     );
     expect(repo.rows).toEqual([
       expect.objectContaining({ code: 'FAILED', formId: FORM_ID }),
@@ -393,6 +395,43 @@ describe('FormService', () => {
     expect(repo.rows).toContainEqual(
       expect.objectContaining({
         confirmationId: 'RECENT2H',
+        code: 'DELIVERED',
+      }),
+    );
+  });
+
+  it('recovers submissions created right after previous successful poll without retry delay skew', async () => {
+    const t0 = Date.now() - 20 * 60 * 1000;
+    // Created 1 second after t0
+    const submissionCreated = new Date(t0 + 1000).toISOString();
+
+    // Prior failed poll had windowStart at t0, which was persisted in submissionUpdatedAt
+    repo.rows.push({
+      id: 1,
+      formId: FORM_ID,
+      formVersionId: VERSION_ID,
+      code: 'FAILED',
+      exceptionLog: 'Failed to fetch submissions from CHEFS: 503',
+      createTimestamp: new Date(t0 + 10 * 60 * 1000 + 5000), // 10:10:05 (after retries)
+      submissionUpdatedAt: new Date(t0), // exact 10:00:00 boundary
+    });
+
+    chefsReturns([
+      submission({
+        confirmationId: 'AT_10_00_01',
+        createdAt: submissionCreated,
+        updatedAt: submissionCreated,
+      }),
+    ]);
+
+    await service.handleSubmissions(FORM_ID, VERSION_ID, 'pw');
+
+    const sent = submissionEmails();
+    expect(sent).toHaveLength(1);
+    expect(sent[0].emailSubject).toContain('AT_10_00_01');
+    expect(repo.rows).toContainEqual(
+      expect.objectContaining({
+        confirmationId: 'AT_10_00_01',
         code: 'DELIVERED',
       }),
     );

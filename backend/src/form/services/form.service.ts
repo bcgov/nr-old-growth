@@ -336,17 +336,21 @@ export class FormService {
               new Date(a.createTimestamp).getTime() -
               new Date(b.createTimestamp).getTime(),
           );
-          const earliestFailure = new Date(recent[0].createTimestamp);
-          const failureWindowStart = new Date(
-            earliestFailure.getTime() - 1000 * 60 * CRON_INTERVAL_MINUTES,
-          );
+          const earliestFailure = recent[0];
+          // Use exact persisted boundary if available; otherwise fall back to failure timestamp with safety buffer
+          const failureWindowStart = earliestFailure.submissionUpdatedAt
+            ? new Date(earliestFailure.submissionUpdatedAt)
+            : new Date(
+                new Date(earliestFailure.createTimestamp).getTime() -
+                  1000 * 60 * (CRON_INTERVAL_MINUTES + 1),
+              );
           const clampedStart =
             failureWindowStart < maxRecoveryStart
               ? maxRecoveryStart
               : failureWindowStart;
           if (clampedStart < defaultStart) {
             this.logger.warn(
-              `${formId}: Found prior API failure at ${earliestFailure.toISOString()}; expanding query window to ${clampedStart.toISOString()}`,
+              `${formId}: Found prior API failure from ${new Date(earliestFailure.createTimestamp).toISOString()}; expanding query window to ${clampedStart.toISOString()}`,
             );
             return clampedStart;
           }
@@ -402,6 +406,8 @@ export class FormService {
     formId: string,
     formVersionId: string,
     formPassword: string,
+    pollStartTime: Date = new Date(),
+    windowStart?: Date,
   ): Promise<Array<{ [key: string]: any }>> {
     const allSubmissions = await this.fetchChefsSubmissions(
       CHEFS_SUBMISSIONS_URL(formId, formVersionId),
@@ -409,17 +415,17 @@ export class FormService {
       formPassword,
     );
 
-    const now = new Date();
-    const windowStart = await this.determineWindowStart(formId, now);
+    const effectiveWindowStart =
+      windowStart ?? (await this.determineWindowStart(formId, pollStartTime));
     const results = await this.filterSubmissions(
       allSubmissions,
-      windowStart,
-      now,
+      effectiveWindowStart,
+      pollStartTime,
       formId,
       formVersionId,
     );
 
-    this.lastSuccessfulPoll.set(formId, now);
+    this.lastSuccessfulPoll.set(formId, pollStartTime);
     await this.markApiFailuresRecovered(formId);
 
     return results;
@@ -519,6 +525,16 @@ export class FormService {
     formVersionId: string,
     formPassword: string,
   ): Promise<unknown[]> {
+    const pollStartTime = new Date();
+    let windowStart: Date;
+    try {
+      windowStart = await this.determineWindowStart(formId, pollStartTime);
+    } catch {
+      windowStart = new Date(
+        pollStartTime.getTime() - 1000 * 60 * CRON_INTERVAL_MINUTES,
+      );
+    }
+
     let submissionsToNotify: Array<{ [key: string]: any }>;
 
     try {
@@ -526,6 +542,8 @@ export class FormService {
         formId,
         formVersionId,
         formPassword,
+        pollStartTime,
+        windowStart,
       );
     } catch (e) {
       const errorMsg = `Failed to fetch submissions needing notification for form ${formId}: ${e}`;
@@ -535,6 +553,8 @@ export class FormService {
         exceptionLog: errorMsg,
         formId,
         formVersionId,
+        createTimestamp: pollStartTime,
+        submissionUpdatedAt: windowStart,
       });
       return [
         new HttpException(
