@@ -13,6 +13,10 @@ import { EmailEntity } from '../../email/model/email.entity';
 /** Cron interval in minutes. Update the @Cron expression below to match. */
 const CRON_INTERVAL_MINUTES = 10;
 
+/** Maximum lookback window in hours for recovering missed submissions during an extended outage. */
+const MAX_RECOVERY_WINDOW_HOURS = 24;
+const MAX_RECOVERY_WINDOW_MS = MAX_RECOVERY_WINDOW_HOURS * 60 * 60 * 1000;
+
 /** Earliest date from which update-email notifications are considered valid. */
 const UPDATE_NOTIFICATION_EPOCH = new Date('2023-01-09T01:14:17.531Z');
 
@@ -91,12 +95,8 @@ export class FormService {
     return this.emailSubmissionLogRepository.find();
   }
 
-  findEmailSubmissionLog(
-    confirmationId: string,
-  ): Promise<EmailSubmissionLog[]> {
-    return this.emailSubmissionLogRepository.find({
-      where: { confirmationId },
-    });
+  findEmailSubmissionLog(confirmationId: string): Promise<EmailSubmissionLog[]> {
+    return this.emailSubmissionLogRepository.find({ where: { confirmationId } });
   }
 
   findNewEmailSubmissionLog(
@@ -293,20 +293,23 @@ export class FormService {
   /**
    * Determines the start of the query window. Expands the window back if a previous
    * cron poll failed, ensuring submissions submitted during downtime are not lost.
+   * Clamps recovery to a maximum of MAX_RECOVERY_WINDOW_HOURS.
    */
   async determineWindowStart(formId: string, now: Date): Promise<Date> {
     const defaultStart = new Date(
       now.getTime() - 1000 * 60 * CRON_INTERVAL_MINUTES,
     );
+    const maxRecoveryStart = new Date(now.getTime() - MAX_RECOVERY_WINDOW_MS);
 
     const inMemoryLast = this.lastSuccessfulPoll.get(formId);
     if (inMemoryLast) {
-      const elapsedMs = now.getTime() - inMemoryLast.getTime();
-      if (inMemoryLast < defaultStart && elapsedMs <= 24 * 60 * 60 * 1000) {
+      if (inMemoryLast < defaultStart) {
+        const clampedStart =
+          inMemoryLast < maxRecoveryStart ? maxRecoveryStart : inMemoryLast;
         this.logger.warn(
-          `${formId}: Expanding query window to last successful poll at ${inMemoryLast.toISOString()}`,
+          `${formId}: Expanding query window to ${clampedStart.toISOString()} (last successful poll was ${inMemoryLast.toISOString()})`,
         );
-        return inMemoryLast;
+        return clampedStart;
       }
       return defaultStart;
     }
@@ -322,9 +325,10 @@ export class FormService {
           !log.exceptionLog?.includes('[RECOVERED]'),
       );
       if (unhandled.length > 0) {
-        const cutoff = now.getTime() - 24 * 60 * 60 * 1000;
         const recent = unhandled.filter(
-          (log) => new Date(log.createTimestamp).getTime() >= cutoff,
+          (log) =>
+            new Date(log.createTimestamp).getTime() >=
+            maxRecoveryStart.getTime(),
         );
         if (recent.length > 0) {
           recent.sort(
@@ -336,11 +340,15 @@ export class FormService {
           const failureWindowStart = new Date(
             earliestFailure.getTime() - 1000 * 60 * CRON_INTERVAL_MINUTES,
           );
-          if (failureWindowStart < defaultStart) {
+          const clampedStart =
+            failureWindowStart < maxRecoveryStart
+              ? maxRecoveryStart
+              : failureWindowStart;
+          if (clampedStart < defaultStart) {
             this.logger.warn(
-              `${formId}: Found prior API failure at ${earliestFailure.toISOString()}; expanding query window to ${failureWindowStart.toISOString()}`,
+              `${formId}: Found prior API failure at ${earliestFailure.toISOString()}; expanding query window to ${clampedStart.toISOString()}`,
             );
-            return failureWindowStart;
+            return clampedStart;
           }
         }
       }

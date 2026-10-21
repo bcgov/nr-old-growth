@@ -273,9 +273,7 @@ describe('FormService', () => {
     expect(result).toBeInstanceOf(HttpException);
     expect(errorEmails()).toHaveLength(0);
     expect(errorSpy).toHaveBeenCalledWith(
-      expect.stringContaining(
-        `Failed to fetch submissions needing notification for form ${FORM_ID}`,
-      ),
+      expect.stringContaining(`Failed to fetch submissions needing notification for form ${FORM_ID}`),
     );
     expect(repo.rows).toEqual([
       expect.objectContaining({ code: 'FAILED', formId: FORM_ID }),
@@ -356,5 +354,47 @@ describe('FormService', () => {
       }),
     );
     expect(repo.rows[0].exceptionLog).toContain('[RECOVERED]');
+  });
+
+  it('clamps recovery window to 24 hours when cached last poll is older than 24 hours', async () => {
+    // Last successful poll was 25 hours ago
+    service['lastSuccessfulPoll'].set(
+      FORM_ID,
+      new Date(Date.now() - 25 * 60 * 60 * 1000),
+    );
+
+    // Submission created 2 hours ago (well within 24h horizon, but > 10 mins)
+    const recentMissed = new Date(
+      Date.now() - 2 * 60 * 60 * 1000,
+    ).toISOString();
+    // Ancient submission created 30 hours ago (outside 24h horizon)
+    const ancientMissed = new Date(
+      Date.now() - 30 * 60 * 60 * 1000,
+    ).toISOString();
+
+    chefsReturns([
+      submission({
+        confirmationId: 'RECENT2H',
+        createdAt: recentMissed,
+        updatedAt: recentMissed,
+      }),
+      submission({
+        confirmationId: 'ANCIENT30H',
+        createdAt: ancientMissed,
+        updatedAt: ancientMissed,
+      }),
+    ]);
+
+    await service.handleSubmissions(FORM_ID, VERSION_ID, 'pw');
+
+    const sent = submissionEmails();
+    expect(sent).toHaveLength(1);
+    expect(sent[0].emailSubject).toContain('RECENT2H');
+    expect(repo.rows).toContainEqual(
+      expect.objectContaining({
+        confirmationId: 'RECENT2H',
+        code: 'DELIVERED',
+      }),
+    );
   });
 });
