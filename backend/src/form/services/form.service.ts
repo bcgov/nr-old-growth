@@ -36,6 +36,7 @@ enum LogCode {
 @Injectable()
 export class FormService {
   private readonly logger = new Logger(FormService.name);
+  private readonly lastSuccessfulPoll = new Map<string, Date>();
 
   constructor(
     @InjectRepository(EmailSubmissionLogEntity)
@@ -56,7 +57,8 @@ export class FormService {
     const formPassword = process.env.IDIR_FORM_PASSWORD;
 
     if (!formId || !formVersionId || !formPassword) {
-      const msg = 'IDIR form environment variables are not set; skipping cron run';
+      const msg =
+        'IDIR form environment variables are not set; skipping cron run';
       this.logger.error(msg);
       return null;
     }
@@ -72,7 +74,8 @@ export class FormService {
     const formPassword = process.env.BCEID_FORM_PASSWORD;
 
     if (!formId || !formVersionId || !formPassword) {
-      const msg = 'BCEID form environment variables are not set; skipping cron run';
+      const msg =
+        'BCEID form environment variables are not set; skipping cron run';
       this.logger.error(msg);
       return null;
     }
@@ -88,11 +91,17 @@ export class FormService {
     return this.emailSubmissionLogRepository.find();
   }
 
-  findEmailSubmissionLog(confirmationId: string): Promise<EmailSubmissionLog[]> {
-    return this.emailSubmissionLogRepository.find({ where: { confirmationId } });
+  findEmailSubmissionLog(
+    confirmationId: string,
+  ): Promise<EmailSubmissionLog[]> {
+    return this.emailSubmissionLogRepository.find({
+      where: { confirmationId },
+    });
   }
 
-  findNewEmailSubmissionLog(confirmationId: string): Promise<EmailSubmissionLog[]> {
+  findNewEmailSubmissionLog(
+    confirmationId: string,
+  ): Promise<EmailSubmissionLog[]> {
     return this.emailSubmissionLogRepository.find({
       where: { confirmationId, emailType: EmailType.NEW },
     });
@@ -103,7 +112,11 @@ export class FormService {
     submissionUpdatedAt: Date,
   ): Promise<EmailSubmissionLog[]> {
     return this.emailSubmissionLogRepository.find({
-      where: { confirmationId, emailType: EmailType.UPDATE, submissionUpdatedAt },
+      where: {
+        confirmationId,
+        emailType: EmailType.UPDATE,
+        submissionUpdatedAt,
+      },
     });
   }
 
@@ -116,11 +129,17 @@ export class FormService {
     try {
       if (log.confirmationId) {
         if (log.emailType === EmailType.NEW) {
-          const existing = await this.findNewEmailSubmissionLog(log.confirmationId);
+          const existing = await this.findNewEmailSubmissionLog(
+            log.confirmationId,
+          );
           if (existing.length > 0) {
-            await this.updateEmailSubmissionLog(log.confirmationId, log.emailType, {
-              code: log.code,
-            });
+            await this.updateEmailSubmissionLog(
+              log.confirmationId,
+              log.emailType,
+              {
+                code: log.code,
+              },
+            );
             return;
           }
         } else if (log.emailType === EmailType.UPDATE) {
@@ -140,6 +159,7 @@ export class FormService {
         }
       }
 
+      log.createTimestamp = log.createTimestamp ?? new Date();
       const entity = Object.assign(new EmailSubmissionLogEntity(), log);
       await this.emailSubmissionLogRepository.save(entity);
     } catch (e) {
@@ -179,6 +199,194 @@ export class FormService {
   // -------------------------------------------------------------------------
 
   /**
+   * Determines whether an Axios error is retryable (transient server errors, rate limits, or network failures).
+   */
+  private isRetryableError(error: AxiosError): boolean {
+    const status = error.response?.status;
+    if (status && (status >= 500 || status === 429)) {
+      return true;
+    }
+    if (!error.response) {
+      return true;
+    }
+    return false;
+  }
+
+  private sleep(ms: number): Promise<void> {
+    if (ms <= 0) return Promise.resolve();
+    return new Promise((resolve) => {
+      const timer = setTimeout(resolve, ms);
+      if (typeof timer.unref === 'function') {
+        timer.unref();
+      }
+    });
+  }
+
+  /**
+   * Performs an HTTP GET to CHEFS API with exponential backoff retry on transient errors.
+   */
+  async fetchChefsSubmissions(
+    url: string,
+    formId: string,
+    formPassword: string,
+    options?: {
+      maxRetries?: number;
+      initialDelayMs?: number;
+      backoffFactor?: number;
+    },
+  ): Promise<Array<{ [key: string]: any }>> {
+    const maxRetries = options?.maxRetries ?? 3;
+    const initialDelay =
+      options?.initialDelayMs ?? (process.env.NODE_ENV === 'test' ? 0 : 1000);
+    const backoffFactor = options?.backoffFactor ?? 2;
+
+    let delay = initialDelay;
+    let attempt = 0;
+
+    while (attempt < maxRetries) {
+      attempt++;
+      try {
+        const response = await axios.get(url, {
+          auth: { username: formId, password: formPassword },
+        });
+
+        if (!response?.data) {
+          throw new HttpException(
+            { message: 'CHEFS API returned an empty response' },
+            HttpStatus.BAD_REQUEST,
+          );
+        }
+
+        return response.data;
+      } catch (e) {
+        if (e instanceof HttpException) throw e;
+
+        const axiosError = e as AxiosError;
+        const isRetryable = this.isRetryableError(axiosError);
+
+        if (!isRetryable || attempt >= maxRetries) {
+          throw new HttpException(
+            {
+              message: `Failed to fetch submissions from CHEFS: ${axiosError.message}`,
+            },
+            HttpStatus.INTERNAL_SERVER_ERROR,
+          );
+        }
+
+        this.logger.warn(
+          `CHEFS API request failed (attempt ${attempt}/${maxRetries}): ${axiosError.message}. Retrying in ${delay}ms...`,
+        );
+
+        if (delay > 0) {
+          await this.sleep(delay);
+        }
+        delay *= backoffFactor;
+      }
+    }
+
+    throw new HttpException(
+      { message: 'Failed to fetch submissions from CHEFS after retries' },
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
+  }
+
+  /**
+   * Determines the start of the query window. Expands the window back if a previous
+   * cron poll failed, ensuring submissions submitted during downtime are not lost.
+   */
+  async determineWindowStart(formId: string, now: Date): Promise<Date> {
+    const defaultStart = new Date(
+      now.getTime() - 1000 * 60 * CRON_INTERVAL_MINUTES,
+    );
+
+    const inMemoryLast = this.lastSuccessfulPoll.get(formId);
+    if (inMemoryLast) {
+      const elapsedMs = now.getTime() - inMemoryLast.getTime();
+      if (inMemoryLast < defaultStart && elapsedMs <= 24 * 60 * 60 * 1000) {
+        this.logger.warn(
+          `${formId}: Expanding query window to last successful poll at ${inMemoryLast.toISOString()}`,
+        );
+        return inMemoryLast;
+      }
+      return defaultStart;
+    }
+
+    try {
+      const logs = await this.emailSubmissionLogRepository.find({
+        where: { formId, code: LogCode.FAILED },
+      });
+      const unhandled = logs.filter(
+        (log) =>
+          !log.confirmationId &&
+          log.createTimestamp &&
+          !log.exceptionLog?.includes('[RECOVERED]'),
+      );
+      if (unhandled.length > 0) {
+        const cutoff = now.getTime() - 24 * 60 * 60 * 1000;
+        const recent = unhandled.filter(
+          (log) => new Date(log.createTimestamp).getTime() >= cutoff,
+        );
+        if (recent.length > 0) {
+          recent.sort(
+            (a, b) =>
+              new Date(a.createTimestamp).getTime() -
+              new Date(b.createTimestamp).getTime(),
+          );
+          const earliestFailure = new Date(recent[0].createTimestamp);
+          const failureWindowStart = new Date(
+            earliestFailure.getTime() - 1000 * 60 * CRON_INTERVAL_MINUTES,
+          );
+          if (failureWindowStart < defaultStart) {
+            this.logger.warn(
+              `${formId}: Found prior API failure at ${earliestFailure.toISOString()}; expanding query window to ${failureWindowStart.toISOString()}`,
+            );
+            return failureWindowStart;
+          }
+        }
+      }
+    } catch (e) {
+      this.logger.warn(
+        `Failed to inspect previous failure logs for form ${formId}: ${e}`,
+      );
+    }
+
+    return defaultStart;
+  }
+
+  /**
+   * Marks unhandled API failure logs as recovered after a successful poll.
+   */
+  private async markApiFailuresRecovered(formId: string): Promise<void> {
+    try {
+      const logs = await this.emailSubmissionLogRepository.find({
+        where: { formId, code: LogCode.FAILED },
+      });
+      const unhandled = logs.filter(
+        (log) =>
+          !log.confirmationId && !log.exceptionLog?.includes('[RECOVERED]'),
+      );
+      for (const log of unhandled) {
+        const updatedMsg = `${(log.exceptionLog || '').slice(0, 480)} [RECOVERED]`;
+        if (log.id) {
+          await this.emailSubmissionLogRepository.update(
+            { id: log.id },
+            { exceptionLog: updatedMsg },
+          );
+        } else {
+          await this.emailSubmissionLogRepository.update(
+            { formId, code: LogCode.FAILED, exceptionLog: log.exceptionLog },
+            { exceptionLog: updatedMsg },
+          );
+        }
+      }
+    } catch (e) {
+      this.logger.warn(
+        `Failed to mark API failure logs as recovered for form ${formId}: ${e}`,
+      );
+    }
+  }
+
+  /**
    * Fetches all submissions for a form version from CHEFS and returns only
    * those that require an email notification (new or updated since last cron run).
    */
@@ -187,34 +395,26 @@ export class FormService {
     formVersionId: string,
     formPassword: string,
   ): Promise<Array<{ [key: string]: any }>> {
-    let allSubmissions: Array<{ [key: string]: any }>;
-
-    try {
-      const response = await axios.get(CHEFS_SUBMISSIONS_URL(formId, formVersionId), {
-        auth: { username: formId, password: formPassword },
-      });
-
-      if (!response?.data) {
-        throw new HttpException(
-          { message: 'CHEFS API returned an empty response' },
-          HttpStatus.BAD_REQUEST,
-        );
-      }
-
-      allSubmissions = response.data;
-    } catch (e) {
-      if (e instanceof HttpException) throw e;
-
-      const axiosError = e as AxiosError;
-      throw new HttpException(
-        { message: `Failed to fetch submissions from CHEFS: ${axiosError.message}` },
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
+    const allSubmissions = await this.fetchChefsSubmissions(
+      CHEFS_SUBMISSIONS_URL(formId, formVersionId),
+      formId,
+      formPassword,
+    );
 
     const now = new Date();
-    const windowStart = new Date(now.getTime() - 1000 * 60 * CRON_INTERVAL_MINUTES);
-    return this.filterSubmissions(allSubmissions, windowStart, now, formId, formVersionId);
+    const windowStart = await this.determineWindowStart(formId, now);
+    const results = await this.filterSubmissions(
+      allSubmissions,
+      windowStart,
+      now,
+      formId,
+      formVersionId,
+    );
+
+    this.lastSuccessfulPoll.set(formId, now);
+    await this.markApiFailuresRecovered(formId);
+
+    return results;
   }
 
   /**
@@ -239,7 +439,9 @@ export class FormService {
           const updatedMs = new Date(submission.updatedAt).valueOf();
 
           // --- NEW email ---
-          const logsAll = await this.findEmailSubmissionLog(submission.confirmationId);
+          const logsAll = await this.findEmailSubmissionLog(
+            submission.confirmationId,
+          );
           const needsNew =
             (logsAll.length === 0 &&
               createdMs > windowStartMs &&
@@ -249,7 +451,9 @@ export class FormService {
 
           const pushIfNotExists = (item: any) => {
             const exists = results.some(
-              (r) => r.confirmationId === item.confirmationId && r.emailType === item.emailType,
+              (r) =>
+                r.confirmationId === item.confirmationId &&
+                r.emailType === item.emailType,
             );
             if (!exists) results.push(item);
           };
@@ -263,13 +467,21 @@ export class FormService {
             submission.confirmationId,
             new Date(submission.updatedAt),
           );
-          const submitterIsOwner = submission.updatedBy && submission.updatedBy === submission.createdBy;
-          const updatedAfterEpoch = updatedMs > UPDATE_NOTIFICATION_EPOCH.valueOf();
+          const submitterIsOwner =
+            submission.updatedBy &&
+            submission.updatedBy === submission.createdBy;
+          const updatedAfterEpoch =
+            updatedMs > UPDATE_NOTIFICATION_EPOCH.valueOf();
 
           const needsUpdate =
-            ((updatedMs > windowStartMs && updatedMs <= windowEndMs && submitterIsOwner && logsUpdate.length === 0) ||
-              (submitterIsOwner && logsUpdate.length === 0 && updatedAfterEpoch) ||
-              logsUpdate[0]?.code === LogCode.FAILED);
+            (updatedMs > windowStartMs &&
+              updatedMs <= windowEndMs &&
+              submitterIsOwner &&
+              logsUpdate.length === 0) ||
+            (submitterIsOwner &&
+              logsUpdate.length === 0 &&
+              updatedAfterEpoch) ||
+            logsUpdate[0]?.code === LogCode.FAILED;
 
           if (needsUpdate) {
             pushIfNotExists({ ...submission, emailType: EmailType.UPDATE });
@@ -316,18 +528,33 @@ export class FormService {
         formId,
         formVersionId,
       });
-      return [new HttpException({ message: errorMsg }, HttpStatus.INTERNAL_SERVER_ERROR)];
+      return [
+        new HttpException(
+          { message: errorMsg },
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        ),
+      ];
     }
 
     if (!submissionsToNotify?.length) {
-      this.logger.debug(`${formId}: No notifications needed in this cron window`);
-      return [{ msg: 'No new or updated submissions within the last cron job interval' }];
+      this.logger.debug(
+        `${formId}: No notifications needed in this cron window`,
+      );
+      return [
+        {
+          msg: 'No new or updated submissions within the last cron job interval',
+        },
+      ];
     }
 
-    this.logger.log(`${formId}: Sending ${submissionsToNotify.length} notification(s)`);
+    this.logger.log(
+      `${formId}: Sending ${submissionsToNotify.length} notification(s)`,
+    );
 
     return Promise.all(
-      submissionsToNotify.map((submission) => this.sendSubmissionEmail(submission, formId, formVersionId)),
+      submissionsToNotify.map((submission) =>
+        this.sendSubmissionEmail(submission, formId, formVersionId),
+      ),
     );
   }
 
@@ -346,23 +573,24 @@ export class FormService {
     const isUpdate = submission.emailType === EmailType.UPDATE;
     const actionWord = isUpdate ? 'updated' : 'submitted';
 
-    const districtRaw: string = submission.submission?.data?.naturalResourceDistrict ?? '';
+    const districtRaw: string =
+      submission.submission?.data?.naturalResourceDistrict ?? '';
     const emailTo = districtRaw.split('-')[1]?.trim();
 
     const isValidEmail = (addr: string): boolean => {
       if (!addr) return false;
 
-      const atIndex = addr.indexOf("@");
-      if (atIndex <= 0 || atIndex !== addr.lastIndexOf("@")) return false;
+      const atIndex = addr.indexOf('@');
+      if (atIndex <= 0 || atIndex !== addr.lastIndexOf('@')) return false;
 
       const local = addr.slice(0, atIndex);
       const domain = addr.slice(atIndex + 1);
 
       if (!local || !domain) return false;
-      if (domain.startsWith(".") || domain.endsWith(".")) return false;
-      if (!domain.includes(".")) return false;
+      if (domain.startsWith('.') || domain.endsWith('.')) return false;
+      if (!domain.includes('.')) return false;
 
-      return !addr.includes(" ");
+      return !addr.includes(' ');
     };
 
     if (!emailTo || !isValidEmail(emailTo)) {
@@ -382,7 +610,9 @@ export class FormService {
       return new HttpException({ message: errMsg }, HttpStatus.BAD_REQUEST);
     }
 
-    this.logger.debug(`${formId}: Notifying "${emailTo}" for submission ${submission.confirmationId} (${actionWord})`);
+    this.logger.debug(
+      `${formId}: Notifying "${emailTo}" for submission ${submission.confirmationId} (${actionWord})`,
+    );
 
     const email: EmailEntity = {
       emailTo: [emailTo],
@@ -404,7 +634,9 @@ export class FormService {
 
     try {
       const mailResponse = await this.emailService.sendEmail(email);
-      this.logger.log(`${formId}: Email delivered for ${submission.confirmationId}`);
+      this.logger.log(
+        `${formId}: Email delivered for ${submission.confirmationId}`,
+      );
       await this.postEmailSubmissionLog({
         ...baseLog,
         code: LogCode.DELIVERED,
@@ -419,7 +651,10 @@ export class FormService {
         code: LogCode.FAILED,
         exceptionLog: errorMsg,
       });
-      return new HttpException({ message: errorMsg }, HttpStatus.INTERNAL_SERVER_ERROR);
+      return new HttpException(
+        { message: errorMsg },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 }

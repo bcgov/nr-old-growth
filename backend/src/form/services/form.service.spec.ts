@@ -7,7 +7,7 @@ import {
   jest,
 } from '@jest/globals';
 import { HttpException } from '@nestjs/common';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { EmailService } from '../../email/services/email.service';
 import { EmailSubmissionLog } from '../entities/emailSubmissionLog.interface';
 import { FormService } from './form.service';
@@ -33,6 +33,9 @@ class FakeRepository {
   }
 
   async save(entity: EmailSubmissionLog) {
+    if (!entity.id) {
+      entity.id = this.rows.length + 1;
+    }
     this.rows.push({ ...entity });
     return entity;
   }
@@ -270,10 +273,88 @@ describe('FormService', () => {
     expect(result).toBeInstanceOf(HttpException);
     expect(errorEmails()).toHaveLength(0);
     expect(errorSpy).toHaveBeenCalledWith(
-      expect.stringContaining(`Failed to fetch submissions needing notification for form ${FORM_ID}`),
+      expect.stringContaining(
+        `Failed to fetch submissions needing notification for form ${FORM_ID}`,
+      ),
     );
     expect(repo.rows).toEqual([
       expect.objectContaining({ code: 'FAILED', formId: FORM_ID }),
     ]);
+  });
+
+  it('retries transient 503 errors from CHEFS and delivers notifications on retry', async () => {
+    const error503 = new AxiosError(
+      'Request failed with status code 503',
+      'ERR_BAD_RESPONSE',
+      undefined,
+      undefined,
+      { status: 503 } as any,
+    );
+    get
+      .mockRejectedValueOnce(error503)
+      .mockResolvedValueOnce({ data: [submission()] });
+
+    await service.handleSubmissions(FORM_ID, VERSION_ID, 'pw');
+
+    expect(get).toHaveBeenCalledTimes(2);
+    expect(submissionEmails()).toHaveLength(1);
+    expect(repo.rows).toEqual([
+      expect.objectContaining({
+        confirmationId: 'ABC123',
+        emailType: 'NEW',
+        code: 'DELIVERED',
+      }),
+    ]);
+  });
+
+  it('does not retry 401 client errors from CHEFS', async () => {
+    const error401 = new AxiosError(
+      'Request failed with status code 401',
+      'ERR_BAD_REQUEST',
+      undefined,
+      undefined,
+      { status: 401 } as any,
+    );
+    get.mockRejectedValue(error401);
+
+    const [result] = await service.handleSubmissions(FORM_ID, VERSION_ID, 'pw');
+
+    expect(result).toBeInstanceOf(HttpException);
+    expect(get).toHaveBeenCalledTimes(1);
+    expect(repo.rows).toEqual([
+      expect.objectContaining({ code: 'FAILED', formId: FORM_ID }),
+    ]);
+  });
+
+  it('recovers missed new submissions from a previous failed cron run', async () => {
+    const missedCreatedAt = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+    repo.rows.push({
+      id: 1,
+      formId: FORM_ID,
+      formVersionId: VERSION_ID,
+      code: 'FAILED',
+      exceptionLog: 'Failed to fetch submissions from CHEFS: 503',
+      createTimestamp: new Date(Date.now() - 10 * 60 * 1000),
+    });
+
+    chefsReturns([
+      submission({
+        confirmationId: 'MISSED1',
+        createdAt: missedCreatedAt,
+        updatedAt: missedCreatedAt,
+      }),
+    ]);
+
+    await service.handleSubmissions(FORM_ID, VERSION_ID, 'pw');
+
+    expect(submissionEmails()).toHaveLength(1);
+    expect(repo.rows).toContainEqual(
+      expect.objectContaining({
+        confirmationId: 'MISSED1',
+        emailType: 'NEW',
+        code: 'DELIVERED',
+      }),
+    );
+    expect(repo.rows[0].exceptionLog).toContain('[RECOVERED]');
   });
 });
