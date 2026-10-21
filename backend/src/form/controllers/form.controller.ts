@@ -2,7 +2,6 @@ import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Observable } from 'rxjs';
 import { EmailSubmissionLogEntity } from '../entities/emailSubmissionLog.entity';
-import { EmailSubmissionLog } from '../entities/emailSubmissionLog.interface';
 import { FormService } from '../services/form.service';
 
 @ApiTags('form')
@@ -42,7 +41,7 @@ export class FormController {
   }
 
   @Post('/postLog')
-  create(@Body() emailSubmissionLog: EmailSubmissionLog) {
+  create(@Body() emailSubmissionLog: EmailSubmissionLogEntity) {
     return this.formService.postEmailSubmissionLog(emailSubmissionLog);
   }
 }
