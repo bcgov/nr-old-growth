@@ -11,8 +11,8 @@ export class AppService {
   }
 
   getToken() {
-    return this.chesService.getToken().then((response) => {
-      this.logger.debug(`Retrieved token response: ${JSON.stringify(response)}`);
+    return this.chesService.getToken().then(() => {
+      this.logger.debug('CHES token retrieved successfully');
       return 'Ok';
     });
   }
