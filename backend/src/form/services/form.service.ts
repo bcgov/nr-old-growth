@@ -503,14 +503,8 @@ export class FormService {
         }),
       );
     } catch (e) {
-      this.logger.error(`Failed to filter submissions: ${e}`);
-      await this.postEmailSubmissionLog({
-        code: LogCode.FAILED,
-        exceptionLog: `Failed to filter submission data: ${e}`,
-        formId,
-        formVersionId,
-      });
-      return [];
+      this.logger.error(`Failed to filter submissions for form ${formId}: ${e}`);
+      throw e;
     }
 
     return results;

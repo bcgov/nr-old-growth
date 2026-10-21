@@ -436,4 +436,34 @@ describe('FormService', () => {
       }),
     );
   });
+
+  it('does not advance recovery checkpoint or mark failures recovered if filtering throws an error', async () => {
+    repo.rows.push({
+      id: 1,
+      formId: FORM_ID,
+      formVersionId: VERSION_ID,
+      code: 'FAILED',
+      exceptionLog: 'Failed to fetch submissions from CHEFS: 503',
+      createTimestamp: new Date(Date.now() - 10 * 60 * 1000),
+    });
+
+    chefsReturns([submission()]);
+    jest
+      .spyOn(service, 'findEmailSubmissionLog')
+      .mockRejectedValue(new Error('DB disconnect'));
+
+    const [result] = await service.handleSubmissions(FORM_ID, VERSION_ID, 'pw');
+
+    expect(result).toBeInstanceOf(HttpException);
+    expect(submissionEmails()).toHaveLength(0);
+    expect(repo.rows[0].exceptionLog).not.toContain('[RECOVERED]');
+    expect(service['lastSuccessfulPoll'].get(FORM_ID)).toBeUndefined();
+    expect(repo.rows).toContainEqual(
+      expect.objectContaining({
+        code: 'FAILED',
+        formId: FORM_ID,
+        exceptionLog: expect.stringContaining('DB disconnect'),
+      }),
+    );
+  });
 });
