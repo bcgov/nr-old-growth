@@ -384,8 +384,9 @@ export class FormService {
       }
     } catch (e) {
       this.logger.warn(
-        `Failed to inspect previous failure logs for form ${formId}: ${e}`,
+        `Failed to inspect previous failure logs for form ${formId}: ${e}; falling back to max recovery window ${maxRecoveryStart.toISOString()}`,
       );
+      return maxRecoveryStart;
     }
 
     return null;

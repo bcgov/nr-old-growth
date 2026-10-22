@@ -466,4 +466,42 @@ describe('FormService', () => {
       }),
     );
   });
+
+  it('falls back to 24-hour horizon when failure history lookup fails after restart', async () => {
+    // Submission created 2 hours ago (within 24h horizon, but outside standard 10m window)
+    const twoHoursAgo = new Date(
+      Date.now() - 2 * 60 * 60 * 1000,
+    ).toISOString();
+
+    chefsReturns([
+      submission({
+        confirmationId: 'RECOVER_AFTER_DB_BLIP',
+        createdAt: twoHoursAgo,
+        updatedAt: twoHoursAgo,
+      }),
+    ]);
+
+    // Mock repo.find to fail on the first call (failure log lookup) and succeed subsequently
+    let findCallCount = 0;
+    const originalFind = repo.find.bind(repo);
+    jest.spyOn(repo, 'find').mockImplementation(async (options) => {
+      findCallCount++;
+      if (findCallCount === 1) {
+        throw new Error('Connection timeout during history inspection');
+      }
+      return originalFind(options);
+    });
+
+    await service.handleSubmissions(FORM_ID, VERSION_ID, 'pw');
+
+    const sent = submissionEmails();
+    expect(sent).toHaveLength(1);
+    expect(sent[0].emailSubject).toContain('RECOVER_AFTER_DB_BLIP');
+    expect(repo.rows).toContainEqual(
+      expect.objectContaining({
+        confirmationId: 'RECOVER_AFTER_DB_BLIP',
+        code: 'DELIVERED',
+      }),
+    );
+  });
 });
