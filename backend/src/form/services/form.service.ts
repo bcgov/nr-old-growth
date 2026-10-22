@@ -240,11 +240,10 @@ export class FormService {
       options?.initialDelayMs ?? (process.env.NODE_ENV === 'test' ? 0 : 1000);
     const backoffFactor = options?.backoffFactor ?? 2;
 
-    let delay = initialDelay;
-    let attempt = 0;
-
-    while (attempt < maxRetries) {
-      attempt++;
+    const executeAttempt = async (
+      attempt: number,
+      delay: number,
+    ): Promise<any> => {
       try {
         const response = await axios.get(url, {
           auth: { username: formId, password: formPassword },
@@ -280,14 +279,12 @@ export class FormService {
         if (delay > 0) {
           await this.sleep(delay);
         }
-        delay *= backoffFactor;
-      }
-    }
 
-    throw new HttpException(
-      { message: 'Failed to fetch submissions from CHEFS after retries' },
-      HttpStatus.INTERNAL_SERVER_ERROR,
-    );
+        return executeAttempt(attempt + 1, delay * backoffFactor);
+      }
+    };
+
+    return executeAttempt(1, initialDelay);
   }
 
   /**
@@ -377,20 +374,21 @@ export class FormService {
         (log) =>
           !log.confirmationId && !log.exceptionLog?.includes('[RECOVERED]'),
       );
-      for (const log of unhandled) {
-        const updatedMsg = `${(log.exceptionLog || '').slice(0, 480)} [RECOVERED]`;
-        if (log.id) {
-          await this.emailSubmissionLogRepository.update(
-            { id: log.id },
-            { exceptionLog: updatedMsg },
-          );
-        } else {
-          await this.emailSubmissionLogRepository.update(
+      await Promise.all(
+        unhandled.map((log) => {
+          const updatedMsg = `${(log.exceptionLog || '').slice(0, 480)} [RECOVERED]`;
+          if (log.id) {
+            return this.emailSubmissionLogRepository.update(
+              { id: log.id },
+              { exceptionLog: updatedMsg },
+            );
+          }
+          return this.emailSubmissionLogRepository.update(
             { formId, code: LogCode.FAILED, exceptionLog: log.exceptionLog },
             { exceptionLog: updatedMsg },
           );
-        }
-      }
+        }),
+      );
     } catch (e) {
       this.logger.warn(
         `Failed to mark API failure logs as recovered for form ${formId}: ${e}`,
