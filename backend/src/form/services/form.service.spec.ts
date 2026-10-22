@@ -100,6 +100,33 @@ describe('FormService', () => {
     get.mockResolvedValue({ data: submissions });
   }
 
+  function pushFailedPoll(
+    createTimestamp: Date,
+    submissionUpdatedAt?: Date,
+  ) {
+    repo.rows.push({
+      id: repo.rows.length + 1,
+      formId: FORM_ID,
+      formVersionId: VERSION_ID,
+      code: 'FAILED',
+      exceptionLog: 'Failed to fetch submissions from CHEFS: 503',
+      createTimestamp,
+      submissionUpdatedAt,
+    });
+  }
+
+  function expectSingleSubmissionDelivered(confirmationId: string) {
+    const sent = submissionEmails();
+    expect(sent).toHaveLength(1);
+    expect(sent[0].emailSubject).toContain(confirmationId);
+    expect(repo.rows).toContainEqual(
+      expect.objectContaining({
+        confirmationId,
+        code: 'DELIVERED',
+      }),
+    );
+  }
+
   beforeEach(() => {
     repo = new FakeRepository();
     sendEmail = jest.fn(async () => ({ status: 201, data: 'sent' }));
@@ -328,14 +355,7 @@ describe('FormService', () => {
 
   it('recovers missed new submissions from a previous failed cron run', async () => {
     const missedCreatedAt = new Date(Date.now() - 15 * 60 * 1000).toISOString();
-    repo.rows.push({
-      id: 1,
-      formId: FORM_ID,
-      formVersionId: VERSION_ID,
-      code: 'FAILED',
-      exceptionLog: 'Failed to fetch submissions from CHEFS: 503',
-      createTimestamp: new Date(Date.now() - 10 * 60 * 1000),
-    });
+    pushFailedPoll(new Date(Date.now() - 10 * 60 * 1000));
 
     chefsReturns([
       submission({
@@ -347,14 +367,7 @@ describe('FormService', () => {
 
     await service.handleSubmissions(FORM_ID, VERSION_ID, 'pw');
 
-    expect(submissionEmails()).toHaveLength(1);
-    expect(repo.rows).toContainEqual(
-      expect.objectContaining({
-        confirmationId: 'MISSED1',
-        emailType: 'NEW',
-        code: 'DELIVERED',
-      }),
-    );
+    expectSingleSubmissionDelivered('MISSED1');
     expect(repo.rows[0].exceptionLog).toContain('[RECOVERED]');
   });
 
@@ -389,15 +402,7 @@ describe('FormService', () => {
 
     await service.handleSubmissions(FORM_ID, VERSION_ID, 'pw');
 
-    const sent = submissionEmails();
-    expect(sent).toHaveLength(1);
-    expect(sent[0].emailSubject).toContain('RECENT2H');
-    expect(repo.rows).toContainEqual(
-      expect.objectContaining({
-        confirmationId: 'RECENT2H',
-        code: 'DELIVERED',
-      }),
-    );
+    expectSingleSubmissionDelivered('RECENT2H');
   });
 
   it('recovers submissions created right after previous successful poll without retry delay skew', async () => {
@@ -406,15 +411,7 @@ describe('FormService', () => {
     const submissionCreated = new Date(t0 + 1000).toISOString();
 
     // Prior failed poll had windowStart at t0, which was persisted in submissionUpdatedAt
-    repo.rows.push({
-      id: 1,
-      formId: FORM_ID,
-      formVersionId: VERSION_ID,
-      code: 'FAILED',
-      exceptionLog: 'Failed to fetch submissions from CHEFS: 503',
-      createTimestamp: new Date(t0 + 10 * 60 * 1000 + 5000), // 10:10:05 (after retries)
-      submissionUpdatedAt: new Date(t0), // exact 10:00:00 boundary
-    });
+    pushFailedPoll(new Date(t0 + 10 * 60 * 1000 + 5000), new Date(t0));
 
     chefsReturns([
       submission({
@@ -426,26 +423,11 @@ describe('FormService', () => {
 
     await service.handleSubmissions(FORM_ID, VERSION_ID, 'pw');
 
-    const sent = submissionEmails();
-    expect(sent).toHaveLength(1);
-    expect(sent[0].emailSubject).toContain('AT_10_00_01');
-    expect(repo.rows).toContainEqual(
-      expect.objectContaining({
-        confirmationId: 'AT_10_00_01',
-        code: 'DELIVERED',
-      }),
-    );
+    expectSingleSubmissionDelivered('AT_10_00_01');
   });
 
   it('does not advance recovery checkpoint or mark failures recovered if filtering throws an error', async () => {
-    repo.rows.push({
-      id: 1,
-      formId: FORM_ID,
-      formVersionId: VERSION_ID,
-      code: 'FAILED',
-      exceptionLog: 'Failed to fetch submissions from CHEFS: 503',
-      createTimestamp: new Date(Date.now() - 10 * 60 * 1000),
-    });
+    pushFailedPoll(new Date(Date.now() - 10 * 60 * 1000));
 
     chefsReturns([submission()]);
     jest
@@ -494,26 +476,11 @@ describe('FormService', () => {
 
     await service.handleSubmissions(FORM_ID, VERSION_ID, 'pw');
 
-    const sent = submissionEmails();
-    expect(sent).toHaveLength(1);
-    expect(sent[0].emailSubject).toContain('RECOVER_AFTER_DB_BLIP');
-    expect(repo.rows).toContainEqual(
-      expect.objectContaining({
-        confirmationId: 'RECOVER_AFTER_DB_BLIP',
-        code: 'DELIVERED',
-      }),
-    );
+    expectSingleSubmissionDelivered('RECOVER_AFTER_DB_BLIP');
   });
 
   it('defers recovery acknowledgement until after notifications are sent and logged', async () => {
-    repo.rows.push({
-      id: 1,
-      formId: FORM_ID,
-      formVersionId: VERSION_ID,
-      code: 'FAILED',
-      exceptionLog: 'Failed to fetch submissions from CHEFS: 503',
-      createTimestamp: new Date(Date.now() - 30 * 60 * 1000),
-    });
+    pushFailedPoll(new Date(Date.now() - 30 * 60 * 1000));
 
     const missed = new Date(Date.now() - 20 * 60 * 1000).toISOString();
     chefsReturns([
@@ -539,5 +506,29 @@ describe('FormService', () => {
     const failedLogAfter = repo.rows.find((r) => r.id === 1);
     expect(failedLogAfter?.exceptionLog).toContain('[RECOVERED]');
     expect(service['lastSuccessfulPoll'].get(FORM_ID)).toBeDefined();
+  });
+
+  it('does not acknowledge recovery when delivery and saving its failure log fail', async () => {
+    pushFailedPoll(new Date(Date.now() - 30 * 60 * 1000));
+
+    const missed = new Date(Date.now() - 20 * 60 * 1000).toISOString();
+    chefsReturns([
+      submission({
+        confirmationId: 'RECOVER_FAIL_PERSIST',
+        createdAt: missed,
+        updatedAt: missed,
+      }),
+    ]);
+
+    sendEmail.mockRejectedValue(new Error('CHES down'));
+    jest
+      .spyOn(repo, 'save')
+      .mockRejectedValue(new Error('DB failure while saving log'));
+
+    const [result] = await service.handleSubmissions(FORM_ID, VERSION_ID, 'pw');
+
+    expect(result).toBeInstanceOf(HttpException);
+    expect(service['lastSuccessfulPoll'].get(FORM_ID)).toBeUndefined();
+    expect(repo.rows[0].exceptionLog).not.toContain('[RECOVERED]');
   });
 });

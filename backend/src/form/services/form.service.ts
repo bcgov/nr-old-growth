@@ -166,6 +166,7 @@ export class FormService {
       this.logger.error(
         `Failed to write log to DB: ${this.getErrorMessage(e)}`,
       );
+      throw e;
     }
   }
 
@@ -184,6 +185,7 @@ export class FormService {
       this.logger.error(
         `Failed to update log in DB: ${this.getErrorMessage(e)}`,
       );
+      throw e;
     }
   }
 
@@ -611,6 +613,10 @@ export class FormService {
         formVersionId,
         createTimestamp: pollStartTime,
         submissionUpdatedAt: windowStart,
+      }).catch((logErr) => {
+        this.logger.warn(
+          `Could not persist form-level failure log for form ${formId}: ${this.getErrorMessage(logErr)}`,
+        );
       });
       return [
         new HttpException(
@@ -636,11 +642,23 @@ export class FormService {
       `${formId}: Sending ${submissionsToNotify.length} notification(s)`,
     );
 
-    const outcomes = await Promise.all(
-      submissionsToNotify.map((submission) =>
-        this.sendSubmissionEmail(submission, formId, formVersionId),
-      ),
-    );
+    let outcomes: unknown[];
+    try {
+      outcomes = await Promise.all(
+        submissionsToNotify.map((submission) =>
+          this.sendSubmissionEmail(submission, formId, formVersionId),
+        ),
+      );
+    } catch (e) {
+      const errorMsg = `Failed to process notifications or persist outcomes for form ${formId}: ${this.getErrorMessage(e)}`;
+      this.logger.error(errorMsg);
+      return [
+        new HttpException(
+          { message: errorMsg },
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        ),
+      ];
+    }
 
     await this.acknowledgeRecovery(formId, pollStartTime);
 
@@ -721,17 +739,12 @@ export class FormService {
       submissionUpdatedAt: new Date(submission.updatedAt),
     };
 
+    let mailResponse: { status: number; data: unknown };
     try {
-      const mailResponse = await this.emailService.sendEmail(email);
+      mailResponse = await this.emailService.sendEmail(email);
       this.logger.log(
         `${formId}: Email delivered for ${submission.confirmationId}`,
       );
-      await this.postEmailSubmissionLog({
-        ...baseLog,
-        code: LogCode.DELIVERED,
-        exceptionLog: '',
-      });
-      return { status: mailResponse.status, data: mailResponse.data };
     } catch (err) {
       const errorMsg = `Failed to send email for ${submission.confirmationId}: ${this.getErrorMessage(err)}`;
       this.logger.error(`${formId}: ${errorMsg}`);
@@ -745,5 +758,12 @@ export class FormService {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
+
+    await this.postEmailSubmissionLog({
+      ...baseLog,
+      code: LogCode.DELIVERED,
+      exceptionLog: '',
+    });
+    return { status: mailResponse.status, data: mailResponse.data };
   }
 }
