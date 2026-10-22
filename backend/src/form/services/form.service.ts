@@ -458,18 +458,25 @@ export class FormService {
 
     const effectiveWindowStart =
       windowStart ?? (await this.determineWindowStart(formId, pollStartTime));
-    const results = await this.filterSubmissions(
+    return this.filterSubmissions(
       allSubmissions,
       effectiveWindowStart,
       pollStartTime,
       formId,
       formVersionId,
     );
+  }
 
+  /**
+   * Durably records successful poll recovery after all notifications in the
+   * window have had their outcomes persisted to the database.
+   */
+  private async acknowledgeRecovery(
+    formId: string,
+    pollStartTime: Date,
+  ): Promise<void> {
     this.lastSuccessfulPoll.set(formId, pollStartTime);
     await this.markApiFailuresRecovered(formId);
-
-    return results;
   }
 
   /**
@@ -600,6 +607,7 @@ export class FormService {
     }
 
     if (!submissionsToNotify?.length) {
+      await this.acknowledgeRecovery(formId, pollStartTime);
       this.logger.debug(
         `${formId}: No notifications needed in this cron window`,
       );
@@ -614,11 +622,15 @@ export class FormService {
       `${formId}: Sending ${submissionsToNotify.length} notification(s)`,
     );
 
-    return Promise.all(
+    const outcomes = await Promise.all(
       submissionsToNotify.map((submission) =>
         this.sendSubmissionEmail(submission, formId, formVersionId),
       ),
     );
+
+    await this.acknowledgeRecovery(formId, pollStartTime);
+
+    return outcomes;
   }
 
   // -------------------------------------------------------------------------

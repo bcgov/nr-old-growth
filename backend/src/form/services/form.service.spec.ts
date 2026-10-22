@@ -504,4 +504,40 @@ describe('FormService', () => {
       }),
     );
   });
+
+  it('defers recovery acknowledgement until after notifications are sent and logged', async () => {
+    repo.rows.push({
+      id: 1,
+      formId: FORM_ID,
+      formVersionId: VERSION_ID,
+      code: 'FAILED',
+      exceptionLog: 'Failed to fetch submissions from CHEFS: 503',
+      createTimestamp: new Date(Date.now() - 30 * 60 * 1000),
+    });
+
+    const missed = new Date(Date.now() - 20 * 60 * 1000).toISOString();
+    chefsReturns([
+      submission({
+        confirmationId: 'RECOVER_DEFER',
+        createdAt: missed,
+        updatedAt: missed,
+      }),
+    ]);
+
+    let emailSentBeforeRecovery = false;
+    sendEmail.mockImplementation(async () => {
+      const failedLog = repo.rows.find((r) => r.id === 1);
+      if (!failedLog?.exceptionLog?.includes('[RECOVERED]')) {
+        emailSentBeforeRecovery = true;
+      }
+      return { status: 201, data: 'sent' };
+    });
+
+    await service.handleSubmissions(FORM_ID, VERSION_ID, 'pw');
+
+    expect(emailSentBeforeRecovery).toBe(true);
+    const failedLogAfter = repo.rows.find((r) => r.id === 1);
+    expect(failedLogAfter?.exceptionLog).toContain('[RECOVERED]');
+    expect(service['lastSuccessfulPoll'].get(FORM_ID)).toBeDefined();
+  });
 });
