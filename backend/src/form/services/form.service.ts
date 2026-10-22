@@ -298,19 +298,48 @@ export class FormService {
     );
     const maxRecoveryStart = new Date(now.getTime() - MAX_RECOVERY_WINDOW_MS);
 
-    const inMemoryLast = this.lastSuccessfulPoll.get(formId);
-    if (inMemoryLast) {
-      if (inMemoryLast < defaultStart) {
-        const clampedStart =
-          inMemoryLast < maxRecoveryStart ? maxRecoveryStart : inMemoryLast;
-        this.logger.warn(
-          `${formId}: Expanding query window to ${clampedStart.toISOString()} (last successful poll was ${inMemoryLast.toISOString()})`,
-        );
-        return clampedStart;
-      }
-      return defaultStart;
+    const inMemoryStart = this.getInMemoryRecoveryStart(
+      formId,
+      defaultStart,
+      maxRecoveryStart,
+    );
+    if (inMemoryStart) {
+      return inMemoryStart;
     }
 
+    const logRecoveryStart = await this.getLogRecoveryStart(
+      formId,
+      defaultStart,
+      maxRecoveryStart,
+    );
+    return logRecoveryStart ?? defaultStart;
+  }
+
+  private getInMemoryRecoveryStart(
+    formId: string,
+    defaultStart: Date,
+    maxRecoveryStart: Date,
+  ): Date | null {
+    const inMemoryLast = this.lastSuccessfulPoll.get(formId);
+    if (!inMemoryLast) {
+      return null;
+    }
+    if (inMemoryLast < defaultStart) {
+      const clampedStart =
+        inMemoryLast < maxRecoveryStart ? maxRecoveryStart : inMemoryLast;
+      this.logger.warn(
+        `${formId}: Expanding query window to ${clampedStart.toISOString()} (last successful poll was ${inMemoryLast.toISOString()})`,
+      );
+      return clampedStart;
+    }
+    return defaultStart;
+  }
+
+  private async getLogRecoveryStart(
+    formId: string,
+    defaultStart: Date,
+    maxRecoveryStart: Date,
+  ): Promise<Date | null> {
     try {
       const logs = await this.emailSubmissionLogRepository.find({
         where: { formId, code: LogCode.FAILED },
@@ -321,37 +350,37 @@ export class FormService {
           log.createTimestamp &&
           !log.exceptionLog?.includes('[RECOVERED]'),
       );
-      if (unhandled.length > 0) {
-        const recent = unhandled.filter(
-          (log) =>
-            new Date(log.createTimestamp).getTime() >=
-            maxRecoveryStart.getTime(),
+      if (unhandled.length === 0) {
+        return null;
+      }
+
+      const recent = unhandled.filter(
+        (log) =>
+          new Date(log.createTimestamp).getTime() >=
+          maxRecoveryStart.getTime(),
+      );
+      if (recent.length === 0) {
+        return null;
+      }
+
+      recent.sort(
+        (a, b) =>
+          new Date(a.createTimestamp).getTime() -
+          new Date(b.createTimestamp).getTime(),
+      );
+      const earliestFailure = recent[0];
+      const failureWindowStart =
+        this.calculateFailureWindowStart(earliestFailure);
+      const clampedStart =
+        failureWindowStart < maxRecoveryStart
+          ? maxRecoveryStart
+          : failureWindowStart;
+
+      if (clampedStart < defaultStart) {
+        this.logger.warn(
+          `${formId}: Found prior API failure from ${new Date(earliestFailure.createTimestamp).toISOString()}; expanding query window to ${clampedStart.toISOString()}`,
         );
-        if (recent.length > 0) {
-          recent.sort(
-            (a, b) =>
-              new Date(a.createTimestamp).getTime() -
-              new Date(b.createTimestamp).getTime(),
-          );
-          const earliestFailure = recent[0];
-          // Use exact persisted boundary if available; otherwise fall back to failure timestamp with safety buffer
-          const failureWindowStart = earliestFailure.submissionUpdatedAt
-            ? new Date(earliestFailure.submissionUpdatedAt)
-            : new Date(
-                new Date(earliestFailure.createTimestamp).getTime() -
-                  1000 * 60 * (CRON_INTERVAL_MINUTES + 1),
-              );
-          const clampedStart =
-            failureWindowStart < maxRecoveryStart
-              ? maxRecoveryStart
-              : failureWindowStart;
-          if (clampedStart < defaultStart) {
-            this.logger.warn(
-              `${formId}: Found prior API failure from ${new Date(earliestFailure.createTimestamp).toISOString()}; expanding query window to ${clampedStart.toISOString()}`,
-            );
-            return clampedStart;
-          }
-        }
+        return clampedStart;
       }
     } catch (e) {
       this.logger.warn(
@@ -359,7 +388,20 @@ export class FormService {
       );
     }
 
-    return defaultStart;
+    return null;
+  }
+
+  private calculateFailureWindowStart(
+    failureLog: EmailSubmissionLogEntity | EmailSubmissionLog,
+  ): Date {
+    // Use exact persisted boundary if available; otherwise fall back to failure timestamp with safety buffer
+    if (failureLog.submissionUpdatedAt) {
+      return new Date(failureLog.submissionUpdatedAt);
+    }
+    return new Date(
+      new Date(failureLog.createTimestamp).getTime() -
+        1000 * 60 * (CRON_INTERVAL_MINUTES + 1),
+    );
   }
 
   /**
