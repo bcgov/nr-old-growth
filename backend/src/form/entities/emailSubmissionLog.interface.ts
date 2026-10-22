@@ -5,6 +5,7 @@ export interface EmailSubmissionLog {
   confirmationId?: string;
   formId?: string;
   formVersionId?: string;
+  createTimestamp?: Date;
   emailType?: string;
   submissionUpdatedAt?: Date;
 }

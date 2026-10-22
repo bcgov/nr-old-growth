@@ -7,7 +7,7 @@ import {
   jest,
 } from '@jest/globals';
 import { HttpException } from '@nestjs/common';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { EmailService } from '../../email/services/email.service';
 import { EmailSubmissionLog } from '../entities/emailSubmissionLog.interface';
 import { FormService } from './form.service';
@@ -33,6 +33,9 @@ class FakeRepository {
   }
 
   async save(entity: EmailSubmissionLog) {
+    if (!entity.id) {
+      entity.id = this.rows.length + 1;
+    }
     this.rows.push({ ...entity });
     return entity;
   }
@@ -95,6 +98,33 @@ describe('FormService', () => {
 
   function chefsReturns(submissions: unknown[]) {
     get.mockResolvedValue({ data: submissions });
+  }
+
+  function pushFailedPoll(
+    createTimestamp: Date,
+    submissionUpdatedAt?: Date,
+  ) {
+    repo.rows.push({
+      id: repo.rows.length + 1,
+      formId: FORM_ID,
+      formVersionId: VERSION_ID,
+      code: 'FAILED',
+      exceptionLog: 'Failed to fetch submissions from CHEFS: 503',
+      createTimestamp,
+      submissionUpdatedAt,
+    });
+  }
+
+  function expectSingleSubmissionDelivered(confirmationId: string) {
+    const sent = submissionEmails();
+    expect(sent).toHaveLength(1);
+    expect(sent[0].emailSubject).toContain(confirmationId);
+    expect(repo.rows).toContainEqual(
+      expect.objectContaining({
+        confirmationId,
+        code: 'DELIVERED',
+      }),
+    );
   }
 
   beforeEach(() => {
@@ -270,10 +300,270 @@ describe('FormService', () => {
     expect(result).toBeInstanceOf(HttpException);
     expect(errorEmails()).toHaveLength(0);
     expect(errorSpy).toHaveBeenCalledWith(
-      expect.stringContaining(`Failed to fetch submissions needing notification for form ${FORM_ID}`),
+      expect.stringContaining(
+        `Failed to fetch submissions needing notification for form ${FORM_ID}`,
+      ),
     );
     expect(repo.rows).toEqual([
       expect.objectContaining({ code: 'FAILED', formId: FORM_ID }),
     ]);
+  });
+
+  it('retries transient 503 errors from CHEFS and delivers notifications on retry', async () => {
+    const error503 = new AxiosError(
+      'Request failed with status code 503',
+      'ERR_BAD_RESPONSE',
+      undefined,
+      undefined,
+      { status: 503 } as any,
+    );
+    get
+      .mockRejectedValueOnce(error503)
+      .mockResolvedValueOnce({ data: [submission()] });
+
+    await service.handleSubmissions(FORM_ID, VERSION_ID, 'pw');
+
+    expect(get).toHaveBeenCalledTimes(2);
+    expect(submissionEmails()).toHaveLength(1);
+    expect(repo.rows).toEqual([
+      expect.objectContaining({
+        confirmationId: 'ABC123',
+        emailType: 'NEW',
+        code: 'DELIVERED',
+      }),
+    ]);
+  });
+
+  it('does not retry 401 client errors from CHEFS', async () => {
+    const error401 = new AxiosError(
+      'Request failed with status code 401',
+      'ERR_BAD_REQUEST',
+      undefined,
+      undefined,
+      { status: 401 } as any,
+    );
+    get.mockRejectedValue(error401);
+
+    const [result] = await service.handleSubmissions(FORM_ID, VERSION_ID, 'pw');
+
+    expect(result).toBeInstanceOf(HttpException);
+    expect(get).toHaveBeenCalledTimes(1);
+    expect(repo.rows).toEqual([
+      expect.objectContaining({ code: 'FAILED', formId: FORM_ID }),
+    ]);
+  });
+
+  it('recovers missed new submissions from a previous failed cron run', async () => {
+    const missedCreatedAt = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+    pushFailedPoll(new Date(Date.now() - 10 * 60 * 1000));
+
+    chefsReturns([
+      submission({
+        confirmationId: 'MISSED1',
+        createdAt: missedCreatedAt,
+        updatedAt: missedCreatedAt,
+      }),
+    ]);
+
+    await service.handleSubmissions(FORM_ID, VERSION_ID, 'pw');
+
+    expectSingleSubmissionDelivered('MISSED1');
+    expect(repo.rows[0].exceptionLog).toContain('[RECOVERED]');
+  });
+
+  it('clamps recovery window to 24 hours when cached last poll is older than 24 hours', async () => {
+    // Last successful poll was 25 hours ago
+    service['lastSuccessfulPoll'].set(
+      FORM_ID,
+      new Date(Date.now() - 25 * 60 * 60 * 1000),
+    );
+
+    // Submission created 2 hours ago (well within 24h horizon, but > 10 mins)
+    const recentMissed = new Date(
+      Date.now() - 2 * 60 * 60 * 1000,
+    ).toISOString();
+    // Ancient submission created 30 hours ago (outside 24h horizon)
+    const ancientMissed = new Date(
+      Date.now() - 30 * 60 * 60 * 1000,
+    ).toISOString();
+
+    chefsReturns([
+      submission({
+        confirmationId: 'RECENT2H',
+        createdAt: recentMissed,
+        updatedAt: recentMissed,
+      }),
+      submission({
+        confirmationId: 'ANCIENT30H',
+        createdAt: ancientMissed,
+        updatedAt: ancientMissed,
+      }),
+    ]);
+
+    await service.handleSubmissions(FORM_ID, VERSION_ID, 'pw');
+
+    expectSingleSubmissionDelivered('RECENT2H');
+  });
+
+  it('recovers submissions created right after previous successful poll without retry delay skew', async () => {
+    const t0 = Date.now() - 20 * 60 * 1000;
+    // Created 1 second after t0
+    const submissionCreated = new Date(t0 + 1000).toISOString();
+
+    // Prior failed poll had windowStart at t0, which was persisted in submissionUpdatedAt
+    pushFailedPoll(new Date(t0 + 10 * 60 * 1000 + 5000), new Date(t0));
+
+    chefsReturns([
+      submission({
+        confirmationId: 'AT_10_00_01',
+        createdAt: submissionCreated,
+        updatedAt: submissionCreated,
+      }),
+    ]);
+
+    await service.handleSubmissions(FORM_ID, VERSION_ID, 'pw');
+
+    expectSingleSubmissionDelivered('AT_10_00_01');
+  });
+
+  it('does not advance recovery checkpoint or mark failures recovered if filtering throws an error', async () => {
+    pushFailedPoll(new Date(Date.now() - 10 * 60 * 1000));
+
+    chefsReturns([submission()]);
+    jest
+      .spyOn(service, 'findEmailSubmissionLog')
+      .mockRejectedValue(new Error('DB disconnect'));
+
+    const [result] = await service.handleSubmissions(FORM_ID, VERSION_ID, 'pw');
+
+    expect(result).toBeInstanceOf(HttpException);
+    expect(submissionEmails()).toHaveLength(0);
+    expect(repo.rows[0].exceptionLog).not.toContain('[RECOVERED]');
+    expect(service['lastSuccessfulPoll'].get(FORM_ID)).toBeUndefined();
+    expect(repo.rows).toContainEqual(
+      expect.objectContaining({
+        code: 'FAILED',
+        formId: FORM_ID,
+        exceptionLog: expect.stringContaining('DB disconnect'),
+      }),
+    );
+  });
+
+  it('falls back to 24-hour horizon when failure history lookup fails after restart', async () => {
+    // Submission created 2 hours ago (within 24h horizon, but outside standard 10m window)
+    const twoHoursAgo = new Date(
+      Date.now() - 2 * 60 * 60 * 1000,
+    ).toISOString();
+
+    chefsReturns([
+      submission({
+        confirmationId: 'RECOVER_AFTER_DB_BLIP',
+        createdAt: twoHoursAgo,
+        updatedAt: twoHoursAgo,
+      }),
+    ]);
+
+    // Mock repo.find to fail on the first call (failure log lookup) and succeed subsequently
+    let findCallCount = 0;
+    const originalFind = repo.find.bind(repo);
+    jest.spyOn(repo, 'find').mockImplementation(async (options) => {
+      findCallCount++;
+      if (findCallCount === 1) {
+        throw new Error('Connection timeout during history inspection');
+      }
+      return originalFind(options);
+    });
+
+    await service.handleSubmissions(FORM_ID, VERSION_ID, 'pw');
+
+    expectSingleSubmissionDelivered('RECOVER_AFTER_DB_BLIP');
+  });
+
+  it('defers recovery acknowledgement until after notifications are sent and logged', async () => {
+    pushFailedPoll(new Date(Date.now() - 30 * 60 * 1000));
+
+    const missed = new Date(Date.now() - 20 * 60 * 1000).toISOString();
+    chefsReturns([
+      submission({
+        confirmationId: 'RECOVER_DEFER',
+        createdAt: missed,
+        updatedAt: missed,
+      }),
+    ]);
+
+    let emailSentBeforeRecovery = false;
+    sendEmail.mockImplementation(async () => {
+      const failedLog = repo.rows.find((r) => r.id === 1);
+      if (!failedLog?.exceptionLog?.includes('[RECOVERED]')) {
+        emailSentBeforeRecovery = true;
+      }
+      return { status: 201, data: 'sent' };
+    });
+
+    await service.handleSubmissions(FORM_ID, VERSION_ID, 'pw');
+
+    expect(emailSentBeforeRecovery).toBe(true);
+    const failedLogAfter = repo.rows.find((r) => r.id === 1);
+    expect(failedLogAfter?.exceptionLog).toContain('[RECOVERED]');
+    expect(service['lastSuccessfulPoll'].get(FORM_ID)).toBeDefined();
+  });
+
+  it('does not acknowledge recovery when delivery and saving its failure log fail', async () => {
+    pushFailedPoll(new Date(Date.now() - 30 * 60 * 1000));
+
+    const missed = new Date(Date.now() - 20 * 60 * 1000).toISOString();
+    chefsReturns([
+      submission({
+        confirmationId: 'RECOVER_FAIL_PERSIST',
+        createdAt: missed,
+        updatedAt: missed,
+      }),
+    ]);
+
+    sendEmail.mockRejectedValue(new Error('CHES down'));
+    jest
+      .spyOn(repo, 'save')
+      .mockRejectedValue(new Error('DB failure while saving log'));
+
+    const [result] = await service.handleSubmissions(FORM_ID, VERSION_ID, 'pw');
+
+    expect(result).toBeInstanceOf(HttpException);
+    expect(service['lastSuccessfulPoll'].get(FORM_ID)).toBeUndefined();
+    expect(repo.rows[0].exceptionLog).not.toContain('[RECOVERED]');
+  });
+
+  it('delivers NEW notification for submission created during API fetch delay when updatedBy equals createdBy', async () => {
+    get.mockImplementation(async () => {
+      const createdDuringFetch = new Date().toISOString();
+      return {
+        data: [
+          submission({
+            confirmationId: 'DURING_FETCH',
+            createdAt: createdDuringFetch,
+            updatedAt: createdDuringFetch,
+            createdBy: 'same-user',
+            updatedBy: 'same-user',
+          }),
+        ],
+      };
+    });
+
+    await service.handleSubmissions(FORM_ID, VERSION_ID, 'pw');
+
+    // Both NEW and UPDATE notifications are sent; NEW is not suppressed
+    expect(repo.rows).toContainEqual(
+      expect.objectContaining({
+        confirmationId: 'DURING_FETCH',
+        emailType: 'NEW',
+        code: 'DELIVERED',
+      }),
+    );
+    expect(repo.rows).toContainEqual(
+      expect.objectContaining({
+        confirmationId: 'DURING_FETCH',
+        emailType: 'UPDATE',
+        code: 'DELIVERED',
+      }),
+    );
   });
 });

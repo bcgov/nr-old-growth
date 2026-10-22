@@ -13,6 +13,10 @@ import { EmailEntity } from '../../email/model/email.entity';
 /** Cron interval in minutes. Update the @Cron expression below to match. */
 const CRON_INTERVAL_MINUTES = 10;
 
+/** Maximum lookback window in hours for recovering missed submissions during an extended outage. */
+const MAX_RECOVERY_WINDOW_HOURS = 24;
+const MAX_RECOVERY_WINDOW_MS = MAX_RECOVERY_WINDOW_HOURS * 60 * 60 * 1000;
+
 /** Earliest date from which update-email notifications are considered valid. */
 const UPDATE_NOTIFICATION_EPOCH = new Date('2023-01-09T01:14:17.531Z');
 
@@ -36,6 +40,7 @@ enum LogCode {
 @Injectable()
 export class FormService {
   private readonly logger = new Logger(FormService.name);
+  private readonly lastSuccessfulPoll = new Map<string, Date>();
 
   constructor(
     @InjectRepository(EmailSubmissionLogEntity)
@@ -56,7 +61,8 @@ export class FormService {
     const formPassword = process.env.IDIR_FORM_PASSWORD;
 
     if (!formId || !formVersionId || !formPassword) {
-      const msg = 'IDIR form environment variables are not set; skipping cron run';
+      const msg =
+        'IDIR form environment variables are not set; skipping cron run';
       this.logger.error(msg);
       return null;
     }
@@ -72,7 +78,8 @@ export class FormService {
     const formPassword = process.env.BCEID_FORM_PASSWORD;
 
     if (!formId || !formVersionId || !formPassword) {
-      const msg = 'BCEID form environment variables are not set; skipping cron run';
+      const msg =
+        'BCEID form environment variables are not set; skipping cron run';
       this.logger.error(msg);
       return null;
     }
@@ -92,7 +99,9 @@ export class FormService {
     return this.emailSubmissionLogRepository.find({ where: { confirmationId } });
   }
 
-  findNewEmailSubmissionLog(confirmationId: string): Promise<EmailSubmissionLog[]> {
+  findNewEmailSubmissionLog(
+    confirmationId: string,
+  ): Promise<EmailSubmissionLog[]> {
     return this.emailSubmissionLogRepository.find({
       where: { confirmationId, emailType: EmailType.NEW },
     });
@@ -103,7 +112,11 @@ export class FormService {
     submissionUpdatedAt: Date,
   ): Promise<EmailSubmissionLog[]> {
     return this.emailSubmissionLogRepository.find({
-      where: { confirmationId, emailType: EmailType.UPDATE, submissionUpdatedAt },
+      where: {
+        confirmationId,
+        emailType: EmailType.UPDATE,
+        submissionUpdatedAt,
+      },
     });
   }
 
@@ -116,11 +129,17 @@ export class FormService {
     try {
       if (log.confirmationId) {
         if (log.emailType === EmailType.NEW) {
-          const existing = await this.findNewEmailSubmissionLog(log.confirmationId);
+          const existing = await this.findNewEmailSubmissionLog(
+            log.confirmationId,
+          );
           if (existing.length > 0) {
-            await this.updateEmailSubmissionLog(log.confirmationId, log.emailType, {
-              code: log.code,
-            });
+            await this.updateEmailSubmissionLog(
+              log.confirmationId,
+              log.emailType,
+              {
+                code: log.code,
+              },
+            );
             return;
           }
         } else if (log.emailType === EmailType.UPDATE) {
@@ -140,10 +159,14 @@ export class FormService {
         }
       }
 
+      log.createTimestamp = log.createTimestamp ?? new Date();
       const entity = Object.assign(new EmailSubmissionLogEntity(), log);
       await this.emailSubmissionLogRepository.save(entity);
     } catch (e) {
-      this.logger.error(`Failed to write log to DB: ${e}`);
+      this.logger.error(
+        `Failed to write log to DB: ${this.getErrorMessage(e)}`,
+      );
+      throw e;
     }
   }
 
@@ -159,8 +182,19 @@ export class FormService {
         : { confirmationId, emailType };
       await this.emailSubmissionLogRepository.update(criteria, patch);
     } catch (e) {
-      this.logger.error(`Failed to update log in DB: ${e}`);
+      this.logger.error(
+        `Failed to update log in DB: ${this.getErrorMessage(e)}`,
+      );
+      throw e;
     }
+  }
+
+  /** Safely extracts an error message without defaulting to '[object Object]'. */
+  private getErrorMessage(error: unknown): string {
+    if (error instanceof Error) {
+      return error.message;
+    }
+    return String(error);
   }
 
   /** Minimal HTML escape to avoid injecting submission values into emails. */
@@ -179,6 +213,247 @@ export class FormService {
   // -------------------------------------------------------------------------
 
   /**
+   * Determines whether an Axios error is retryable (transient server errors, rate limits, or network failures).
+   */
+  private isRetryableError(error: AxiosError): boolean {
+    const status = error.response?.status;
+    if (status && (status >= 500 || status === 429)) {
+      return true;
+    }
+    if (!error.response) {
+      return true;
+    }
+    return false;
+  }
+
+  private sleep(ms: number): Promise<void> {
+    if (ms <= 0) return Promise.resolve();
+    return new Promise((resolve) => {
+      const timer = setTimeout(resolve, ms);
+      if (typeof timer.unref === 'function') {
+        timer.unref();
+      }
+    });
+  }
+
+  /**
+   * Performs an HTTP GET to CHEFS API with exponential backoff retry on transient errors.
+   */
+  async fetchChefsSubmissions(
+    url: string,
+    formId: string,
+    formPassword: string,
+    options?: {
+      maxRetries?: number;
+      initialDelayMs?: number;
+      backoffFactor?: number;
+    },
+  ): Promise<Array<{ [key: string]: any }>> {
+    const maxRetries = options?.maxRetries ?? 3;
+    const initialDelay =
+      options?.initialDelayMs ?? (process.env.NODE_ENV === 'test' ? 0 : 1000);
+    const backoffFactor = options?.backoffFactor ?? 2;
+
+    const executeAttempt = async (
+      attempt: number,
+      delay: number,
+    ): Promise<any> => {
+      try {
+        const response = await axios.get(url, {
+          auth: { username: formId, password: formPassword },
+        });
+
+        if (!response?.data) {
+          throw new HttpException(
+            { message: 'CHEFS API returned an empty response' },
+            HttpStatus.BAD_REQUEST,
+          );
+        }
+
+        return response.data;
+      } catch (e) {
+        if (e instanceof HttpException) throw e;
+
+        const axiosError = e as AxiosError;
+        const isRetryable = this.isRetryableError(axiosError);
+
+        if (!isRetryable || attempt >= maxRetries) {
+          throw new HttpException(
+            {
+              message: `Failed to fetch submissions from CHEFS: ${axiosError.message}`,
+            },
+            HttpStatus.INTERNAL_SERVER_ERROR,
+          );
+        }
+
+        this.logger.warn(
+          `CHEFS API request failed (attempt ${attempt}/${maxRetries}): ${axiosError.message}. Retrying in ${delay}ms...`,
+        );
+
+        if (delay > 0) {
+          await this.sleep(delay);
+        }
+
+        return executeAttempt(attempt + 1, delay * backoffFactor);
+      }
+    };
+
+    return executeAttempt(1, initialDelay);
+  }
+
+  /**
+   * Determines the start of the query window. Expands the window back if a previous
+   * cron poll failed, ensuring submissions submitted during downtime are not lost.
+   * Clamps recovery to a maximum of MAX_RECOVERY_WINDOW_HOURS.
+   */
+  async determineWindowStart(formId: string, now: Date): Promise<Date> {
+    const defaultStart = new Date(
+      now.getTime() - 1000 * 60 * CRON_INTERVAL_MINUTES,
+    );
+    const maxRecoveryStart = new Date(now.getTime() - MAX_RECOVERY_WINDOW_MS);
+
+    const inMemoryStart = this.getInMemoryRecoveryStart(
+      formId,
+      defaultStart,
+      maxRecoveryStart,
+    );
+    if (inMemoryStart) {
+      return inMemoryStart;
+    }
+
+    const logRecoveryStart = await this.getLogRecoveryStart(
+      formId,
+      defaultStart,
+      maxRecoveryStart,
+    );
+    return logRecoveryStart ?? defaultStart;
+  }
+
+  private getInMemoryRecoveryStart(
+    formId: string,
+    defaultStart: Date,
+    maxRecoveryStart: Date,
+  ): Date | null {
+    const inMemoryLast = this.lastSuccessfulPoll.get(formId);
+    if (!inMemoryLast) {
+      return null;
+    }
+    if (inMemoryLast < defaultStart) {
+      const clampedStart =
+        inMemoryLast < maxRecoveryStart ? maxRecoveryStart : inMemoryLast;
+      this.logger.warn(
+        `${formId}: Expanding query window to ${clampedStart.toISOString()} (last successful poll was ${inMemoryLast.toISOString()})`,
+      );
+      return clampedStart;
+    }
+    return defaultStart;
+  }
+
+  private async getLogRecoveryStart(
+    formId: string,
+    defaultStart: Date,
+    maxRecoveryStart: Date,
+  ): Promise<Date | null> {
+    try {
+      const logs = await this.emailSubmissionLogRepository.find({
+        where: { formId, code: LogCode.FAILED },
+      });
+      const unhandled = logs.filter(
+        (log) =>
+          !log.confirmationId &&
+          log.createTimestamp &&
+          !log.exceptionLog?.includes('[RECOVERED]'),
+      );
+      if (unhandled.length === 0) {
+        return null;
+      }
+
+      const recent = unhandled.filter(
+        (log) =>
+          new Date(log.createTimestamp).getTime() >=
+          maxRecoveryStart.getTime(),
+      );
+      if (recent.length === 0) {
+        return null;
+      }
+
+      recent.sort(
+        (a, b) =>
+          new Date(a.createTimestamp).getTime() -
+          new Date(b.createTimestamp).getTime(),
+      );
+      const earliestFailure = recent[0];
+      const failureWindowStart =
+        this.calculateFailureWindowStart(earliestFailure);
+      const clampedStart =
+        failureWindowStart < maxRecoveryStart
+          ? maxRecoveryStart
+          : failureWindowStart;
+
+      if (clampedStart < defaultStart) {
+        this.logger.warn(
+          `${formId}: Found prior API failure from ${new Date(earliestFailure.createTimestamp).toISOString()}; expanding query window to ${clampedStart.toISOString()}`,
+        );
+        return clampedStart;
+      }
+    } catch (e) {
+      this.logger.warn(
+        `Failed to inspect previous failure logs for form ${formId}: ${this.getErrorMessage(e)}; falling back to max recovery window ${maxRecoveryStart.toISOString()}`,
+      );
+      return maxRecoveryStart;
+    }
+
+    return null;
+  }
+
+  private calculateFailureWindowStart(
+    failureLog: EmailSubmissionLogEntity | EmailSubmissionLog,
+  ): Date {
+    // Use exact persisted boundary if available; otherwise fall back to failure timestamp with safety buffer
+    if (failureLog.submissionUpdatedAt) {
+      return new Date(failureLog.submissionUpdatedAt);
+    }
+    return new Date(
+      new Date(failureLog.createTimestamp).getTime() -
+        1000 * 60 * (CRON_INTERVAL_MINUTES + 1),
+    );
+  }
+
+  /**
+   * Marks unhandled API failure logs as recovered after a successful poll.
+   */
+  private async markApiFailuresRecovered(formId: string): Promise<void> {
+    try {
+      const logs = await this.emailSubmissionLogRepository.find({
+        where: { formId, code: LogCode.FAILED },
+      });
+      const unhandled = logs.filter(
+        (log) =>
+          !log.confirmationId && !log.exceptionLog?.includes('[RECOVERED]'),
+      );
+      await Promise.all(
+        unhandled.map((log) => {
+          const updatedMsg = `${(log.exceptionLog || '').slice(0, 480)} [RECOVERED]`;
+          if (log.id) {
+            return this.emailSubmissionLogRepository.update(
+              { id: log.id },
+              { exceptionLog: updatedMsg },
+            );
+          }
+          return this.emailSubmissionLogRepository.update(
+            { formId, code: LogCode.FAILED, exceptionLog: log.exceptionLog },
+            { exceptionLog: updatedMsg },
+          );
+        }),
+      );
+    } catch (e) {
+      this.logger.warn(
+        `Failed to mark API failure logs as recovered for form ${formId}: ${this.getErrorMessage(e)}`,
+      );
+    }
+  }
+
+  /**
    * Fetches all submissions for a form version from CHEFS and returns only
    * those that require an email notification (new or updated since last cron run).
    */
@@ -186,35 +461,37 @@ export class FormService {
     formId: string,
     formVersionId: string,
     formPassword: string,
+    pollStartTime: Date = new Date(),
+    windowStart?: Date,
   ): Promise<Array<{ [key: string]: any }>> {
-    let allSubmissions: Array<{ [key: string]: any }>;
+    const allSubmissions = await this.fetchChefsSubmissions(
+      CHEFS_SUBMISSIONS_URL(formId, formVersionId),
+      formId,
+      formPassword,
+    );
 
-    try {
-      const response = await axios.get(CHEFS_SUBMISSIONS_URL(formId, formVersionId), {
-        auth: { username: formId, password: formPassword },
-      });
+    const effectiveWindowStart =
+      windowStart ?? (await this.determineWindowStart(formId, pollStartTime));
+    const filterEndTime = new Date();
+    return this.filterSubmissions(
+      allSubmissions,
+      effectiveWindowStart,
+      filterEndTime,
+      formId,
+      formVersionId,
+    );
+  }
 
-      if (!response?.data) {
-        throw new HttpException(
-          { message: 'CHEFS API returned an empty response' },
-          HttpStatus.BAD_REQUEST,
-        );
-      }
-
-      allSubmissions = response.data;
-    } catch (e) {
-      if (e instanceof HttpException) throw e;
-
-      const axiosError = e as AxiosError;
-      throw new HttpException(
-        { message: `Failed to fetch submissions from CHEFS: ${axiosError.message}` },
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-
-    const now = new Date();
-    const windowStart = new Date(now.getTime() - 1000 * 60 * CRON_INTERVAL_MINUTES);
-    return this.filterSubmissions(allSubmissions, windowStart, now, formId, formVersionId);
+  /**
+   * Durably records successful poll recovery after all notifications in the
+   * window have had their outcomes persisted to the database.
+   */
+  private async acknowledgeRecovery(
+    formId: string,
+    pollStartTime: Date,
+  ): Promise<void> {
+    this.lastSuccessfulPoll.set(formId, pollStartTime);
+    await this.markApiFailuresRecovered(formId);
   }
 
   /**
@@ -239,7 +516,9 @@ export class FormService {
           const updatedMs = new Date(submission.updatedAt).valueOf();
 
           // --- NEW email ---
-          const logsAll = await this.findEmailSubmissionLog(submission.confirmationId);
+          const logsAll = await this.findEmailSubmissionLog(
+            submission.confirmationId,
+          );
           const needsNew =
             (logsAll.length === 0 &&
               createdMs > windowStartMs &&
@@ -249,7 +528,9 @@ export class FormService {
 
           const pushIfNotExists = (item: any) => {
             const exists = results.some(
-              (r) => r.confirmationId === item.confirmationId && r.emailType === item.emailType,
+              (r) =>
+                r.confirmationId === item.confirmationId &&
+                r.emailType === item.emailType,
             );
             if (!exists) results.push(item);
           };
@@ -263,13 +544,21 @@ export class FormService {
             submission.confirmationId,
             new Date(submission.updatedAt),
           );
-          const submitterIsOwner = submission.updatedBy && submission.updatedBy === submission.createdBy;
-          const updatedAfterEpoch = updatedMs > UPDATE_NOTIFICATION_EPOCH.valueOf();
+          const submitterIsOwner =
+            submission.updatedBy &&
+            submission.updatedBy === submission.createdBy;
+          const updatedAfterEpoch =
+            updatedMs > UPDATE_NOTIFICATION_EPOCH.valueOf();
 
           const needsUpdate =
-            ((updatedMs > windowStartMs && updatedMs <= windowEndMs && submitterIsOwner && logsUpdate.length === 0) ||
-              (submitterIsOwner && logsUpdate.length === 0 && updatedAfterEpoch) ||
-              logsUpdate[0]?.code === LogCode.FAILED);
+            (updatedMs > windowStartMs &&
+              updatedMs <= windowEndMs &&
+              submitterIsOwner &&
+              logsUpdate.length === 0) ||
+            (submitterIsOwner &&
+              logsUpdate.length === 0 &&
+              updatedAfterEpoch) ||
+            logsUpdate[0]?.code === LogCode.FAILED;
 
           if (needsUpdate) {
             pushIfNotExists({ ...submission, emailType: EmailType.UPDATE });
@@ -277,14 +566,10 @@ export class FormService {
         }),
       );
     } catch (e) {
-      this.logger.error(`Failed to filter submissions: ${e}`);
-      await this.postEmailSubmissionLog({
-        code: LogCode.FAILED,
-        exceptionLog: `Failed to filter submission data: ${e}`,
-        formId,
-        formVersionId,
-      });
-      return [];
+      this.logger.error(
+        `Failed to filter submissions for form ${formId}: ${this.getErrorMessage(e)}`,
+      );
+      throw e;
     }
 
     return results;
@@ -299,6 +584,16 @@ export class FormService {
     formVersionId: string,
     formPassword: string,
   ): Promise<unknown[]> {
+    const pollStartTime = new Date();
+    let windowStart: Date;
+    try {
+      windowStart = await this.determineWindowStart(formId, pollStartTime);
+    } catch {
+      windowStart = new Date(
+        pollStartTime.getTime() - 1000 * 60 * CRON_INTERVAL_MINUTES,
+      );
+    }
+
     let submissionsToNotify: Array<{ [key: string]: any }>;
 
     try {
@@ -306,29 +601,69 @@ export class FormService {
         formId,
         formVersionId,
         formPassword,
+        pollStartTime,
+        windowStart,
       );
     } catch (e) {
-      const errorMsg = `Failed to fetch submissions needing notification for form ${formId}: ${e}`;
+      const errorMsg = `Failed to fetch submissions needing notification for form ${formId}: ${this.getErrorMessage(e)}`;
       this.logger.error(errorMsg);
       await this.postEmailSubmissionLog({
         code: LogCode.FAILED,
         exceptionLog: errorMsg,
         formId,
         formVersionId,
+        createTimestamp: pollStartTime,
+        submissionUpdatedAt: windowStart,
+      }).catch((logErr) => {
+        this.logger.warn(
+          `Could not persist form-level failure log for form ${formId}: ${this.getErrorMessage(logErr)}`,
+        );
       });
-      return [new HttpException({ message: errorMsg }, HttpStatus.INTERNAL_SERVER_ERROR)];
+      return [
+        new HttpException(
+          { message: errorMsg },
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        ),
+      ];
     }
 
     if (!submissionsToNotify?.length) {
-      this.logger.debug(`${formId}: No notifications needed in this cron window`);
-      return [{ msg: 'No new or updated submissions within the last cron job interval' }];
+      await this.acknowledgeRecovery(formId, pollStartTime);
+      this.logger.debug(
+        `${formId}: No notifications needed in this cron window`,
+      );
+      return [
+        {
+          msg: 'No new or updated submissions within the last cron job interval',
+        },
+      ];
     }
 
-    this.logger.log(`${formId}: Sending ${submissionsToNotify.length} notification(s)`);
-
-    return Promise.all(
-      submissionsToNotify.map((submission) => this.sendSubmissionEmail(submission, formId, formVersionId)),
+    this.logger.log(
+      `${formId}: Sending ${submissionsToNotify.length} notification(s)`,
     );
+
+    let outcomes: unknown[];
+    try {
+      outcomes = await Promise.all(
+        submissionsToNotify.map((submission) =>
+          this.sendSubmissionEmail(submission, formId, formVersionId),
+        ),
+      );
+    } catch (e) {
+      const errorMsg = `Failed to process notifications or persist outcomes for form ${formId}: ${this.getErrorMessage(e)}`;
+      this.logger.error(errorMsg);
+      return [
+        new HttpException(
+          { message: errorMsg },
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        ),
+      ];
+    }
+
+    await this.acknowledgeRecovery(formId, pollStartTime);
+
+    return outcomes;
   }
 
   // -------------------------------------------------------------------------
@@ -346,23 +681,24 @@ export class FormService {
     const isUpdate = submission.emailType === EmailType.UPDATE;
     const actionWord = isUpdate ? 'updated' : 'submitted';
 
-    const districtRaw: string = submission.submission?.data?.naturalResourceDistrict ?? '';
+    const districtRaw: string =
+      submission.submission?.data?.naturalResourceDistrict ?? '';
     const emailTo = districtRaw.split('-')[1]?.trim();
 
     const isValidEmail = (addr: string): boolean => {
       if (!addr) return false;
 
-      const atIndex = addr.indexOf("@");
-      if (atIndex <= 0 || atIndex !== addr.lastIndexOf("@")) return false;
+      const atIndex = addr.indexOf('@');
+      if (atIndex <= 0 || atIndex !== addr.lastIndexOf('@')) return false;
 
       const local = addr.slice(0, atIndex);
       const domain = addr.slice(atIndex + 1);
 
       if (!local || !domain) return false;
-      if (domain.startsWith(".") || domain.endsWith(".")) return false;
-      if (!domain.includes(".")) return false;
+      if (domain.startsWith('.') || domain.endsWith('.')) return false;
+      if (!domain.includes('.')) return false;
 
-      return !addr.includes(" ");
+      return !addr.includes(' ');
     };
 
     if (!emailTo || !isValidEmail(emailTo)) {
@@ -382,7 +718,9 @@ export class FormService {
       return new HttpException({ message: errMsg }, HttpStatus.BAD_REQUEST);
     }
 
-    this.logger.debug(`${formId}: Notifying "${emailTo}" for submission ${submission.confirmationId} (${actionWord})`);
+    this.logger.debug(
+      `${formId}: Notifying "${emailTo}" for submission ${submission.confirmationId} (${actionWord})`,
+    );
 
     const email: EmailEntity = {
       emailTo: [emailTo],
@@ -402,24 +740,31 @@ export class FormService {
       submissionUpdatedAt: new Date(submission.updatedAt),
     };
 
+    let mailResponse: { status: number; data: unknown };
     try {
-      const mailResponse = await this.emailService.sendEmail(email);
-      this.logger.log(`${formId}: Email delivered for ${submission.confirmationId}`);
-      await this.postEmailSubmissionLog({
-        ...baseLog,
-        code: LogCode.DELIVERED,
-        exceptionLog: '',
-      });
-      return { status: mailResponse.status, data: mailResponse.data };
+      mailResponse = await this.emailService.sendEmail(email);
+      this.logger.log(
+        `${formId}: Email delivered for ${submission.confirmationId}`,
+      );
     } catch (err) {
-      const errorMsg = `Failed to send email for ${submission.confirmationId}: ${err}`;
+      const errorMsg = `Failed to send email for ${submission.confirmationId}: ${this.getErrorMessage(err)}`;
       this.logger.error(`${formId}: ${errorMsg}`);
       await this.postEmailSubmissionLog({
         ...baseLog,
         code: LogCode.FAILED,
         exceptionLog: errorMsg,
       });
-      return new HttpException({ message: errorMsg }, HttpStatus.INTERNAL_SERVER_ERROR);
+      return new HttpException(
+        { message: errorMsg },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
+
+    await this.postEmailSubmissionLog({
+      ...baseLog,
+      code: LogCode.DELIVERED,
+      exceptionLog: '',
+    });
+    return { status: mailResponse.status, data: mailResponse.data };
   }
 }
