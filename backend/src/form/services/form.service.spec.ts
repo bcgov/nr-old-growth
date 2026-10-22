@@ -531,4 +531,39 @@ describe('FormService', () => {
     expect(service['lastSuccessfulPoll'].get(FORM_ID)).toBeUndefined();
     expect(repo.rows[0].exceptionLog).not.toContain('[RECOVERED]');
   });
+
+  it('delivers NEW notification for submission created during API fetch delay when updatedBy equals createdBy', async () => {
+    get.mockImplementation(async () => {
+      const createdDuringFetch = new Date().toISOString();
+      return {
+        data: [
+          submission({
+            confirmationId: 'DURING_FETCH',
+            createdAt: createdDuringFetch,
+            updatedAt: createdDuringFetch,
+            createdBy: 'same-user',
+            updatedBy: 'same-user',
+          }),
+        ],
+      };
+    });
+
+    await service.handleSubmissions(FORM_ID, VERSION_ID, 'pw');
+
+    // Both NEW and UPDATE notifications are sent; NEW is not suppressed
+    expect(repo.rows).toContainEqual(
+      expect.objectContaining({
+        confirmationId: 'DURING_FETCH',
+        emailType: 'NEW',
+        code: 'DELIVERED',
+      }),
+    );
+    expect(repo.rows).toContainEqual(
+      expect.objectContaining({
+        confirmationId: 'DURING_FETCH',
+        emailType: 'UPDATE',
+        code: 'DELIVERED',
+      }),
+    );
+  });
 });

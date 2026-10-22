@@ -472,10 +472,11 @@ export class FormService {
 
     const effectiveWindowStart =
       windowStart ?? (await this.determineWindowStart(formId, pollStartTime));
+    const filterEndTime = new Date();
     return this.filterSubmissions(
       allSubmissions,
       effectiveWindowStart,
-      pollStartTime,
+      filterEndTime,
       formId,
       formVersionId,
     );
