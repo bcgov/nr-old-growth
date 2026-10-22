@@ -163,7 +163,9 @@ export class FormService {
       const entity = Object.assign(new EmailSubmissionLogEntity(), log);
       await this.emailSubmissionLogRepository.save(entity);
     } catch (e) {
-      this.logger.error(`Failed to write log to DB: ${e}`);
+      this.logger.error(
+        `Failed to write log to DB: ${this.getErrorMessage(e)}`,
+      );
     }
   }
 
@@ -179,8 +181,18 @@ export class FormService {
         : { confirmationId, emailType };
       await this.emailSubmissionLogRepository.update(criteria, patch);
     } catch (e) {
-      this.logger.error(`Failed to update log in DB: ${e}`);
+      this.logger.error(
+        `Failed to update log in DB: ${this.getErrorMessage(e)}`,
+      );
     }
+  }
+
+  /** Safely extracts an error message without defaulting to '[object Object]'. */
+  private getErrorMessage(error: unknown): string {
+    if (error instanceof Error) {
+      return error.message;
+    }
+    return String(error);
   }
 
   /** Minimal HTML escape to avoid injecting submission values into emails. */
@@ -384,7 +396,7 @@ export class FormService {
       }
     } catch (e) {
       this.logger.warn(
-        `Failed to inspect previous failure logs for form ${formId}: ${e}; falling back to max recovery window ${maxRecoveryStart.toISOString()}`,
+        `Failed to inspect previous failure logs for form ${formId}: ${this.getErrorMessage(e)}; falling back to max recovery window ${maxRecoveryStart.toISOString()}`,
       );
       return maxRecoveryStart;
     }
@@ -434,7 +446,7 @@ export class FormService {
       );
     } catch (e) {
       this.logger.warn(
-        `Failed to mark API failure logs as recovered for form ${formId}: ${e}`,
+        `Failed to mark API failure logs as recovered for form ${formId}: ${this.getErrorMessage(e)}`,
       );
     }
   }
@@ -551,7 +563,9 @@ export class FormService {
         }),
       );
     } catch (e) {
-      this.logger.error(`Failed to filter submissions for form ${formId}: ${e}`);
+      this.logger.error(
+        `Failed to filter submissions for form ${formId}: ${this.getErrorMessage(e)}`,
+      );
       throw e;
     }
 
@@ -588,7 +602,7 @@ export class FormService {
         windowStart,
       );
     } catch (e) {
-      const errorMsg = `Failed to fetch submissions needing notification for form ${formId}: ${e}`;
+      const errorMsg = `Failed to fetch submissions needing notification for form ${formId}: ${this.getErrorMessage(e)}`;
       this.logger.error(errorMsg);
       await this.postEmailSubmissionLog({
         code: LogCode.FAILED,
@@ -719,7 +733,7 @@ export class FormService {
       });
       return { status: mailResponse.status, data: mailResponse.data };
     } catch (err) {
-      const errorMsg = `Failed to send email for ${submission.confirmationId}: ${err}`;
+      const errorMsg = `Failed to send email for ${submission.confirmationId}: ${this.getErrorMessage(err)}`;
       this.logger.error(`${formId}: ${errorMsg}`);
       await this.postEmailSubmissionLog({
         ...baseLog,
