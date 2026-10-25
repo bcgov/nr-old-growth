@@ -13,10 +13,6 @@ parameters:
   - name: ZONE
     description: Deployment zone, e.g. pr-### or prod
     required: true
-  - description: Password for the PostgreSQL connection user.
-    from: "[a-zA-Z0-9]{16}"
-    generate: expression
-    name: DB_PASSWORD
   - description: Volume space available for data, e.g. 512Mi, 2Gi.
     displayName: Database Volume Capacity
     name: DB_PVC_SIZE
@@ -33,17 +29,6 @@ parameters:
     from: "[a-zA-Z0-9]{32}"
     generate: expression
 objects:
-  - apiVersion: v1
-    kind: Secret
-    metadata:
-      name: ${NAME}-${ZONE}-${COMPONENT}
-      labels:
-        app: ${NAME}-${ZONE}
-    stringData:
-      database-name: "${NAME}"
-      database-password: "${DB_PASSWORD}"
-      database-user: "${NAME}"
-      database-conn: "jdbc:postgresql://${NAME}-${ZONE}-database/${NAME}"
   - kind: PersistentVolumeClaim
     apiVersion: v1
     metadata:
@@ -183,3 +168,4 @@ objects:
       sessionAffinity: None
       type: ClusterIP
       # Trigger deployment to pull patched PG12 image
+
