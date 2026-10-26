@@ -29,32 +29,3 @@ objects:
       database-password: "${DB_PASSWORD}"
       database-user: "${NAME}"
       database-conn: "jdbc:postgresql://${NAME}-${ZONE}-database/${NAME}"
-  - apiVersion: networking.k8s.io/v1
-    kind: NetworkPolicy
-    metadata:
-      name: allow-from-openshift-ingress
-      labels:
-        template: openshift-test
-    spec:
-      podSelector: {}
-      ingress:
-        - from:
-            - namespaceSelector:
-                matchLabels:
-                  network.openshift.io/policy-group: ingress
-      policyTypes:
-        - Ingress
-  - apiVersion: networking.k8s.io/v1
-    kind: NetworkPolicy
-    metadata:
-      name: allow-same-namespace
-      labels:
-        template: quickstart-network-security-policy
-    spec:
-      podSelector: {}
-      ingress:
-        - from:
-            - podSelector: {}
-      policyTypes:
-        - Ingress
-

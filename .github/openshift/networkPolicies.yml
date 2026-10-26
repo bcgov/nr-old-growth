@@ -3,9 +3,13 @@ kind: Template
 metadata:
   name: ${NAME}
   annotations:
-    description: "NR-Old-Growth"
+    description: "NR-Old-Growth shared NetworkPolicies (namespace-wide, not PR-scoped)"
     tags: "nrog"
     iconClass: icon-js
+parameters:
+  - name: NAME
+    description: Product name
+    value: nr-old-growth
 objects:
   - apiVersion: networking.k8s.io/v1
     kind: NetworkPolicy
