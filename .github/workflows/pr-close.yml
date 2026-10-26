@@ -10,6 +10,8 @@ concurrency:
   group: ${{ github.event.number }}
   cancel-in-progress: true
 
+permissions: {}
+
 jobs:
   cleanup-openshift:
     name: Cleanup OpenShift
@@ -17,15 +19,11 @@ jobs:
     environment:
       name: dev
     steps:
-      - uses: actions/checkout@v7
-      - name: Install CLI tools from OpenShift Mirror
-        uses: redhat-actions/openshift-tools-installer@1f130822bb0930e0ee02a119adcc3271a22b1499 # v3
-        with:        
-          oc: "4.13"
       - name: Remove OpenShift artifacts
-        run: |
-          oc login --token=${{ secrets.OC_TOKEN }} --server=${{ secrets.OC_SERVER }}
-          oc project ${{ secrets.OC_NAMESPACE }}
-          # Remove old build runs, build pods and deployment pods
-          oc delete all,pvc,secret,cm -l app=${{ github.event.repository.name }}-${{ github.event.number }}
+        uses: bcgov/actions-openshift/cleanup-pr@46f2614322f7ba1a5ad88a7e4e1b98569c80dcf7 # v0.6.0
+        with:
+          cleanup: label
+          oc_namespace: ${{ secrets.OC_NAMESPACE }}
+          oc_server: ${{ secrets.OC_SERVER }}
+          oc_token: ${{ secrets.OC_TOKEN }}
 
