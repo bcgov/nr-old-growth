@@ -42,7 +42,7 @@ jobs:
             npm ci
             npm run test:cov
             npm run test:e2e
-          dir: backend
+          working_directory: backend
           node_version: 22
 
       - name: Report code coverage

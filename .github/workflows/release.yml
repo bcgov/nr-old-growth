@@ -35,7 +35,7 @@ jobs:
         id: tracker
         uses: bcgov/actions/image-tracker@091f1da89c669d36bf4899830381e5b12d2c889a # v0.11.0
         with:
-          package: backend
+          packages: backend
           max_depth: 100
 
       - name: Summary

@@ -80,7 +80,7 @@ jobs:
         uses: bcgov/actions/pr-description-add@091f1da89c669d36bf4899830381e5b12d2c889a # v0.11.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          add_markdown: |
+          markdown: |
             ---
             Thanks for the PR!
 
@@ -102,8 +102,8 @@ jobs:
       - name: Build Image
         uses: bcgov/actions/builder@091f1da89c669d36bf4899830381e5b12d2c889a # v0.11.0
         with:
-          build_context: ./backend
-          build_file: ./backend/Dockerfile
+          context: ./backend
+          file: ./backend/Dockerfile
           package: backend
           tag_fallback: test
           token: ${{ secrets.GITHUB_TOKEN }}
