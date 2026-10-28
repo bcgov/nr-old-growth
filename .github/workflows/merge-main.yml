@@ -27,7 +27,7 @@ jobs:
     steps:
       - name: Skip issue templates and docs
         id: diff
-        uses: bcgov/actions/diff-triggers@122a9b1c6c082b1b1f18c300020fbdc417b6b0b2 # v0.10.0
+        uses: bcgov/actions/diff-triggers@091f1da89c669d36bf4899830381e5b12d2c889a # v0.11.0
         with:
           triggers: |
             .
@@ -54,13 +54,13 @@ jobs:
           --health-retries 10
     steps:
       - name: Run tests
-        uses: bcgov/actions/test-and-analyse@122a9b1c6c082b1b1f18c300020fbdc417b6b0b2 # v0.10.0
+        uses: bcgov/actions/test-and-analyse@091f1da89c669d36bf4899830381e5b12d2c889a # v0.11.0
         with:
           commands: |
             npm ci
             npm run test:cov
             npm run test:e2e
-          dir: backend
+          working_directory: backend
           node_version: 20
 
   codeql:
@@ -106,9 +106,9 @@ jobs:
       # Walk per package. An image that was not built for this commit keeps its last digest.
       - name: Resolve images
         id: tracker
-        uses: bcgov/actions/image-tracker@122a9b1c6c082b1b1f18c300020fbdc417b6b0b2 # v0.10.0
+        uses: bcgov/actions/image-tracker@091f1da89c669d36bf4899830381e5b12d2c889a # v0.11.0
         with:
-          package: backend
+          packages: backend
           max_depth: 100
 
   deploy-test-database:
@@ -180,6 +180,6 @@ jobs:
     runs-on: ubuntu-slim
     timeout-minutes: 1
     steps:
-      - uses: bcgov/actions/workflow-results@122a9b1c6c082b1b1f18c300020fbdc417b6b0b2 # v0.10.0
+      - uses: bcgov/actions/workflow-results@091f1da89c669d36bf4899830381e5b12d2c889a # v0.11.0
         with:
           needs: ${{ toJson(needs) }}
