@@ -167,9 +167,40 @@ jobs:
             -p BCEID_FORM_PASSWORD=${{ secrets.CHEFS_BCEID_FORM_PASSWORD}}
             -p IDIR_FORM_PASSWORD=${{ secrets.CHEFS_IDIR_FORM_PASSWORD}}
 
+  database-rehearsal:
+    name: Database upgrade rehearsal (TEST data)
+    # Read-only rehearsal: copies TEST into a throwaway PG17 server inside the Job
+    # and verifies row counts. Never pauses writes, switches apps or deletes anything.
+    environment: test
+    runs-on: ubuntu-26.04
+    timeout-minutes: 45
+    steps:
+      - name: Rehearse PostgreSQL 17 upgrade
+        id: rehearse
+        uses: bcgov/actions-openshift/pg-upgrade@46f2614322f7ba1a5ad88a7e4e1b98569c80dcf7 # v0.6.0
+        with:
+          mode: rehearse
+          source: ${{ github.event.repository.name }}-test-database
+          secret: ${{ github.event.repository.name }}-test-database
+          image: postgres:17
+          app_label: ${{ github.event.repository.name }}-${{ github.event.number }}
+          oc_namespace: ${{ secrets.OC_NAMESPACE }}
+          oc_server: ${{ secrets.OC_SERVER }}
+          oc_token: ${{ secrets.OC_TOKEN }}
+
+      - name: Require rehearsed result
+        env:
+          RESULT: ${{ steps.rehearse.outputs.result }}
+          ROWS: ${{ steps.rehearse.outputs.rows }}
+          SECONDS_: ${{ steps.rehearse.outputs.copy_seconds }}
+          PEAK: ${{ steps.rehearse.outputs.peak_memory_mib }}
+        run: |
+          echo "result=${RESULT} rows=${ROWS} copy_seconds=${SECONDS_} peak_memory_mib=${PEAK}" | tee -a "$GITHUB_STEP_SUMMARY"
+          [ "${RESULT}" = "rehearsed" ] || { echo "::error::Expected result=rehearsed, got '${RESULT}'"; exit 1; }
+
   results:
     name: PR Results
-    needs: [pr-validation, pr-greeting, builds, deploy-database, deploy-backend]
+    needs: [pr-validation, pr-greeting, builds, deploy-database, deploy-backend, database-rehearsal]
     if: always()
     runs-on: ubuntu-slim
     timeout-minutes: 1
