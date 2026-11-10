@@ -7,7 +7,6 @@ import {
   jest,
 } from '@jest/globals';
 import { HttpException, HttpStatus } from '@nestjs/common';
-import axios from 'axios';
 import { ChesService } from './ches.service';
 
 const ENV_KEYS = [
@@ -19,7 +18,16 @@ const ENV_KEYS = [
   'NODE_ENV',
 ];
 
+const json = (status: number, body: unknown) =>
+  new Response(JSON.stringify(body), { status });
+
+function fetchCall(fetchMock: ReturnType<typeof jest.spyOn>, index: number) {
+  const [url, init] = fetchMock.mock.calls[index] as [string, RequestInit];
+  return { url, init, headers: init.headers as Headers };
+}
+
 describe('ChesService', () => {
+  let fetchMock: ReturnType<typeof jest.spyOn>;
   const saved: Record<string, string | undefined> = {};
   let service: ChesService;
 
@@ -32,6 +40,7 @@ describe('ChesService', () => {
     process.env.CHES_CLIENT_SECRET = 'secret';
     process.env.NODE_ENV = 'test';
     service = new ChesService();
+    fetchMock = jest.spyOn(globalThis, 'fetch');
   });
 
   afterEach(() => {
@@ -44,39 +53,51 @@ describe('ChesService', () => {
 
   describe('getToken', () => {
     it('requests a client-credentials token and returns the access token', async () => {
-      const request = jest
-        .spyOn(axios, 'request')
-        .mockResolvedValue({ data: { access_token: 'abc' } });
+      fetchMock.mockResolvedValue(json(200, { access_token: 'abc' }));
 
       await expect(service.getToken()).resolves.toBe('abc');
-      expect(request).toHaveBeenCalledWith(
-        expect.objectContaining({
-          method: 'POST',
-          url: 'https://token.example/token',
-          auth: { username: 'client', password: 'secret' },
-          data: 'grant_type=client_credentials',
-        }),
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      const { url, init, headers } = fetchCall(fetchMock, 0);
+      expect(url).toBe('https://token.example/token');
+      expect(init.method).toBe('POST');
+      expect(init.body).toBe('grant_type=client_credentials');
+      expect(headers.get('authorization')).toBe(
+        `Basic ${Buffer.from('client:secret').toString('base64')}`,
+      );
+      expect(headers.get('content-type')).toBe(
+        'application/x-www-form-urlencoded',
       );
     });
 
     it('wraps token failures in a 500 HttpException', async () => {
-      jest.spyOn(axios, 'request').mockRejectedValue(new Error('boom'));
+      fetchMock.mockRejectedValue(new Error('boom'));
 
       const error = await service.getToken().catch((e) => e);
       expect(error).toBeInstanceOf(HttpException);
       expect(error.getStatus()).toBe(HttpStatus.INTERNAL_SERVER_ERROR);
+      expect(error.getResponse().message).toContain('boom');
+    });
+
+    it('wraps non-2xx token responses in a 500 HttpException', async () => {
+      fetchMock.mockResolvedValue(json(401, { error: 'unauthorized' }));
+
+      const error = await service.getToken().catch((e) => e);
+      expect(error).toBeInstanceOf(HttpException);
+      expect(error.getStatus()).toBe(HttpStatus.INTERNAL_SERVER_ERROR);
+      expect(error.getResponse().message).toContain(
+        'Request failed with status code 401',
+      );
     });
   });
 
   describe('sendEmail', () => {
     it('rejects when CHES configuration is missing', () => {
       delete process.env.CHES_API_URL;
-      const post = jest.spyOn(axios, 'post');
 
       expect(() => service.sendEmail({ emailTo: ['a@gov.bc.ca'] })).toThrow(
         HttpException,
       );
-      expect(post).not.toHaveBeenCalled();
+      expect(fetchMock).not.toHaveBeenCalled();
     });
 
     it('rejects when there is no recipient', () => {
@@ -86,10 +107,7 @@ describe('ChesService', () => {
     });
 
     it('does not post outside production', async () => {
-      jest
-        .spyOn(axios, 'request')
-        .mockResolvedValue({ data: { access_token: 'abc' } });
-      const post = jest.spyOn(axios, 'post');
+      fetchMock.mockResolvedValue(json(200, { access_token: 'abc' }));
 
       await expect(
         service.sendEmail({ emailTo: ['a@gov.bc.ca'] }),
@@ -97,17 +115,14 @@ describe('ChesService', () => {
         status: 200,
         data: 'Not send email in dev deployment',
       });
-      expect(post).not.toHaveBeenCalled();
+      expect(fetchMock).toHaveBeenCalledTimes(1);
     });
 
     it('posts the email with the bearer token in production', async () => {
       process.env.NODE_ENV = 'production';
-      jest
-        .spyOn(axios, 'request')
-        .mockResolvedValue({ data: { access_token: 'abc' } });
-      const post = jest
-        .spyOn(axios, 'post')
-        .mockResolvedValue({ status: 201, data: { txId: '1' } });
+      fetchMock
+        .mockResolvedValueOnce(json(200, { access_token: 'abc' }))
+        .mockResolvedValueOnce(json(201, { txId: '1' }));
 
       await expect(
         service.sendEmail({
@@ -118,8 +133,13 @@ describe('ChesService', () => {
         }),
       ).resolves.toEqual({ status: 201, data: { txId: '1' } });
 
-      expect(post).toHaveBeenCalledWith(
-        'https://ches.example/api/v1/email',
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      const { url, init, headers } = fetchCall(fetchMock, 1);
+      expect(url).toBe('https://ches.example/api/v1/email');
+      expect(init.method).toBe('POST');
+      expect(headers.get('authorization')).toBe('Bearer abc');
+      expect(headers.get('content-type')).toBe('application/json');
+      expect(JSON.parse(init.body as string)).toEqual(
         expect.objectContaining({
           to: ['a@gov.bc.ca'],
           from: 'noreply@gov.bc.ca',
@@ -127,16 +147,25 @@ describe('ChesService', () => {
           body: '<p>Body</p>',
           bodyType: 'html',
         }),
-        { headers: { Authorization: 'Bearer abc' } },
       );
     });
 
     it('wraps a failed post in an HttpException', async () => {
       process.env.NODE_ENV = 'production';
-      jest
-        .spyOn(axios, 'request')
-        .mockResolvedValue({ data: { access_token: 'abc' } });
-      jest.spyOn(axios, 'post').mockRejectedValue(new Error('down'));
+      fetchMock
+        .mockResolvedValueOnce(json(200, { access_token: 'abc' }))
+        .mockRejectedValueOnce(new Error('down'));
+
+      await expect(
+        service.sendEmail({ emailTo: ['a@gov.bc.ca'] }),
+      ).rejects.toBeInstanceOf(HttpException);
+    });
+
+    it('wraps a non-2xx post in an HttpException', async () => {
+      process.env.NODE_ENV = 'production';
+      fetchMock
+        .mockResolvedValueOnce(json(200, { access_token: 'abc' }))
+        .mockResolvedValueOnce(json(500, { error: 'boom' }));
 
       await expect(
         service.sendEmail({ emailTo: ['a@gov.bc.ca'] }),
@@ -144,13 +173,12 @@ describe('ChesService', () => {
     });
 
     it('fails when the token response has no access token', async () => {
-      jest.spyOn(axios, 'request').mockResolvedValue({ data: {} });
-      const post = jest.spyOn(axios, 'post');
+      fetchMock.mockResolvedValue(json(200, {}));
 
       await expect(
         service.sendEmail({ emailTo: ['a@gov.bc.ca'] }),
       ).rejects.toBeInstanceOf(HttpException);
-      expect(post).not.toHaveBeenCalled();
+      expect(fetchMock).toHaveBeenCalledTimes(1);
     });
   });
 });

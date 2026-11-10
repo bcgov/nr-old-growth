@@ -1,24 +1,22 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
-import axios from 'axios';
+import { httpRequest } from '../../common/http';
 
 import { EmailEntity } from '../../email/model/email.entity';
 
 @Injectable()
 export class ChesService {
   getToken() {
-    return axios
-      .request({
-        method: 'POST',
-        url: process.env.CHES_TOKEN_URL,
-        auth: {
-          username: process.env.CHES_CLIENT_ID,
-          password: process.env.CHES_CLIENT_SECRET,
-        },
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        data: 'grant_type=client_credentials',
-      })
+    return httpRequest(process.env.CHES_TOKEN_URL, {
+      method: 'POST',
+      auth: {
+        username: process.env.CHES_CLIENT_ID,
+        password: process.env.CHES_CLIENT_SECRET,
+      },
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: 'grant_type=client_credentials',
+    })
       .then((res) => res.data)
       .then((token) => token?.access_token)
       .catch((e) => {
@@ -63,28 +61,25 @@ export class ChesService {
       .then((access_token) => {
         if (access_token) {
           if (process.env.NODE_ENV == 'production') {
-            return axios
-              .post(
-                `${process.env.CHES_API_URL}/email`,
-                {
-                  bcc: [],
-                  bodyType: emailBodyType,
-                  body: emailBody,
-                  cc: [],
-                  delayTS: 0,
-                  encoding: 'utf-8',
-                  from: emailFrom,
-                  priority: 'normal',
-                  subject: emailSubject,
-                  to: emailTo,
-                  attachments: emailAttachments,
-                },
-                {
-                  headers: {
-                    Authorization: `Bearer ${access_token}`,
-                  },
-                },
-              )
+            return httpRequest(`${process.env.CHES_API_URL}/email`, {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${access_token}`,
+              },
+              body: {
+                bcc: [],
+                bodyType: emailBodyType,
+                body: emailBody,
+                cc: [],
+                delayTS: 0,
+                encoding: 'utf-8',
+                from: emailFrom,
+                priority: 'normal',
+                subject: emailSubject,
+                to: emailTo,
+                attachments: emailAttachments,
+              },
+            })
               .then((r) => {
                 return { status: r.status, data: r.data };
               })

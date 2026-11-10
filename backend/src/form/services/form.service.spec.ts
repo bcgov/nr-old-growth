@@ -7,7 +7,6 @@ import {
   jest,
 } from '@jest/globals';
 import { HttpException } from '@nestjs/common';
-import axios, { AxiosError } from 'axios';
 import { EmailService } from '../../email/services/email.service';
 import { EmailSubmissionLog } from '../entities/emailSubmissionLog.interface';
 import { FormService } from './form.service';
@@ -97,7 +96,9 @@ describe('FormService', () => {
       );
 
   function chefsReturns(submissions: unknown[]) {
-    get.mockResolvedValue({ data: submissions });
+    get.mockImplementation(
+      async () => new Response(JSON.stringify(submissions), { status: 200 }),
+    );
   }
 
   function pushFailedPoll(
@@ -134,7 +135,7 @@ describe('FormService', () => {
       repo as never,
       { sendEmail } as unknown as EmailService,
     );
-    get = jest.spyOn(axios, 'get');
+    get = jest.spyOn(globalThis, 'fetch');
     jest.spyOn(service['logger'], 'error').mockImplementation(() => undefined);
     jest.spyOn(service['logger'], 'warn').mockImplementation(() => undefined);
   });
@@ -164,9 +165,14 @@ describe('FormService', () => {
 
     await service.handleIDIRForm();
 
-    expect(get).toHaveBeenCalledWith(
+    expect(get).toHaveBeenCalledTimes(1);
+    const [url, init] = get.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe(
       `https://submit.digital.gov.bc.ca/app/api/v1/forms/${FORM_ID}/versions/${VERSION_ID}/submissions`,
-      { auth: { username: FORM_ID, password: 'form-password' } },
+    );
+    expect(init.method).toBe('GET');
+    expect((init.headers as Headers).get('authorization')).toBe(
+      `Basic ${Buffer.from(`${FORM_ID}:form-password`).toString('base64')}`,
     );
     expect(sendEmail).not.toHaveBeenCalled();
   });
@@ -310,16 +316,11 @@ describe('FormService', () => {
   });
 
   it('retries transient 503 errors from CHEFS and delivers notifications on retry', async () => {
-    const error503 = new AxiosError(
-      'Request failed with status code 503',
-      'ERR_BAD_RESPONSE',
-      undefined,
-      undefined,
-      { status: 503 } as any,
-    );
     get
-      .mockRejectedValueOnce(error503)
-      .mockResolvedValueOnce({ data: [submission()] });
+      .mockResolvedValueOnce(new Response('', { status: 503 }))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify([submission()]), { status: 200 }),
+      );
 
     await service.handleSubmissions(FORM_ID, VERSION_ID, 'pw');
 
@@ -335,14 +336,7 @@ describe('FormService', () => {
   });
 
   it('does not retry 401 client errors from CHEFS', async () => {
-    const error401 = new AxiosError(
-      'Request failed with status code 401',
-      'ERR_BAD_REQUEST',
-      undefined,
-      undefined,
-      { status: 401 } as any,
-    );
-    get.mockRejectedValue(error401);
+    get.mockResolvedValue(new Response('', { status: 401 }));
 
     const [result] = await service.handleSubmissions(FORM_ID, VERSION_ID, 'pw');
 
@@ -535,8 +529,8 @@ describe('FormService', () => {
   it('delivers NEW notification for submission created during API fetch delay when updatedBy equals createdBy', async () => {
     get.mockImplementation(async () => {
       const createdDuringFetch = new Date().toISOString();
-      return {
-        data: [
+      return new Response(
+        JSON.stringify([
           submission({
             confirmationId: 'DURING_FETCH',
             createdAt: createdDuringFetch,
@@ -544,8 +538,9 @@ describe('FormService', () => {
             createdBy: 'same-user',
             updatedBy: 'same-user',
           }),
-        ],
-      };
+        ]),
+        { status: 200 },
+      );
     });
 
     await service.handleSubmissions(FORM_ID, VERSION_ID, 'pw');

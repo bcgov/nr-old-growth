@@ -1,7 +1,7 @@
 import { Injectable, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import axios, { AxiosError } from 'axios';
+import { HttpRequestError, httpRequest } from '../../common/http';
 import { Cron } from '@nestjs/schedule';
 import { EmailSubmissionLogEntity } from '../entities/emailSubmissionLog.entity';
 import { EmailSubmissionLog } from '../entities/emailSubmissionLog.interface';
@@ -213,9 +213,9 @@ export class FormService {
   // -------------------------------------------------------------------------
 
   /**
-   * Determines whether an Axios error is retryable (transient server errors, rate limits, or network failures).
+   * Determines whether an HTTP error is retryable (transient server errors, rate limits, or network failures).
    */
-  private isRetryableError(error: AxiosError): boolean {
+  private isRetryableError(error: HttpRequestError): boolean {
     const status = error.response?.status;
     if (status && (status >= 500 || status === 429)) {
       return true;
@@ -259,7 +259,7 @@ export class FormService {
       delay: number,
     ): Promise<any> => {
       try {
-        const response = await axios.get(url, {
+        const response = await httpRequest(url, {
           auth: { username: formId, password: formPassword },
         });
 
@@ -274,20 +274,20 @@ export class FormService {
       } catch (e) {
         if (e instanceof HttpException) throw e;
 
-        const axiosError = e as AxiosError;
-        const isRetryable = this.isRetryableError(axiosError);
+        const httpError = e as HttpRequestError;
+        const isRetryable = this.isRetryableError(httpError);
 
         if (!isRetryable || attempt >= maxRetries) {
           throw new HttpException(
             {
-              message: `Failed to fetch submissions from CHEFS: ${axiosError.message}`,
+              message: `Failed to fetch submissions from CHEFS: ${httpError.message}`,
             },
             HttpStatus.INTERNAL_SERVER_ERROR,
           );
         }
 
         this.logger.warn(
-          `CHEFS API request failed (attempt ${attempt}/${maxRetries}): ${axiosError.message}. Retrying in ${delay}ms...`,
+          `CHEFS API request failed (attempt ${attempt}/${maxRetries}): ${httpError.message}. Retrying in ${delay}ms...`,
         );
 
         if (delay > 0) {
