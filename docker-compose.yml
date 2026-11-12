@@ -7,15 +7,16 @@ services:
     build:
       context: database
       dockerfile: Dockerfile
+    pull_policy: build
+    image: nr-old-growth-database:18
     environment:
       POSTGRES_USER: default
       POSTGRES_PASSWORD: default
       POSTGRES_DB: default
     hostname: database
-    image: postgres:18
     restart: always
     volumes:
-      - /var/lib/postgresql/data
+      - /var/lib/postgresql
 
   backend:
     container_name: backend
