@@ -4,15 +4,19 @@ version: "3.8"
 services:
   database:
     container_name: database
+    build:
+      context: database
+      dockerfile: Dockerfile
+    pull_policy: build
+    image: nr-old-growth-database:18
     environment:
       POSTGRES_USER: default
       POSTGRES_PASSWORD: default
       POSTGRES_DB: default
     hostname: database
-    image: postgres:13
     restart: always
     volumes:
-      - /pgdata
+      - /var/lib/postgresql
 
   backend:
     container_name: backend

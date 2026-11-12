@@ -13,6 +13,13 @@ parameters:
   - name: ZONE
     description: Deployment zone, e.g. pr-### or prod
     required: true
+  - name: TAG
+    description: Image tag suffix. A tag is :123. A digest is @sha256:...
+    required: false
+    value: :latest
+  - name: PVC_MOUNT_PATH
+    description: Where to mount the PVC, subpath (e.g. data/)
+    value: /var/lib/postgresql
   - description: Volume space available for data, e.g. 512Mi, 2Gi.
     displayName: Database Volume Capacity
     name: DB_PVC_SIZE
@@ -71,19 +78,28 @@ objects:
                 claimName: ${NAME}-${ZONE}-${COMPONENT}
           containers:
             - name: ${NAME}
-              image: image-registry.openshift-image-registry.svc:5000/openshift/postgresql:12
+              image: ${REGISTRY}/${ORG}/${NAME}/${COMPONENT}${TAG}
               ports:
                 - containerPort: 5432
                   protocol: TCP
+              startupProbe:
+                exec:
+                  command:
+                    - /usr/bin/env
+                    - bash
+                    - -c
+                    - psql -q -U ${POSTGRES_USER:-$POSTGRESQL_USER} -d ${POSTGRES_DB:-$POSTGRESQL_DATABASE} -c 'SELECT 1'
+                failureThreshold: 30
+                initialDelaySeconds: 10
+                periodSeconds: 10
+                timeoutSeconds: 2
               readinessProbe:
                 exec:
                   command:
                     - /usr/bin/env
                     - bash
-                    - '-c'
-                    - >-
-                      psql -q -d
-                      $POSTGRESQL_DATABASE -c 'SELECT 1'
+                    - -c
+                    - psql -q -U ${POSTGRES_USER:-$POSTGRESQL_USER} -d ${POSTGRES_DB:-$POSTGRESQL_DATABASE} -c 'SELECT 1'
                 failureThreshold: 5
                 initialDelaySeconds: 30
                 periodSeconds: 15
@@ -93,15 +109,28 @@ objects:
                   command:
                     - /usr/bin/env
                     - bash
-                    - '-c'
-                    - >-
-                      psql -q -d
-                      $POSTGRESQL_DATABASE -c 'SELECT 1'
+                    - -c
+                    - psql -q -U ${POSTGRES_USER:-$POSTGRESQL_USER} -d ${POSTGRES_DB:-$POSTGRESQL_DATABASE} -c 'SELECT 1'
                 failureThreshold: 5
                 initialDelaySeconds: 30
                 periodSeconds: 15
                 timeoutSeconds: 1
               env:
+                - name: POSTGRES_DB
+                  valueFrom:
+                    secretKeyRef:
+                      name: ${NAME}-${ZONE}-${COMPONENT}
+                      key: database-name
+                - name: POSTGRES_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: ${NAME}-${ZONE}-${COMPONENT}
+                      key: database-password
+                - name: POSTGRES_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: ${NAME}-${ZONE}-${COMPONENT}
+                      key: database-user
                 - name: POSTGRESQL_DATABASE
                   valueFrom:
                     secretKeyRef:
@@ -117,24 +146,13 @@ objects:
                     secretKeyRef:
                       name: ${NAME}-${ZONE}-${COMPONENT}
                       key: database-user
+                - name: PGDATA
+                  value: /var/lib/postgresql/data
                 - name: RANDOM_EXPRESSION
                   value: ${RANDOM_EXPRESSION}
               volumeMounts:
                 - name: ${NAME}-${ZONE}-${COMPONENT}
-                  mountPath: "/var/lib/pgsql/data"
-              livenessProbe:
-                initialDelaySeconds: 30
-                tcpSocket:
-                  port: 5432
-                timeoutSeconds: 1
-              readinessProbe:
-                exec:
-                  command:
-                    - /bin/bash
-                    - -c
-                    - pg_isready -h localhost -p 5432
-                initialDelaySeconds: 20
-                timeoutSeconds: 15
+                  mountPath: ${PVC_MOUNT_PATH}
               # PostgreSQL writes outside its data volume (sockets, locks), so the root filesystem stays writable
               securityContext:
                 allowPrivilegeEscalation: false
@@ -167,5 +185,3 @@ objects:
         deployment: ${NAME}-${ZONE}-${COMPONENT}
       sessionAffinity: None
       type: ClusterIP
-      # Trigger deployment to pull patched PG12 image
-
