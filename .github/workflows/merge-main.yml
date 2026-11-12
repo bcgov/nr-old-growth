@@ -99,7 +99,8 @@ jobs:
       pull-requests: read
     timeout-minutes: 5
     outputs:
-      digest: ${{ steps.tracker.outputs.digest }}
+      backend_digest: ${{ fromJson(steps.tracker.outputs.digests).backend }}
+      database_digest: ${{ fromJson(steps.tracker.outputs.digests).database }}
     steps:
       - uses: actions/checkout@v7
 
@@ -108,13 +109,16 @@ jobs:
         id: tracker
         uses: bcgov/actions/image-tracker@d209bb08aabe15e5e69aca53b24d338a7b2843d5 # v0.12.0
         with:
-          packages: backend
+          packages: |
+            backend
+            database
           max_depth: 100
 
   deploy-test-database:
     name: Deploy Database on Test Env
     needs:
       - tests-backend
+      - resolve
     env:
       ZONE: test
     environment: test
@@ -141,7 +145,7 @@ jobs:
           oc_token: ${{ secrets.OC_TOKEN }}
           oc_version: "4.13"
           overwrite: true
-          parameters: -p ZONE=${{ env.ZONE }} -p NAME=${{ github.event.repository.name }}
+          parameters: -p ZONE=${{ env.ZONE }} -p TAG=@${{ needs.resolve.outputs.database_digest }} -p NAME=${{ github.event.repository.name }}
 
   deploy-test-backend:
     name: Deploy Backend on Test Env
@@ -164,7 +168,7 @@ jobs:
           oc_version: "4.13"
           overwrite: true
           parameters:
-            -p ZONE=${{ env.ZONE }} -p TAG=@${{ needs.resolve.outputs.digest }} -p NAME=${{ github.event.repository.name }}
+            -p ZONE=${{ env.ZONE }} -p TAG=@${{ needs.resolve.outputs.backend_digest }} -p NAME=${{ github.event.repository.name }}
             -p CHES_CLIENT_ID=${{ secrets.CHES_CLIENT_ID }}
             -p CHES_CLIENT_SECRET=${{ secrets.CHES_CLIENT_SECRET }}
             -p CHES_TOKEN_URL='https://test.loginproxy.gov.bc.ca/auth/realms/comsvcauth/protocol/openid-connect/token'

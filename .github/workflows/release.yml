@@ -26,31 +26,41 @@ jobs:
       pull-requests: read
     timeout-minutes: 5
     outputs:
-      digest: ${{ steps.tracker.outputs.digest }}
+      backend_digest: ${{ fromJson(steps.tracker.outputs.digests).backend }}
+      database_digest: ${{ fromJson(steps.tracker.outputs.digests).database }}
     steps:
       - uses: actions/checkout@v7
 
-      # Backend image for the release's commit (last built digest if this commit built none)
+      # Backend and database images for the release's commit (last built digest if this commit built none)
       - name: Resolve images
         id: tracker
         uses: bcgov/actions/image-tracker@d209bb08aabe15e5e69aca53b24d338a7b2843d5 # v0.12.0
         with:
-          packages: backend
+          packages: |
+            backend
+            database
           max_depth: 100
 
       - name: Summary
         env:
-          DIGEST: ${{ steps.tracker.outputs.digest }}
+          DIGESTS: ${{ steps.tracker.outputs.digests }}
           RELEASE: ${{ github.event.release.tag_name }}
         run: |
-          if [ -z "${DIGEST}" ]; then
+          BACKEND_DIGEST=$(echo "${DIGESTS}" | jq -r '.backend // empty')
+          DATABASE_DIGEST=$(echo "${DIGESTS}" | jq -r '.database // empty')
+          if [ -z "${BACKEND_DIGEST}" ]; then
             echo "::error::No backend image found for ${RELEASE} (${GITHUB_SHA})."
             exit 1
           fi
-          echo "${RELEASE}: backend@${DIGEST}" | tee -a "${GITHUB_STEP_SUMMARY}"
+          echo "${RELEASE}: backend@${BACKEND_DIGEST}" | tee -a "${GITHUB_STEP_SUMMARY}"
+          if [ -n "${DATABASE_DIGEST}" ]; then
+            echo "${RELEASE}: database@${DATABASE_DIGEST}" | tee -a "${GITHUB_STEP_SUMMARY}"
+          fi
 
   deploy-prod-database:
     name: Deploy Database on Prod Env
+    needs:
+      - resolve
     env:
       ZONE: prod
     environment: prod
@@ -77,7 +87,7 @@ jobs:
           oc_token: ${{ secrets.OC_TOKEN }}
           oc_version: "4.13"
           overwrite: true
-          parameters: -p ZONE=${{ env.ZONE }} -p NAME=${{ github.event.repository.name }}
+          parameters: -p ZONE=${{ env.ZONE }} -p TAG=@${{ needs.resolve.outputs.database_digest }} -p NAME=${{ github.event.repository.name }}
 
   deploy-prod-backend:
     name: Deploy Backend on Prod Env
@@ -100,7 +110,7 @@ jobs:
           oc_version: "4.13"
           overwrite: true
           parameters:
-            -p ZONE=${{ env.ZONE }} -p TAG=@${{ needs.resolve.outputs.digest }} -p NAME=${{ github.event.repository.name }}
+            -p ZONE=${{ env.ZONE }} -p TAG=@${{ needs.resolve.outputs.backend_digest }} -p NAME=${{ github.event.repository.name }}
             -p CHES_CLIENT_ID=${{ secrets.CHES_CLIENT_ID }}
             -p CHES_CLIENT_SECRET=${{ secrets.CHES_CLIENT_SECRET }}
             -p CHES_TOKEN_URL='https://loginproxy.gov.bc.ca/auth/realms/comsvcauth/protocol/openid-connect/token'
@@ -123,7 +133,15 @@ jobs:
         with:
           registry: ghcr.io
           repository: ${{ github.repository }}/backend
-          target: ${{ needs.resolve.outputs.digest }}
+          target: ${{ needs.resolve.outputs.backend_digest }}
+          tags: prod
+
+      - uses: shrink/actions-docker-registry-tag@e6aaef25c595b6e0edd18bf4c7dbfea3abd43299 # v5
+        if: needs.resolve.outputs.database_digest != ''
+        with:
+          registry: ghcr.io
+          repository: ${{ github.repository }}/database
+          target: ${{ needs.resolve.outputs.database_digest }}
           tags: prod
 
   results:

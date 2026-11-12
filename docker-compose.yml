@@ -4,15 +4,18 @@ version: "3.8"
 services:
   database:
     container_name: database
+    build:
+      context: database
+      dockerfile: Dockerfile
     environment:
       POSTGRES_USER: default
       POSTGRES_PASSWORD: default
       POSTGRES_DB: default
     hostname: database
-    image: postgres:13
+    image: postgres:18
     restart: always
     volumes:
-      - /pgdata
+      - /var/lib/postgresql/data
 
   backend:
     container_name: backend
