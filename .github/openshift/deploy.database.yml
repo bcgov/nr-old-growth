@@ -146,6 +146,11 @@ objects:
                     secretKeyRef:
                       name: ${NAME}-${ZONE}-${COMPONENT}
                       key: database-user
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: ${NAME}-${ZONE}-${COMPONENT}
+                      key: database-password
                 - name: PGDATA
                   value: /var/lib/postgresql/data
                 - name: RANDOM_EXPRESSION
