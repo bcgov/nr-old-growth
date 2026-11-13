@@ -145,16 +145,40 @@ if [ -n "$OLD_CLUSTER_DIR" ] && [ -n "$OLD_VERSION" ]; then
     fi
     echo "Preserving checksum setting: $INITDB_CHECKSUM_ARG"
 
+    # Helper to restore source cluster's original configuration files on failure or before archiving
+    restore_old_cluster_configs() {
+        if [ -n "$OLD_CLUSTER_DIR" ] && [ -d "$OLD_CLUSTER_DIR" ]; then
+            if [ -f "$OLD_CLUSTER_DIR/pg_hba.conf.orig" ]; then
+                cp -p "$OLD_CLUSTER_DIR/pg_hba.conf.orig" "$OLD_CLUSTER_DIR/pg_hba.conf"
+                rm -f "$OLD_CLUSTER_DIR/pg_hba.conf.orig"
+            fi
+            if [ -f "$OLD_CLUSTER_DIR/postgresql.conf.orig" ]; then
+                cp -p "$OLD_CLUSTER_DIR/postgresql.conf.orig" "$OLD_CLUSTER_DIR/postgresql.conf"
+                rm -f "$OLD_CLUSTER_DIR/postgresql.conf.orig"
+            fi
+        fi
+    }
+    # Ensure source cluster configs are restored if any unexpected error terminates the script
+    trap restore_old_cluster_configs ERR
+
     # OpenShift SCL PostgreSQL 12 postgresql.conf references files outside the volume
-    # like /var/lib/pgsql/openshift-custom-postgresql.conf. Neutralize these so pg_upgrade can start the old server.
+    # such as /var/lib/pgsql/openshift-custom-postgresql.conf or $HOME/openshift-custom-postgresql.conf.
+    # Comment out all include directives in the old cluster's postgresql.conf so pg_upgrade can cleanly start it.
     if [ -f "$OLD_CLUSTER_DIR/postgresql.conf" ]; then
         if [ ! -f "$OLD_CLUSTER_DIR/postgresql.conf.orig" ]; then
             cp -p "$OLD_CLUSTER_DIR/postgresql.conf" "$OLD_CLUSTER_DIR/postgresql.conf.orig"
         fi
-        sed -i -E "s/^[[:space:]]*(include(_if_exists)?[[:space:]]*=[[:space:]]*['\"].*\/var\/lib\/pgsql\/.*)/# \1/" "$OLD_CLUSTER_DIR/postgresql.conf"
+        sed -i -E "s/^[[:space:]]*include/# &/" "$OLD_CLUSTER_DIR/postgresql.conf"
     fi
-    mkdir -p /var/lib/pgsql 2>/dev/null || true
-    touch /var/lib/pgsql/openshift-custom-postgresql.conf 2>/dev/null || true
+
+    # Ensure pg_upgrade can connect locally without password authentication
+    if [ -f "$OLD_CLUSTER_DIR/pg_hba.conf" ]; then
+        if [ ! -f "$OLD_CLUSTER_DIR/pg_hba.conf.orig" ]; then
+            cp -p "$OLD_CLUSTER_DIR/pg_hba.conf" "$OLD_CLUSTER_DIR/pg_hba.conf.orig"
+        fi
+        # Prepend trust rule for local unix socket connections during upgrade
+        sed -i '1s/^/local all all trust\n/' "$OLD_CLUSTER_DIR/pg_hba.conf"
+    fi
 
     mkdir -p "$NEW_PGDATA"
     # If resuming an interrupted migration, wipe incomplete target files first
@@ -168,21 +192,40 @@ if [ -n "$OLD_CLUSTER_DIR" ] && [ -n "$OLD_VERSION" ]; then
     # Run pg_upgrade
     echo "Executing pg_upgrade..."
     cd /tmp
+    set +e
     "$NEW_BIN/pg_upgrade" \
         -d "$OLD_CLUSTER_DIR" \
         -D "$NEW_PGDATA" \
         -b "$OLD_BIN" \
         -B "$NEW_BIN" \
         -U "$MIGRATION_SUPERUSER"
+    UPGRADE_EXIT_CODE=$?
+    set -e
+
+    if [ $UPGRADE_EXIT_CODE -ne 0 ]; then
+        echo "ERROR: pg_upgrade failed with exit code $UPGRADE_EXIT_CODE!" >&2
+        echo "=== Dumping all pg_upgrade log files ===" >&2
+        find "$NEW_PGDATA" -type f -name "*.log" -exec echo "--- {} ---" \; -exec cat {} \; >&2
+        restore_old_cluster_configs
+        exit $UPGRADE_EXIT_CODE
+    fi
 
     echo "pg_upgrade completed successfully!"
 
-    # Restore authentication configuration from old cluster so external connections are accepted
-    if [ -f "$OLD_CLUSTER_DIR/pg_hba.conf" ]; then
-        echo "Restoring authentication configuration (pg_hba.conf, pg_ident.conf) from old cluster..."
+    # Restore authentication configuration from old cluster into new PostgreSQL 18 cluster
+    if [ -f "$OLD_CLUSTER_DIR/pg_hba.conf.orig" ]; then
+        echo "Restoring authentication configuration (pg_hba.conf, pg_ident.conf) to new cluster..."
+        cp -p "$OLD_CLUSTER_DIR/pg_hba.conf.orig" "$NEW_PGDATA/pg_hba.conf"
+        [ -f "$OLD_CLUSTER_DIR/pg_ident.conf" ] && cp -p "$OLD_CLUSTER_DIR/pg_ident.conf" "$NEW_PGDATA/pg_ident.conf"
+    elif [ -f "$OLD_CLUSTER_DIR/pg_hba.conf" ]; then
+        echo "Restoring authentication configuration (pg_hba.conf, pg_ident.conf) to new cluster..."
         cp -p "$OLD_CLUSTER_DIR/pg_hba.conf" "$NEW_PGDATA/pg_hba.conf"
         [ -f "$OLD_CLUSTER_DIR/pg_ident.conf" ] && cp -p "$OLD_CLUSTER_DIR/pg_ident.conf" "$NEW_PGDATA/pg_ident.conf"
     fi
+
+    # Restore the source cluster's original configs so the backup and any rollback remain pristine
+    restore_old_cluster_configs
+    trap - ERR
 
     # Preserve old data cluster as backup so NO DATA IS EVER DELETED
     BACKUP_PATH="/var/lib/postgresql/data.v${OLD_VERSION}.bak"
@@ -199,6 +242,7 @@ fi
 export POSTGRES_USER="${POSTGRES_USER:-${POSTGRESQL_USER:-postgres}}"
 export POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-${POSTGRESQL_PASSWORD:-}}"
 export POSTGRES_DB="${POSTGRES_DB:-${POSTGRESQL_DATABASE:-${POSTGRES_USER}}}"
+export PGPASSWORD="${POSTGRES_PASSWORD}"
 
 # Hand off execution to official docker-entrypoint
 exec docker-entrypoint.sh postgres "$@"
