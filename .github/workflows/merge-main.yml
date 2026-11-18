@@ -125,7 +125,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Deploy Init
-        uses: bcgov/actions-openshift/deployer@45d8c7f7d0d5e3b15786cb99a83f410e01547133 # v0.9.0
+        uses: bcgov/actions-openshift/deployer@510a8105fdffbb718094e8a093e638132e300975 # v0.10.0
         with:
           file: common/openshift.init.yml
           oc_namespace: ${{ secrets.OC_NAMESPACE }}
@@ -136,7 +136,7 @@ jobs:
           parameters: -p ZONE=${{ env.ZONE }} -p NAME=${{ github.event.repository.name }}
 
       - name: Deploy Database
-        uses: bcgov/actions-openshift/deployer@45d8c7f7d0d5e3b15786cb99a83f410e01547133 # v0.9.0
+        uses: bcgov/actions-openshift/deployer@510a8105fdffbb718094e8a093e638132e300975 # v0.10.0
         with:
           file: .github/openshift/deploy.database.yml
           oc_namespace: ${{ secrets.OC_NAMESPACE }}
@@ -158,7 +158,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Deploys
-        uses: bcgov/actions-openshift/deployer@45d8c7f7d0d5e3b15786cb99a83f410e01547133 # v0.9.0
+        uses: bcgov/actions-openshift/deployer@510a8105fdffbb718094e8a093e638132e300975 # v0.10.0
         with:
           file: .github/openshift/deploy.backend.yml
           oc_namespace: ${{ secrets.OC_NAMESPACE }}
