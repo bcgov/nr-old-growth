@@ -112,7 +112,6 @@ jobs:
           packages: |
             backend
             database
-          max_depth: 100
 
   deploy-test-database:
     name: Deploy Database on Test Env

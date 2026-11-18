@@ -39,7 +39,6 @@ jobs:
           packages: |
             backend
             database
-          max_depth: 100
 
       - name: Summary
         env:
