@@ -77,7 +77,7 @@ jobs:
       pull-requests: write
     steps:
       - name: PR Greeting
-        uses: bcgov/actions/pr-description-add@a32f1904a14c4bda07b998aa0e19cd321ae82dd4 # v0.13.0
+        uses: bcgov/actions/pr-description-add@6c8ac0469fcf0d826533bc526c90119b8f149884 # v0.13.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           markdown: |
@@ -100,7 +100,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Build Backend Image
-        uses: bcgov/actions/builder@a32f1904a14c4bda07b998aa0e19cd321ae82dd4 # v0.13.0
+        uses: bcgov/actions/builder@6c8ac0469fcf0d826533bc526c90119b8f149884 # v0.13.0
         with:
           context: ./backend
           file: ./backend/Dockerfile
@@ -110,7 +110,7 @@ jobs:
           triggers: backend/
 
       - name: Build Database Image
-        uses: bcgov/actions/builder@a32f1904a14c4bda07b998aa0e19cd321ae82dd4 # v0.13.0
+        uses: bcgov/actions/builder@6c8ac0469fcf0d826533bc526c90119b8f149884 # v0.13.0
         with:
           context: ./database
           file: ./database/Dockerfile
@@ -184,6 +184,6 @@ jobs:
     runs-on: ubuntu-slim
     timeout-minutes: 1
     steps:
-      - uses: bcgov/actions/workflow-results@a32f1904a14c4bda07b998aa0e19cd321ae82dd4 # v0.13.0
+      - uses: bcgov/actions/workflow-results@6c8ac0469fcf0d826533bc526c90119b8f149884 # v0.13.0
         with:
           needs: ${{ toJson(needs) }}
