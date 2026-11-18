@@ -34,7 +34,7 @@ jobs:
       # Backend and database images for the release's commit (last built digest if this commit built none)
       - name: Resolve images
         id: tracker
-        uses: bcgov/actions/image-tracker@d209bb08aabe15e5e69aca53b24d338a7b2843d5 # v0.12.0
+        uses: bcgov/actions/image-tracker@a32f1904a14c4bda07b998aa0e19cd321ae82dd4 # v0.13.0
         with:
           packages: |
             backend
@@ -151,6 +151,6 @@ jobs:
     runs-on: ubuntu-slim
     timeout-minutes: 1
     steps:
-      - uses: bcgov/actions/workflow-results@d209bb08aabe15e5e69aca53b24d338a7b2843d5 # v0.12.0
+      - uses: bcgov/actions/workflow-results@a32f1904a14c4bda07b998aa0e19cd321ae82dd4 # v0.13.0
         with:
           needs: ${{ toJson(needs) }}
