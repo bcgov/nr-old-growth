@@ -27,7 +27,7 @@ jobs:
     steps:
       - name: Skip issue templates and docs
         id: diff
-        uses: bcgov/actions/diff-triggers@d209bb08aabe15e5e69aca53b24d338a7b2843d5 # v0.12.0
+        uses: bcgov/actions/diff-triggers@6c8ac0469fcf0d826533bc526c90119b8f149884 # v0.13.0
         with:
           triggers: |
             .
@@ -54,7 +54,7 @@ jobs:
           --health-retries 10
     steps:
       - name: Run tests
-        uses: bcgov/actions/test-and-analyse@d209bb08aabe15e5e69aca53b24d338a7b2843d5 # v0.12.0
+        uses: bcgov/actions/test-and-analyse@6c8ac0469fcf0d826533bc526c90119b8f149884 # v0.13.0
         with:
           commands: |
             npm ci
@@ -107,12 +107,11 @@ jobs:
       # Walk per package. An image that was not built for this commit keeps its last digest.
       - name: Resolve images
         id: tracker
-        uses: bcgov/actions/image-tracker@d209bb08aabe15e5e69aca53b24d338a7b2843d5 # v0.12.0
+        uses: bcgov/actions/image-tracker@6c8ac0469fcf0d826533bc526c90119b8f149884 # v0.13.0
         with:
           packages: |
             backend
             database
-          max_depth: 100
 
   deploy-test-database:
     name: Deploy Database on Test Env
@@ -126,7 +125,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Deploy Init
-        uses: bcgov/actions-openshift/deployer@45d8c7f7d0d5e3b15786cb99a83f410e01547133 # v0.9.0
+        uses: bcgov/actions-openshift/deployer@510a8105fdffbb718094e8a093e638132e300975 # v0.10.0
         with:
           file: common/openshift.init.yml
           oc_namespace: ${{ secrets.OC_NAMESPACE }}
@@ -137,7 +136,7 @@ jobs:
           parameters: -p ZONE=${{ env.ZONE }} -p NAME=${{ github.event.repository.name }}
 
       - name: Deploy Database
-        uses: bcgov/actions-openshift/deployer@45d8c7f7d0d5e3b15786cb99a83f410e01547133 # v0.9.0
+        uses: bcgov/actions-openshift/deployer@510a8105fdffbb718094e8a093e638132e300975 # v0.10.0
         with:
           file: .github/openshift/deploy.database.yml
           oc_namespace: ${{ secrets.OC_NAMESPACE }}
@@ -159,7 +158,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Deploys
-        uses: bcgov/actions-openshift/deployer@45d8c7f7d0d5e3b15786cb99a83f410e01547133 # v0.9.0
+        uses: bcgov/actions-openshift/deployer@510a8105fdffbb718094e8a093e638132e300975 # v0.10.0
         with:
           file: .github/openshift/deploy.backend.yml
           oc_namespace: ${{ secrets.OC_NAMESPACE }}
@@ -184,6 +183,6 @@ jobs:
     runs-on: ubuntu-slim
     timeout-minutes: 1
     steps:
-      - uses: bcgov/actions/workflow-results@d209bb08aabe15e5e69aca53b24d338a7b2843d5 # v0.12.0
+      - uses: bcgov/actions/workflow-results@6c8ac0469fcf0d826533bc526c90119b8f149884 # v0.13.0
         with:
           needs: ${{ toJson(needs) }}
