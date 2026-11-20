@@ -20,7 +20,7 @@ jobs:
       name: dev
     steps:
       - name: Remove OpenShift artifacts
-        uses: bcgov/actions-openshift/cleanup-pr@510a8105fdffbb718094e8a093e638132e300975 # v0.10.0
+        uses: bcgov/actions-openshift/cleanup-pr@47805d2fc4e919382757c1fbeb68d39313abe64f # v0.11.0
         with:
           oc_namespace: ${{ secrets.OC_NAMESPACE }}
           oc_server: ${{ secrets.OC_SERVER }}
