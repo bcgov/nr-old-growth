@@ -27,7 +27,7 @@ jobs:
     steps:
       - name: Skip issue templates and docs
         id: diff
-        uses: bcgov/actions/diff-triggers@6c8ac0469fcf0d826533bc526c90119b8f149884 # v0.13.0
+        uses: bcgov/actions/diff-triggers@acc058abf85bb183dad21b839a92a40a4ff47af3 # v0.14.0
         with:
           triggers: |
             .
@@ -54,7 +54,7 @@ jobs:
           --health-retries 10
     steps:
       - name: Run tests
-        uses: bcgov/actions/test-and-analyse@6c8ac0469fcf0d826533bc526c90119b8f149884 # v0.13.0
+        uses: bcgov/actions/test-and-analyse@acc058abf85bb183dad21b839a92a40a4ff47af3 # v0.14.0
         with:
           commands: |
             npm ci
@@ -107,7 +107,7 @@ jobs:
       # Walk per package. An image that was not built for this commit keeps its last digest.
       - name: Resolve images
         id: tracker
-        uses: bcgov/actions/image-tracker@6c8ac0469fcf0d826533bc526c90119b8f149884 # v0.13.0
+        uses: bcgov/actions/image-tracker@acc058abf85bb183dad21b839a92a40a4ff47af3 # v0.14.0
         with:
           packages: |
             backend
@@ -125,7 +125,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Deploy Init
-        uses: bcgov/actions-openshift/deployer@510a8105fdffbb718094e8a093e638132e300975 # v0.10.0
+        uses: bcgov/actions-openshift/deployer@47805d2fc4e919382757c1fbeb68d39313abe64f # v0.11.0
         with:
           file: common/openshift.init.yml
           oc_namespace: ${{ secrets.OC_NAMESPACE }}
@@ -136,7 +136,7 @@ jobs:
           parameters: -p ZONE=${{ env.ZONE }} -p NAME=${{ github.event.repository.name }}
 
       - name: Deploy Database
-        uses: bcgov/actions-openshift/deployer@510a8105fdffbb718094e8a093e638132e300975 # v0.10.0
+        uses: bcgov/actions-openshift/deployer@47805d2fc4e919382757c1fbeb68d39313abe64f # v0.11.0
         with:
           file: .github/openshift/deploy.database.yml
           oc_namespace: ${{ secrets.OC_NAMESPACE }}
@@ -158,14 +158,13 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Deploys
-        uses: bcgov/actions-openshift/deployer@510a8105fdffbb718094e8a093e638132e300975 # v0.10.0
+        uses: bcgov/actions-openshift/deployer@47805d2fc4e919382757c1fbeb68d39313abe64f # v0.11.0
         with:
           file: .github/openshift/deploy.backend.yml
           oc_namespace: ${{ secrets.OC_NAMESPACE }}
           oc_server: ${{ secrets.OC_SERVER }}
           oc_token: ${{ secrets.OC_TOKEN }}
           oc_version: "4.13"
-          overwrite: true
           parameters:
             -p ZONE=${{ env.ZONE }} -p TAG=@${{ needs.resolve.outputs.backend_digest }} -p NAME=${{ github.event.repository.name }}
             -p CHES_CLIENT_ID=${{ secrets.CHES_CLIENT_ID }}
@@ -183,6 +182,6 @@ jobs:
     runs-on: ubuntu-slim
     timeout-minutes: 1
     steps:
-      - uses: bcgov/actions/workflow-results@6c8ac0469fcf0d826533bc526c90119b8f149884 # v0.13.0
+      - uses: bcgov/actions/workflow-results@acc058abf85bb183dad21b839a92a40a4ff47af3 # v0.14.0
         with:
           needs: ${{ toJson(needs) }}
