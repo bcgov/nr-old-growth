@@ -1,4 +1,4 @@
-FROM postgres:18
+FROM postgres:19
 
 # Install older postgresql binaries to enable seamless in-place zero-data-loss upgrades
 # and libnss-wrapper for arbitrary UID support in OpenShift
