@@ -26,6 +26,7 @@ if ! getent passwd "$(id -u)" >/dev/null 2>&1; then
     fi
 fi
 
+TARGET_VERSION="${PG_MAJOR:-19}"
 NEW_PGDATA="${PGDATA:-/var/lib/postgresql/data}"
 export PGDATA="$NEW_PGDATA"
 
@@ -33,12 +34,12 @@ OLD_CLUSTER_DIR=""
 OLD_VERSION=""
 
 # 1. First check if an earlier migration was interrupted / left unfinished in data.v*
-# This takes precedence over checking $NEW_PGDATA/PG_VERSION so an incomplete PostgreSQL 18
+# This takes precedence over checking $NEW_PGDATA/PG_VERSION so an incomplete target
 # cluster left by an interrupted pg_upgrade does not prevent resuming the migration.
 for d in /var/lib/postgresql/data.v*; do
     if [ -d "$d" ] && [[ "$d" != *.bak* ]] && [ -s "$d/PG_VERSION" ]; then
         V=$(cat "$d/PG_VERSION")
-        if [ "$V" != "18" ]; then
+        if [ "$V" != "$TARGET_VERSION" ]; then
             echo "Found unfinished migration in $d (source version $V)."
             OLD_CLUSTER_DIR="$d"
             OLD_VERSION="$V"
@@ -50,7 +51,7 @@ done
 # 2. Check if legacy docker-compose /pgdata volume contains a cluster
 if [ -z "$OLD_CLUSTER_DIR" ] && [ -s "/pgdata/PG_VERSION" ]; then
     V=$(cat "/pgdata/PG_VERSION")
-    if [ "$V" != "18" ]; then
+    if [ "$V" != "$TARGET_VERSION" ]; then
         echo "Detected PostgreSQL $V in legacy /pgdata volume."
         OLD_DIR="/var/lib/postgresql/data.v${V}"
         mkdir -p "$OLD_DIR"
@@ -63,7 +64,7 @@ fi
 # 3. Check if PG_VERSION exists directly in /var/lib/postgresql
 if [ -z "$OLD_CLUSTER_DIR" ] && [ -s "/var/lib/postgresql/PG_VERSION" ]; then
     V=$(cat "/var/lib/postgresql/PG_VERSION")
-    if [ "$V" != "18" ]; then
+    if [ "$V" != "$TARGET_VERSION" ]; then
         echo "Detected PostgreSQL $V directly in /var/lib/postgresql."
         # Relocate all files into a subfolder except PG_VERSION first, so an interrupted
         # relocation can safely resume through this root-directory branch on next startup
@@ -71,7 +72,7 @@ if [ -z "$OLD_CLUSTER_DIR" ] && [ -s "/var/lib/postgresql/PG_VERSION" ]; then
         mkdir -p "$OLD_DIR"
         find /var/lib/postgresql -maxdepth 1 -mindepth 1 \
             ! -name "data.v${V}" \
-            ! -name "18" \
+            ! -name "$TARGET_VERSION" \
             ! -name "data" \
             ! -name "lost+found" \
             ! -name "PG_VERSION" \
@@ -86,7 +87,7 @@ fi
 # 4. Check if PG_VERSION exists in /var/lib/postgresql/userdata (OpenShift SCL PostgreSQL container default)
 if [ -z "$OLD_CLUSTER_DIR" ] && [ -s "/var/lib/postgresql/userdata/PG_VERSION" ]; then
     V=$(cat "/var/lib/postgresql/userdata/PG_VERSION")
-    if [ "$V" != "18" ]; then
+    if [ "$V" != "$TARGET_VERSION" ]; then
         echo "Detected PostgreSQL $V in /var/lib/postgresql/userdata."
         OLD_DIR="/var/lib/postgresql/data.v${V}"
         mv /var/lib/postgresql/userdata "$OLD_DIR"
@@ -98,7 +99,7 @@ fi
 # 5. Check if PG_VERSION exists in /var/lib/postgresql/data (default in PostgreSQL 13 container)
 if [ -z "$OLD_CLUSTER_DIR" ] && [ -s "/var/lib/postgresql/data/PG_VERSION" ]; then
     V=$(cat "/var/lib/postgresql/data/PG_VERSION")
-    if [ "$V" != "18" ]; then
+    if [ "$V" != "$TARGET_VERSION" ]; then
         echo "Detected PostgreSQL $V in /var/lib/postgresql/data."
         OLD_DIR="/var/lib/postgresql/data.v${V}"
         mkdir -p "$OLD_DIR"
@@ -115,22 +116,24 @@ fi
 
 if [ -n "$OLD_CLUSTER_DIR" ] && [ -n "$OLD_VERSION" ]; then
     # OpenShift SCL PostgreSQL 12 installation superuser was strictly 'postgres'.
-    # PostgreSQL 13 (e.g. docker-compose) may have been initialized with custom $POSTGRES_USER.
-    if [ "$OLD_VERSION" = "12" ]; then
+    # If migrating directly from 12, or from a cluster previously upgraded from 12 (data.v12.bak present),
+    # the cluster's bootstrap superuser is 'postgres'.
+    # PostgreSQL 13+ (e.g. docker-compose) may have been initialized with custom $POSTGRES_USER.
+    if [ "$OLD_VERSION" = "12" ] || [ -d "/var/lib/postgresql/data.v12.bak" ]; then
         MIGRATION_SUPERUSER="postgres"
     else
-        MIGRATION_SUPERUSER="${POSTGRES_USER:-postgres}"
+        MIGRATION_SUPERUSER="${POSTGRES_USER:-${POSTGRESQL_USER:-postgres}}"
     fi
 
     echo "=========================================================="
-    echo "Initiating automated upgrade from PostgreSQL $OLD_VERSION to 18..."
+    echo "Initiating automated upgrade from PostgreSQL $OLD_VERSION to $TARGET_VERSION..."
     echo "Source: $OLD_CLUSTER_DIR"
     echo "Target: $NEW_PGDATA"
     echo "Migration Superuser: $MIGRATION_SUPERUSER"
     echo "=========================================================="
 
     OLD_BIN="/usr/lib/postgresql/${OLD_VERSION}/bin"
-    NEW_BIN="/usr/lib/postgresql/18/bin"
+    NEW_BIN="/usr/lib/postgresql/${TARGET_VERSION}/bin"
 
     if [ ! -x "$OLD_BIN/postgres" ]; then
         echo "ERROR: PostgreSQL $OLD_VERSION binaries not found at $OLD_BIN!" >&2
@@ -186,7 +189,7 @@ if [ -n "$OLD_CLUSTER_DIR" ] && [ -n "$OLD_VERSION" ]; then
     chmod 700 "$NEW_PGDATA"
     chmod 700 "$OLD_CLUSTER_DIR"
 
-    # Initialize PostgreSQL 18 cluster with matching superuser and checksums
+    # Initialize PostgreSQL $TARGET_VERSION cluster with matching superuser and checksums
     "$NEW_BIN/initdb" -D "$NEW_PGDATA" $INITDB_CHECKSUM_ARG -U "$MIGRATION_SUPERUSER"
 
     # Run pg_upgrade
@@ -212,7 +215,7 @@ if [ -n "$OLD_CLUSTER_DIR" ] && [ -n "$OLD_VERSION" ]; then
 
     echo "pg_upgrade completed successfully!"
 
-    # Restore authentication configuration from old cluster into new PostgreSQL 18 cluster
+    # Restore authentication configuration from old cluster into new PostgreSQL $TARGET_VERSION cluster
     if [ -f "$OLD_CLUSTER_DIR/pg_hba.conf.orig" ]; then
         echo "Restoring authentication configuration (pg_hba.conf, pg_ident.conf) to new cluster..."
         cp -p "$OLD_CLUSTER_DIR/pg_hba.conf.orig" "$NEW_PGDATA/pg_hba.conf"
@@ -233,8 +236,8 @@ if [ -n "$OLD_CLUSTER_DIR" ] && [ -n "$OLD_VERSION" ]; then
         echo "Safely retaining old cluster at $BACKUP_PATH..."
         mv "$OLD_CLUSTER_DIR" "$BACKUP_PATH"
     fi
-    touch "/var/lib/postgresql/.migrated_to_18"
-    echo "Upgrade to PostgreSQL 18 complete. Proceeding to startup."
+    touch "/var/lib/postgresql/.migrated_to_${TARGET_VERSION}"
+    echo "Upgrade to PostgreSQL $TARGET_VERSION complete. Proceeding to startup."
     echo "=========================================================="
 fi
 

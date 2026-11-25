@@ -3,7 +3,7 @@ FROM postgres:19
 # Install older postgresql binaries to enable seamless in-place zero-data-loss upgrades
 # and libnss-wrapper for arbitrary UID support in OpenShift
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends postgresql-12 postgresql-13 libnss-wrapper \
+    && apt-get install -y --no-install-recommends postgresql-12 postgresql-13 postgresql-18 libnss-wrapper \
     && rm -rf /var/lib/apt/lists/*
 
 # Allow arbitrary UIDs (OpenShift default) to register a valid passwd entry
