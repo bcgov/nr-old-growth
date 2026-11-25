@@ -37,13 +37,20 @@ OLD_VERSION=""
 # This takes precedence over checking $NEW_PGDATA/PG_VERSION so an incomplete target
 # cluster left by an interrupted pg_upgrade does not prevent resuming the migration.
 for d in /var/lib/postgresql/data.v*; do
-    if [ -d "$d" ] && [[ "$d" != *.bak* ]] && [ -s "$d/PG_VERSION" ]; then
-        V=$(cat "$d/PG_VERSION")
-        if [ "$V" != "$TARGET_VERSION" ]; then
-            echo "Found unfinished migration in $d (source version $V)."
-            OLD_CLUSTER_DIR="$d"
-            OLD_VERSION="$V"
-            break
+    if [ -d "$d" ] && [[ "$d" != *.bak* ]]; then
+        if [ ! -s "$d/PG_VERSION" ] && [ -s "$d/data/PG_VERSION" ]; then
+            echo "Unwrapping nested cluster directory in $d/data..."
+            find "$d/data" -maxdepth 1 -mindepth 1 -exec mv -t "$d" {} +
+            rmdir "$d/data" 2>/dev/null || true
+        fi
+        if [ -s "$d/PG_VERSION" ]; then
+            V=$(cat "$d/PG_VERSION")
+            if [ "$V" != "$TARGET_VERSION" ]; then
+                echo "Found unfinished migration in $d (source version $V)."
+                OLD_CLUSTER_DIR="$d"
+                OLD_VERSION="$V"
+                break
+            fi
         fi
     fi
 done
@@ -102,9 +109,9 @@ if [ -z "$OLD_CLUSTER_DIR" ] && [ -s "/var/lib/postgresql/data/PG_VERSION" ]; th
     if [ "$V" != "$TARGET_VERSION" ]; then
         echo "Detected PostgreSQL $V in /var/lib/postgresql/data."
         OLD_DIR="/var/lib/postgresql/data.v${V}"
-        mkdir -p "$OLD_DIR"
         # If /var/lib/postgresql/data is an active mountpoint, move its contents to avoid "Device or resource busy"
         if mountpoint -q /var/lib/postgresql/data 2>/dev/null || grep -qs '/var/lib/postgresql/data ' /proc/mounts 2>/dev/null; then
+            mkdir -p "$OLD_DIR"
             find /var/lib/postgresql/data -maxdepth 1 -mindepth 1 -exec mv -t "$OLD_DIR" {} +
         else
             mv /var/lib/postgresql/data "$OLD_DIR"
