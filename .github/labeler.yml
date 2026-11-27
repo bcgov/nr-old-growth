@@ -1,22 +1,29 @@
 github_actions:
-  - .github/*
+  - changed-files:
+      - any-glob-to-any-file: .github/*
 
 tests:
-  - backend/test/**/*
+  - changed-files:
+      - any-glob-to-any-file: backend/test/**/*
 
 source:
-  - backend/src/**/*
+  - changed-files:
+      - any-glob-to-any-file: backend/src/**/*
 
 docker:
-  - backend/Dockerfile
+  - changed-files:
+      - any-glob-to-any-file: backend/Dockerfile
 
 dependencies:
-  - backend/package.json
+  - changed-files:
+      - any-glob-to-any-file: backend/package.json
 
 documentation:
-  - backend/docs/**/*
-  - docs/**/*
-
+  - changed-files:
+      - any-glob-to-any-file:
+          - backend/docs/**/*
+          - docs/**/*
 
 openshift:
-  - .github/openshift/.*.yml
+  - changed-files:
+      - any-glob-to-any-file: .github/openshift/.*.yml
